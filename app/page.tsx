@@ -1,18 +1,18 @@
 import Link from 'next/link';
 import {
   IIAEmblem, BlueprintGridOverlay, CompassRoseDecor, DraftingAnnotations,
-  ArchitecturalSkyline, CornerMark, BuildingElevation,
+  ArchitecturalSkyline, CornerMark,
   AmphitheaterIcon, CompassIcon, ArchIcon,
   ElevationIcon, ColumnsIcon, SkylineNightIcon,
 } from '@/components/arch-elements';
 
 const HIGHLIGHTS = [
-  { num: '01', label: 'Panel Discussion',  desc: 'Expert-led dialogue on the future of sustainable architecture and the built environment.', icon: <AmphitheaterIcon /> },
-  { num: '02', label: 'Technical Session', desc: 'Deep dives into green building technologies, materials, and structural innovation.', icon: <CompassIcon /> },
-  { num: '03', label: 'Cultural Activity',  desc: "Celebrating India's rich architectural heritage through curated cultural performances.", icon: <ArchIcon /> },
-  { num: '04', label: 'Presentation',       desc: 'Showcasing innovative and award-winning projects by leading architects and firms.', icon: <ElevationIcon /> },
-  { num: '05', label: 'Exhibition',         desc: 'A curated display of eco-conscious architecture, planning models, and material studies.', icon: <ColumnsIcon /> },
-  { num: '06', label: 'Gala Night',         desc: 'An evening of networking, recognition, and celebration with the architect community.', icon: <SkylineNightIcon /> },
+  { num: '01', label: 'Panel Discussion',  desc: 'Expert-led dialogue on the future of sustainable architecture and the built environment.', icon: <AmphitheaterIcon />, img: '/panel_discussion.png' },
+  { num: '02', label: 'Technical Session', desc: 'Deep dives into green building technologies, materials, and structural innovation.',        icon: <CompassIcon />,      img: '/tech_session.png' },
+  { num: '03', label: 'Cultural Activity',  desc: "Celebrating India's rich architectural heritage through curated cultural performances.",    icon: <ArchIcon />,         img: '/cultural_dance.png' },
+  { num: '04', label: 'Presentation',       desc: 'Showcasing innovative and award-winning projects by leading architects and firms.',         icon: <ElevationIcon />,    img: '/presentation.png' },
+  { num: '05', label: 'Exhibition',         desc: 'A curated display of eco-conscious architecture, planning models, and material studies.',   icon: <ColumnsIcon />,      img: '/exhibition.png' },
+  { num: '06', label: 'Gala Night',         desc: 'An evening of networking, recognition, and celebration with the architect community.',      icon: <SkylineNightIcon />, img: '/gala_night.png' },
 ];
 
 const PRICING = [
@@ -72,65 +72,82 @@ export default function Home() {
       </header>
 
       {/* ─── Hero ───────────────────────────────────────────────────────────── */}
-      <section className="relative bg-[#1a4a1a] overflow-hidden">
-        <BlueprintGridOverlay />
-        <CompassRoseDecor />
-        <DraftingAnnotations />
+      <section className="relative flex min-h-[80vh] overflow-hidden">
 
-        <div className="relative max-w-7xl mx-auto px-6 pt-14 pb-6 text-center">
-          <div className="inline-flex items-center gap-2 bg-[#c8a96e]/10 border border-[#c8a96e]/25 rounded-full px-5 py-1.5 mb-6">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#c8a96e]" />
-            <span className="text-[#c8a96e] text-[11px] font-bold uppercase tracking-[0.2em]">
-              Entry Ticket — Limited Registration
-            </span>
-            <span className="h-1.5 w-1.5 rounded-full bg-[#c8a96e]" />
-          </div>
+        {/* Left panel — light content area */}
+        <div className="relative z-10 w-full lg:w-[48%] flex items-center bg-[#f4f7f0] px-8 sm:px-12 xl:px-16 py-16">
+          <div className="w-full max-w-lg">
 
-          <h1 className="text-[76px] sm:text-[108px] font-black text-[#c8a96e] leading-none tracking-tight">
-            Prakriti
-          </h1>
-          <p className="text-[60px] sm:text-[90px] font-black text-white leading-none tracking-[0.12em] -mt-2">
-            2026
-          </p>
-          <p className="mt-4 text-green-300 text-lg sm:text-xl font-medium">
-            Architects for a Sustainable Tomorrow
-          </p>
-          <p className="mt-2 text-[#c8a96e]/60 text-xs uppercase tracking-[0.4em]">
-            Design &nbsp;·&nbsp; Conserve &nbsp;·&nbsp; Restore
-          </p>
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 border border-[#2e7d32]/40 rounded-full px-4 py-1.5 mb-7">
+              <span className="h-2 w-2 rounded-full bg-[#2e7d32]" />
+              <span className="text-[#1a4a1a] text-[11px] font-bold uppercase tracking-[0.15em]">
+                Entry Ticket — Limited Registration
+              </span>
+            </div>
 
-          {/* Info pills */}
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            {[
-              { label: 'Date',  value: 'Saturday, 20 June 2026',                          icon: <CalIcon /> },
-              { label: 'Time',  value: '3:00 PM Onwards',                                  icon: <ClockIcon /> },
-              { label: 'Venue', value: 'Saffron Hall, Vardaan Group, Faridabad',            icon: <PinIcon /> },
-            ].map((item) => (
-              <div key={item.label}
-                className="flex items-center gap-3 bg-white/8 border border-white/10 rounded-2xl px-5 py-3">
-                <span className="text-[#c8a96e] shrink-0">{item.icon}</span>
-                <div className="text-left">
-                  <p className="text-[9px] text-green-400/80 uppercase tracking-widest">{item.label}</p>
-                  <p className="text-sm font-bold text-white leading-tight">{item.value}</p>
+            {/* Title */}
+            <h1 className="text-[80px] sm:text-[100px] font-black text-[#1a3a1a] leading-none tracking-tight">
+              Prakriti
+            </h1>
+            <p className="text-[80px] sm:text-[100px] font-black text-[#1a3a1a] leading-none tracking-tight -mt-3">
+              2026
+            </p>
+
+            <p className="mt-5 text-[#2e7d32] text-lg sm:text-xl font-medium leading-snug">
+              Architects for a Sustainable Tomorrow
+            </p>
+            <p className="mt-2 text-[#1a4a1a]/45 text-[11px] uppercase tracking-[0.35em]">
+              Design &nbsp;·&nbsp; Conserve &nbsp;·&nbsp; Restore
+            </p>
+
+            {/* Info rows */}
+            <div className="mt-8 space-y-4">
+              {[
+                { label: 'Date',  value: 'Saturday, 20 June 2026',               icon: <CalIcon /> },
+                { label: 'Time',  value: '3:00 PM Onwards',                       icon: <ClockIcon /> },
+                { label: 'Venue', value: 'Saffron Hall, Vardaan Group, Faridabad', icon: <PinIcon /> },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center gap-3">
+                  <span className="text-[#2e7d32] shrink-0">{item.icon}</span>
+                  <div>
+                    <p className="text-[9px] text-[#2e7d32]/60 uppercase tracking-widest leading-none mb-0.5">{item.label}</p>
+                    <p className="text-sm font-semibold text-[#1a4a1a] leading-tight">{item.value}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
 
-          {/* Hero CTA */}
-          <div className="mt-9">
-            <Link href="/register"
-              className="inline-flex items-center gap-2.5 bg-[#c8a96e] hover:bg-[#b8995e] text-[#1a4a1a]
-                font-extrabold text-sm px-8 py-3.5 rounded-xl transition-colors shadow-lg shadow-[#c8a96e]/20">
-              Secure Your Spot
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </Link>
+            {/* CTA */}
+            <div className="mt-9">
+              <Link href="/register"
+                className="inline-flex items-center gap-2.5 bg-[#1a4a1a] hover:bg-[#2e7d32] text-white
+                  font-bold text-sm px-8 py-3.5 rounded-xl transition-colors shadow-md shadow-[#1a4a1a]/20">
+                Secure Your Spot
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </Link>
+            </div>
           </div>
         </div>
 
-        <ArchitecturalSkyline />
+        {/* Right panel — full-bleed hero image */}
+        <div className="hidden lg:block absolute right-0 top-0 w-[52%] h-full">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/hero_forest_city.png" alt="Prakriti 2026 — Forest City"
+            className="w-full h-full object-cover object-center" />
+          {/* Soft fade where image meets left panel */}
+          <div className="absolute inset-y-0 left-0 w-28 bg-gradient-to-r from-[#f4f7f0] to-transparent pointer-events-none" />
+        </div>
+
+        {/* Mobile fallback: image tinted behind text */}
+        <div className="lg:hidden absolute inset-0 pointer-events-none">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/hero_forest_city.png" alt=""
+            className="w-full h-full object-cover object-center opacity-10" />
+        </div>
+
       </section>
 
       {/* ─── Key Highlights ─────────────────────────────────────────────────── */}
@@ -139,23 +156,27 @@ export default function Home() {
         <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {HIGHLIGHTS.map((h) => (
             <div key={h.num}
-              className="relative bg-white rounded-2xl border border-green-100 shadow-sm p-6
-                hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group overflow-hidden">
-              <CornerMark pos="tl" />
-              <CornerMark pos="br" />
-              <div className="flex items-start gap-4">
-                <div className="h-11 w-11 rounded-xl bg-[#f1f8e9] border border-green-200 flex items-center
-                  justify-center text-[#2e7d32] shrink-0 group-hover:bg-[#1a4a1a] group-hover:text-[#c8a96e]
-                  group-hover:border-[#1a4a1a] transition-colors">
+              className="relative bg-white rounded-2xl border border-green-100 shadow-sm overflow-hidden
+                hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
+              {/* Photo thumbnail */}
+              <div className="relative h-44 overflow-hidden bg-[#1a4a1a]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={h.img} alt={h.label}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#1a4a1a]/80 via-[#1a4a1a]/20 to-transparent" />
+                {/* Number */}
+                <span className="absolute top-3 left-3.5 text-[11px] font-black text-white/50 font-mono">{h.num}</span>
+                {/* Icon badge */}
+                <div className="absolute bottom-3 right-3 h-9 w-9 rounded-xl bg-white/15 backdrop-blur-sm
+                  border border-white/20 flex items-center justify-center text-white group-hover:bg-[#c8a96e]/80
+                  group-hover:border-[#c8a96e] group-hover:text-[#1a4a1a] transition-colors">
                   {h.icon}
                 </div>
-                <div>
-                  <div className="flex items-baseline gap-2 mb-1">
-                    <span className="text-[10px] font-black text-green-200">{h.num}</span>
-                    <h3 className="text-sm font-extrabold text-[#1a4a1a]">{h.label}</h3>
-                  </div>
-                  <p className="text-xs text-gray-500 leading-relaxed">{h.desc}</p>
-                </div>
+              </div>
+              {/* Text */}
+              <div className="p-5">
+                <h3 className="text-sm font-extrabold text-[#1a4a1a]">{h.label}</h3>
+                <p className="mt-1 text-xs text-gray-500 leading-relaxed">{h.desc}</p>
               </div>
             </div>
           ))}
@@ -167,17 +188,20 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-14">
           <div className="flex flex-col lg:flex-row gap-12 items-center">
 
-            {/* Left: Building elevation illustration */}
-            <div className="w-full lg:w-2/5 flex items-center justify-center">
-              <div className="relative w-full max-w-[280px]">
-                {/* Blueprint paper background */}
-                <div className="absolute inset-0 rounded-2xl" style={{
-                  background: 'linear-gradient(135deg, #f0f8f0 0%, #e8f5e9 100%)',
-                  backgroundImage: 'radial-gradient(circle, rgba(46,125,50,0.08) 1px, transparent 1px)',
-                  backgroundSize: '16px 16px',
-                }} />
-                <div className="relative p-6">
-                  <BuildingElevation />
+            {/* Left: Sustainability photo */}
+            <div className="w-full lg:w-2/5">
+              <div className="relative rounded-2xl overflow-hidden h-80 shadow-md">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/sustainability.png" alt="Sustainability — Design, Conserve, Restore"
+                  className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#1a4a1a]/75 via-transparent to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-5">
+                  <p className="text-white font-extrabold text-base leading-tight">
+                    Design · Conserve · Restore
+                  </p>
+                  <p className="text-green-300 text-xs mt-0.5">
+                    Architecture for a sustainable tomorrow
+                  </p>
                 </div>
               </div>
             </div>
@@ -231,6 +255,28 @@ export default function Home() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ─── Venue Section ──────────────────────────────────────────────────── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-14">
+        <SectionTitle label="The Venue" sub="Saffron Hall, Vardaan Group — Sector-21C, GymKhana Club, Surajkund Road, Faridabad" />
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-5">
+          {[
+            { src: '/venue_exterior.png', label: 'Venue Exterior', sub: 'Saffron Hall, Vardaan Group' },
+            { src: '/venue_interior.png', label: 'Grand Ballroom Interior', sub: 'Capacity for 500+ guests' },
+          ].map((v) => (
+            <div key={v.label} className="relative rounded-2xl overflow-hidden h-64 shadow-md group">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={v.src} alt={v.label}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#1a4a1a]/80 via-transparent to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-5">
+                <p className="text-white font-extrabold text-sm">{v.label}</p>
+                <p className="text-green-300 text-xs mt-0.5">{v.sub}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
