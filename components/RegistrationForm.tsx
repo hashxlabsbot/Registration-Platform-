@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { BookingResult } from '@/lib/types';
 
 // ── Registration types ────────────────────────────────────────────────────────
 const REGISTRATION_TYPES = [
-  { label: 'IIA Member', price: 500 },
+  { label: 'IIA Member', price: 1 },
   { label: 'Non IIA Member', price: 1000 },
   { label: 'Visitor', price: 2000 },
   { label: 'Exhibitor', price: 3000 },
@@ -99,7 +100,7 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
 
   function handleProceed(e: React.SyntheticEvent) {
     e.preventDefault();
-    if (validateStep1()) { setStep(2); setPaymentInitiated(false); setPaymentConfirmed(false); }
+    if (validateStep1()) { setStep(2); setPaymentInitiated(true); setPaymentConfirmed(false); }
   }
 
   // ── Step 2 ──────────────────────────────────────────────────────────────────
@@ -300,6 +301,7 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
 
             {/* ── UPI Payment block ── */}
             <div className="rounded-2xl border-2 border-green-200 overflow-hidden">
+
               {/* Amount header */}
               <div className="bg-[#1a4a1a] px-5 py-4 flex items-center justify-between">
                 <div>
@@ -313,23 +315,44 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
                 </div>
               </div>
 
-              {/* UPI ID */}
-              <div className="bg-green-50 px-5 py-4 flex items-center justify-between gap-4 border-b border-green-200">
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wider">Pay to UPI ID</p>
-                  <p className="text-lg font-bold text-gray-900 font-mono">{UPI_ID}</p>
-                  <p className="text-xs text-gray-500">{UPI_NAME}</p>
+              {/* QR + UPI ID side by side */}
+              <div className="bg-white px-5 py-5 flex flex-col sm:flex-row gap-5 items-center border-b border-green-100">
+
+                {/* QR Code */}
+                <div className="shrink-0 flex flex-col items-center gap-2">
+                  <div className="rounded-xl border-2 border-green-200 p-3 bg-white shadow-sm">
+                    <QRCodeSVG
+                      value={`upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(UPI_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(`Prakriti2026 ${s2.registrationType}`)}`}
+                      size={148}
+                      fgColor="#1a4a1a"
+                      bgColor="#ffffff"
+                      level="M"
+                    />
+                  </div>
+                  <p className="text-[10px] text-gray-400 text-center font-medium">Scan with any UPI app</p>
                 </div>
-                <button type="button" onClick={copyUpiId}
-                  className={`shrink-0 rounded-lg border px-4 py-2 text-sm font-semibold transition ${copied ? 'border-green-400 bg-green-100 text-green-700' : 'border-gray-300 bg-white text-gray-600 hover:border-[#2e7d32] hover:text-[#2e7d32]'}`}>
-                  {copied ? '✓ Copied' : 'Copy ID'}
-                </button>
+
+                {/* UPI ID + instructions */}
+                <div className="flex-1 min-w-0 w-full">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Pay to UPI ID</p>
+                  <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-3">
+                    <p className="flex-1 text-base font-bold text-gray-900 font-mono truncate">{UPI_ID}</p>
+                    <button type="button" onClick={copyUpiId}
+                      className={`shrink-0 rounded-lg border px-3 py-1.5 text-xs font-bold transition
+                        ${copied ? 'border-green-400 bg-green-100 text-green-700' : 'border-gray-300 bg-white text-gray-600 hover:border-[#2e7d32] hover:text-[#2e7d32]'}`}>
+                      {copied ? '✓ Copied' : 'Copy'}
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    <strong className="text-[#1a4a1a]">How to pay:</strong> Open GPay / PhonePe / Paytm → Scan QR code or enter UPI ID manually → Pay <strong>₹{amount.toLocaleString('en-IN')}</strong>
+                  </p>
+                </div>
               </div>
 
-              {/* UPI app buttons */}
-              <div className="px-5 py-4">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                  Open directly in your UPI app
+              {/* App deep-links (secondary, with disclaimer) */}
+              <div className="bg-gray-50 px-5 py-4">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2.5">
+                  Or try opening directly in app
                 </p>
                 <div className="grid grid-cols-5 gap-2">
                   {UPI_APPS.map((app) => (
@@ -339,16 +362,12 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
                       title={app.name}
                       style={{ backgroundColor: app.bg }}
                       className="rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all flex items-center justify-center p-2 aspect-[5/3]">
-                      <img
-                        src={app.logo}
-                        alt={app.name}
-                        className="w-full h-full object-contain"
-                      />
+                      <img src={app.logo} alt={app.name} className="w-full h-full object-contain" />
                     </a>
                   ))}
                 </div>
-                <p className="mt-2.5 text-xs text-gray-400 text-center">
-                  Works on mobile — tap to open your UPI app with amount pre-filled
+                <p className="mt-2 text-[10px] text-amber-600 text-center">
+                  ⚠ Some apps (e.g. GPay) may decline web-initiated payments — use the QR code above if this happens
                 </p>
               </div>
             </div>
@@ -366,11 +385,6 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
               </span>
             </label>
 
-            {!paymentInitiated && (
-              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
-                Please complete the UPI payment using one of the app buttons above before submitting.
-              </p>
-            )}
 
             {apiError && (
               <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">

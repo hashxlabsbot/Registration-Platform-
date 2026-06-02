@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { nanoid } from 'nanoid';
 import { sendTicketEmail, sendAdminNotification } from '@/lib/mailer';
+import { appendRegistration } from '@/lib/sheet';
+import { appendToSheet }       from '@/lib/gsheets';
 
 export const runtime = 'nodejs';
 
@@ -39,6 +41,30 @@ export async function POST(request: NextRequest) {
       registrationType,
       totalAmount: Number(totalAmount),
     };
+
+    // Save to local Excel + Google Sheet (both non-blocking)
+    const rowData = {
+      bookingId,
+      name,
+      email,
+      phone,
+      whatsapp:            whatsapp            || '',
+      gender:              gender              || '',
+      nationality:         nationality         || '',
+      organization:        firm                || '',
+      designation:         designation         || '',
+      coaNumber:           coaNumber           || '',
+      iiaMembershipNumber: iiaMembershipNumber || '',
+      registrationType,
+      totalAmount: Number(totalAmount),
+      address:  address  || '',
+      district: district || '',
+      state:    state    || '',
+      pincode:  pincode  || '',
+    };
+
+    try { appendRegistration(rowData); } catch (e) { console.error('[register] local sheet:', e); }
+    appendToSheet(rowData).catch((e) => console.error('[register] gsheet:', e));
 
     await Promise.all([
       sendTicketEmail(ticketData),
