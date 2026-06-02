@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { BookingResult } from '@/app/page';
+import { BookingResult } from '@/lib/types';
 
 // ── Registration types ────────────────────────────────────────────────────────
 const REGISTRATION_TYPES = [
@@ -14,13 +14,12 @@ const REGISTRATION_TYPES = [
 type RegType = (typeof REGISTRATION_TYPES)[number]['label'];
 
 // ── UPI app deep-link definitions ─────────────────────────────────────────────
-// Each entry carries a scheme prefix; the full URL is built by buildUpiLink()
 const UPI_APPS = [
-  { name: 'GPay',       color: '#1a73e8', textColor: 'white', prefix: 'tez://upi/pay' },
-  { name: 'PhonePe',   color: '#5f259f', textColor: 'white', prefix: 'phonepe://pay' },
-  { name: 'Paytm',     color: '#00baf2', textColor: 'white', prefix: 'paytmmp://pay' },
-  { name: 'BHIM',      color: '#ff6600', textColor: 'white', prefix: 'upi://pay' },
-  { name: 'Amazon Pay',color: '#ff9900', textColor: '#111',  prefix: 'upi://pay' },
+  { name: 'GPay',        logo: '/gpay.svg',       prefix: 'tez://upi/pay',   bg: '#ffffff' },
+  { name: 'PhonePe',     logo: '/phonepe.svg',    prefix: 'phonepe://pay',   bg: '#5f259f' },
+  { name: 'Paytm',       logo: '/paytm.svg',      prefix: 'paytmmp://pay',   bg: '#ffffff' },
+  { name: 'BHIM',        logo: '/bhim.svg',        prefix: 'upi://pay',       bg: '#ff6b00' },
+  { name: 'Amazon Pay',  logo: '/amazonpay.svg',  prefix: 'upi://pay',       bg: '#ffffff' },
 ] as const;
 
 // ── Env ───────────────────────────────────────────────────────────────────────
@@ -144,22 +143,49 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
   }
 
   return (
-    <div className="w-full max-w-2xl">
+    <div className="w-full rounded-2xl shadow-xl overflow-hidden border border-green-100">
       {/* Header */}
-      <div className="rounded-t-2xl bg-[#1a4a1a] px-8 py-6 text-white">
-        <p className="text-xs font-bold tracking-widest uppercase text-[#c8a96e]">
-          {step === 1 ? 'Step 1 of 2 — Attendee Details' : 'Step 2 of 2 — Registration & Payment'}
-        </p>
-        <h1 className="mt-1 text-2xl font-extrabold">Prakriti 2026</h1>
-        <p className="mt-0.5 text-sm text-green-300">{EVENT_SUBTITLE}</p>
-        <p className="mt-1 text-xs text-green-400">{EVENT_DATE} · {EVENT_VENUE}</p>
-        <div className="mt-3 flex gap-2">
+      <div className="relative bg-[#1a4a1a] px-7 py-5 text-white overflow-hidden">
+        {/* Blueprint grid in header */}
+        <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.08]" aria-hidden>
+          <defs>
+            <pattern id="hg" width="20" height="20" patternUnits="userSpaceOnUse">
+              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#c8a96e" strokeWidth="0.5"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#hg)"/>
+        </svg>
+        {/* Corner marks */}
+        <svg className="absolute top-2 left-2 opacity-40" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+          <path d="M 8,0 L 0,0 L 0,8" stroke="#c8a96e" strokeWidth="1.5" fill="none"/>
+        </svg>
+        <svg className="absolute top-2 right-2 opacity-40" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+          <path d="M 8,0 L 16,0 L 16,8" stroke="#c8a96e" strokeWidth="1.5" fill="none"/>
+        </svg>
+        {/* Drafting compass small icon */}
+        <svg className="absolute bottom-4 right-5 opacity-10" width="48" height="48" viewBox="0 0 48 48" fill="none" aria-hidden>
+          <circle cx="24" cy="24" r="22" stroke="#c8a96e" strokeWidth="1"/>
+          <circle cx="24" cy="24" r="14" stroke="#c8a96e" strokeWidth="0.7"/>
+          <line x1="24" y1="2"  x2="24" y2="46" stroke="#c8a96e" strokeWidth="0.8"/>
+          <line x1="2"  y1="24" x2="46" y2="24" stroke="#c8a96e" strokeWidth="0.8"/>
+          <polygon points="24,2 22,10 24,8 26,10" fill="#c8a96e"/>
+        </svg>
+        {/* Content */}
+        <div className="relative flex items-center justify-between">
+          <p className="text-[11px] font-extrabold tracking-[0.2em] uppercase text-[#c8a96e]">
+            {step === 1 ? 'Step 1 of 2 — Attendee Details' : 'Step 2 of 2 — Registration & Payment'}
+          </p>
+          <span className="text-[11px] font-bold text-green-400 font-mono">{step}/2</span>
+        </div>
+        <h1 className="relative mt-2 text-xl font-extrabold text-white">Prakriti 2026 — Event Registration</h1>
+        <p className="relative mt-0.5 text-xs text-[#c8a96e]/70 tracking-widest">Design · Conserve · Restore</p>
+        <div className="relative mt-3.5 flex gap-1.5">
           <div className="h-1 flex-1 rounded-full bg-[#c8a96e]" />
-          <div className={`h-1 flex-1 rounded-full transition-colors ${step === 2 ? 'bg-[#c8a96e]' : 'bg-green-900'}`} />
+          <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${step === 2 ? 'bg-[#c8a96e]' : 'bg-white/10'}`} />
         </div>
       </div>
 
-      <div className="rounded-b-2xl bg-white px-8 py-8 shadow-2xl">
+      <div className="bg-white px-7 py-7">
         {/* ── STEP 1 ── */}
         {step === 1 && (
           <form onSubmit={handleProceed} noValidate>
@@ -310,9 +336,14 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
                     <a key={app.name}
                       href={buildUpiLink(app.prefix)}
                       onClick={() => setPaymentInitiated(true)}
-                      style={{ backgroundColor: app.color, color: app.textColor }}
-                      className="rounded-xl py-3 text-xs font-bold text-center shadow-sm hover:opacity-90 active:scale-95 transition-all block">
-                      {app.name}
+                      title={app.name}
+                      style={{ backgroundColor: app.bg }}
+                      className="rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all flex items-center justify-center p-2 aspect-[5/3]">
+                      <img
+                        src={app.logo}
+                        alt={app.name}
+                        className="w-full h-full object-contain"
+                      />
                     </a>
                   ))}
                 </div>

@@ -30,7 +30,7 @@ body {
 }
 
 .input {
-  @apply block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-[#e94560] focus:ring-2 focus:ring-[#e94560]/20;
+  @apply block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-[#2e7d32] focus:ring-2 focus:ring-[#2e7d32]/20;
 }
 
 .err {

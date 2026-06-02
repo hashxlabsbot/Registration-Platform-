@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 72">
+  <rect width="200" height="72" rx="10" fill="#ffffff" stroke="#e0e0e0" stroke-width="1.5"/>
+  <!-- "amazon" text -->
+  <text x="100" y="24" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="bold" fill="#232F3E" text-anchor="middle" dominant-baseline="middle">amazon</text>
+  <!-- Orange smile arrow -->
+  <path d="M58 38 Q100 52 142 38" fill="none" stroke="#FF9900" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M138 34 L142 38 L137 41" fill="none" stroke="#FF9900" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- "pay" text -->
+  <text x="100" y="60" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="bold" fill="#232F3E" text-anchor="middle" dominant-baseline="middle" letter-spacing="2">Pay</text>
+</svg>
