@@ -24,3 +24,15 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.label {
+  @apply block mb-1.5 text-sm font-semibold text-gray-700;
+}
+
+.input {
+  @apply block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-[#e94560] focus:ring-2 focus:ring-[#e94560]/20;
+}
+
+.err {
+  @apply mt-1 text-xs text-red-600;
+}
