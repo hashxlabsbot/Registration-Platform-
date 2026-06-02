@@ -272,69 +272,83 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
 
         {/* ── STEP 2 ── */}
         {step === 2 && (
-          <form onSubmit={openPayment} noValidate className="space-y-6">
+          <form onSubmit={openPayment} noValidate className="space-y-5">
 
             {/* Registration type */}
             <div>
               <label className="label">Registration Type <Req /></label>
-              <div className="grid grid-cols-2 gap-3 mt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-1.5">
                 {REGISTRATION_TYPES.map((t) => (
                   <label key={t.label}
                     className={`flex items-center justify-between rounded-xl border-2 px-4 py-3 cursor-pointer transition
-                      ${s2.registrationType === t.label ? 'border-[#2e7d32] bg-green-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                    <div className="flex items-center gap-2">
+                      ${s2.registrationType === t.label
+                        ? 'border-[#2e7d32] bg-green-50 shadow-sm'
+                        : 'border-gray-100 bg-gray-50 hover:border-gray-300'}`}>
+                    <div className="flex items-center gap-2.5">
                       <input type="radio" name="registrationType" value={t.label}
                         checked={s2.registrationType === t.label}
                         onChange={(e) => setS2((p) => ({ ...p, registrationType: e.target.value as RegType }))}
-                        className="accent-[#2e7d32]" />
-                      <span className="text-sm font-medium text-gray-800">{t.label}</span>
+                        className="accent-[#2e7d32] h-4 w-4" />
+                      <span className={`text-sm font-semibold ${s2.registrationType === t.label ? 'text-[#1a4a1a]' : 'text-gray-600'}`}>
+                        {t.label}
+                      </span>
                     </div>
-                    <span className="text-sm font-bold text-[#2e7d32]">₹{t.price.toLocaleString('en-IN')}</span>
+                    <span className={`text-sm font-black ${s2.registrationType === t.label ? 'text-[#2e7d32]' : 'text-gray-400'}`}>
+                      ₹{t.price.toLocaleString('en-IN')}
+                    </span>
                   </label>
                 ))}
               </div>
             </div>
 
             {/* COA + IIA */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="COA Number" id="coaNumber" name="coaNumber" value={s2.coaNumber}
                 onChange={(e) => setS2((p) => ({ ...p, coaNumber: e.target.value }))}
                 placeholder="CA/XXXX/XXXX" />
               <Field
-                label={`IIA Membership No.${s2.registrationType === 'IIA Member' ? '' : ' (if applicable)'}`}
+                label={`IIA Membership No.${s2.registrationType === 'IIA Member' ? '' : ' (optional)'}`}
                 id="iiaMembershipNumber" name="iiaMembershipNumber" value={s2.iiaMembershipNumber}
                 onChange={(e) => setS2((p) => ({ ...p, iiaMembershipNumber: e.target.value }))}
                 placeholder="IIA/XXXX/XXXX"
                 required={s2.registrationType === 'IIA Member'} />
             </div>
 
-            {/* Amount card */}
-            <div className="rounded-2xl bg-[#1a4a1a] px-6 py-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] text-green-400 uppercase tracking-widest font-bold">Amount to Pay</p>
-                  <p className="text-5xl font-black text-white mt-1 leading-none">
+            {/* ── Order summary card ── */}
+            <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
+              {/* Top: event info */}
+              <div className="bg-[#f4f7f0] px-5 py-4 border-b border-gray-100">
+                <p className="text-[10px] font-bold text-[#2e7d32] uppercase tracking-widest mb-1">Order Summary</p>
+                <p className="text-sm font-bold text-[#1a4a1a]">Prakriti 2026 — Entry Ticket</p>
+                <p className="text-xs text-gray-500 mt-0.5">Saturday, 20 June 2026 · Saffron Hall, Faridabad</p>
+              </div>
+
+              {/* Middle: attendee + price */}
+              <div className="bg-white px-5 py-4 flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-xs text-gray-400 mb-0.5">Attendee</p>
+                  <p className="text-sm font-bold text-[#1a4a1a] truncate">{s1.name}</p>
+                  <p className="text-xs text-gray-400 truncate">{s1.email}</p>
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className="text-xs text-gray-400 mb-0.5">{s2.registrationType}</p>
+                  <p className="text-3xl font-black text-[#1a4a1a] leading-none">
                     ₹{amount.toLocaleString('en-IN')}
                   </p>
-                  <p className="text-xs text-[#c8a96e] mt-2">{s2.registrationType} · Prakriti 2026</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-semibold text-white">{s1.name}</p>
-                  <p className="text-xs text-green-400 mt-0.5 max-w-[160px] truncate">{s1.email}</p>
-                  {/* Accepted payment icons */}
-                  <div className="mt-3 flex items-center justify-end gap-1.5">
-                    {['UPI', 'GPay', 'Card', 'NB'].map((m) => (
-                      <span key={m} className="border border-[#c8a96e]/40 text-[#c8a96e] rounded px-1.5 py-0.5 text-[9px] font-bold">
-                        {m}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+              </div>
+
+              {/* Bottom: accepted methods */}
+              <div className="bg-gray-50 px-5 py-3 flex items-center gap-2 border-t border-gray-100">
+                <svg className="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <p className="text-[10px] text-gray-400">UPI · GPay · PhonePe · Paytm · Debit/Credit Card · Net Banking</p>
               </div>
             </div>
 
             {apiError && (
-              <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 flex items-start gap-2">
+              <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 flex items-start gap-2.5">
                 <svg className="w-4 h-4 text-red-500 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
                 </svg>
@@ -342,17 +356,18 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
               </div>
             )}
 
-            <div className="flex gap-3">
+            {/* Action buttons */}
+            <div className="flex gap-3 pt-1">
               <button type="button" onClick={() => { setStep(1); setApiError(''); }}
-                className="flex-1 rounded-xl border border-gray-200 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
+                className="flex-1 rounded-xl border border-gray-200 py-3.5 text-sm font-semibold text-gray-500 hover:bg-gray-50 transition">
                 ← Back
               </button>
               <button type="submit" disabled={paying}
-                className="flex-[2] rounded-xl bg-[#2e7d32] py-4 text-base font-bold text-white
-                  hover:bg-[#1a4a1a] disabled:opacity-60 disabled:cursor-not-allowed
-                  flex items-center justify-center gap-2.5 transition shadow-lg shadow-green-900/20">
+                className="flex-[2] rounded-xl bg-[#1a4a1a] py-3.5 text-base font-bold text-white
+                  hover:bg-[#2e7d32] disabled:opacity-50 disabled:cursor-not-allowed
+                  flex items-center justify-center gap-2.5 transition-colors shadow-lg shadow-green-950/20">
                 {paying ? (
-                  <><Spinner /> Processing…</>
+                  <><Spinner />Processing…</>
                 ) : (
                   <>
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -364,11 +379,15 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
               </button>
             </div>
 
-            <p className="text-center text-[10px] text-gray-400 pb-1">
-              Secured by{' '}
-              <span className="font-semibold text-[#528FF0]">Razorpay</span>
-              {' '}· UPI · GPay · PhonePe · Cards · Net Banking
-            </p>
+            {/* Trust badge */}
+            <div className="flex items-center justify-center gap-2 py-1">
+              <svg className="w-3.5 h-3.5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"/>
+              </svg>
+              <p className="text-[11px] text-gray-400">
+                Secured by <span className="font-bold text-[#528FF0]">Razorpay</span> · 256-bit SSL encryption
+              </p>
+            </div>
 
           </form>
         )}
