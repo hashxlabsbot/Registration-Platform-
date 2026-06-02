@@ -7,6 +7,7 @@ const HEADERS = [
   'Booking ID', 'Name', 'Email', 'Phone', 'WhatsApp',
   'Gender', 'Nationality', 'Organization', 'Designation',
   'COA Number', 'IIA Membership No.', 'Registration Type', 'Amount (₹)',
+  'UPI Transaction ID / UTR',
   'Address', 'District', 'State', 'Pincode', 'Registered At (IST)',
 ];
 
@@ -61,6 +62,7 @@ export async function appendToSheet(data: RegistrationRow): Promise<void> {
         data.iiaMembershipNumber || '—',
         data.registrationType,
         data.totalAmount,
+        data.utrNumber,
         data.address             || '—',
         data.district            || '—',
         data.state               || '—',

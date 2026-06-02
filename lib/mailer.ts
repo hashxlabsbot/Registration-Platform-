@@ -108,6 +108,7 @@ export interface AdminNotificationData extends TicketData {
   pincode: string;
   coaNumber: string;
   iiaMembershipNumber: string;
+  utrNumber?: string;
 }
 
 export async function sendAdminNotification(
@@ -151,6 +152,7 @@ export async function sendAdminNotification(
               ['Amount', `₹${data.totalAmount.toLocaleString('en-IN')}`],
               ['COA Number', data.coaNumber || '—'],
               ['IIA Membership No.', data.iiaMembershipNumber || '—'],
+              ['UPI Transaction ID / UTR', data.utrNumber || '—'],
               ['Registered At', new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) + ' IST'],
             ]
               .map(
@@ -163,7 +165,7 @@ export async function sendAdminNotification(
               .join('')}
           </table>
           <p style="margin:14px 0 0;font-size:12px;color:#999;">
-            Payment screenshot is attached. Please verify in your UPI app and confirm entry.
+            Please verify the UTR number above against your UPI account and confirm entry.
           </p>
         </td></tr>
 

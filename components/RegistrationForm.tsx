@@ -27,7 +27,7 @@ const UPI_APPS = [
 const EVENT_SUBTITLE = process.env.NEXT_PUBLIC_EVENT_SUBTITLE ?? 'Architects for a Sustainable Tomorrow';
 const EVENT_DATE = process.env.NEXT_PUBLIC_EVENT_DATE ?? 'Saturday, 20 June 2026 · 3:00 PM';
 const EVENT_VENUE = process.env.NEXT_PUBLIC_EVENT_VENUE ?? 'Saffron Hall, Gymkhana Club, Faridabad';
-const UPI_ID = process.env.NEXT_PUBLIC_UPI_ID ?? '9310530220@ybl';
+const UPI_ID = process.env.NEXT_PUBLIC_UPI_ID ?? '8810235570@yescred';
 const UPI_NAME = process.env.NEXT_PUBLIC_UPI_NAME ?? 'IIA Faridabad Centre';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -59,7 +59,8 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
 
   // Payment state
   const [paymentInitiated, setPaymentInitiated] = useState(false);
-  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const [utrNumber, setUtrNumber] = useState('');
+  const [utrError, setUtrError] = useState('');
   const [copied, setCopied] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
@@ -100,7 +101,7 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
 
   function handleProceed(e: React.SyntheticEvent) {
     e.preventDefault();
-    if (validateStep1()) { setStep(2); setPaymentInitiated(true); setPaymentConfirmed(false); }
+    if (validateStep1()) { setStep(2); setPaymentInitiated(false); }
   }
 
   // ── Step 2 ──────────────────────────────────────────────────────────────────
@@ -111,31 +112,48 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
     });
   }
 
-
   async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
-    if (!paymentConfirmed) {
-      setApiError('Please confirm that you have completed the payment.');
+
+    const trimmedUtr = utrNumber.trim();
+    if (!trimmedUtr) {
+      setUtrError('Enter your UPI Transaction ID / UTR number to confirm payment.');
+      return;
+    }
+    if (trimmedUtr.length < 6) {
+      setUtrError('Transaction ID looks too short. Please check and re-enter.');
       return;
     }
     if (s2.registrationType === 'IIA Member' && !s2.iiaMembershipNumber.trim()) {
       setApiError('IIA Membership Number is required for IIA Members.');
       return;
     }
+
     setSubmitting(true);
     setApiError('');
+    setUtrError('');
 
     try {
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...s1, ...s2, totalAmount: amount,
+          ...s1, ...s2, totalAmount: amount, utrNumber: trimmedUtr,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Registration failed.');
-      onSuccess({ bookingId: data.bookingId, paymentId: UPI_ID, name: s1.name, email: s1.email, registrationType: s2.registrationType, amount });
+      onSuccess({
+        bookingId: data.bookingId,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        organization: data.organization,
+        designation: data.designation,
+        registrationType: data.registrationType,
+        amount: data.totalAmount,
+        utrNumber: data.utrNumber,
+      });
     } catch (err) {
       setApiError((err as Error).message);
     } finally {
@@ -274,7 +292,12 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
                     <div className="flex items-center gap-2">
                       <input type="radio" name="registrationType" value={t.label}
                         checked={s2.registrationType === t.label}
-                        onChange={(e) => { setS2((p) => ({ ...p, registrationType: e.target.value as RegType })); setPaymentInitiated(false); setPaymentConfirmed(false); }}
+                        onChange={(e) => {
+                          setS2((p) => ({ ...p, registrationType: e.target.value as RegType }));
+                          setPaymentInitiated(false);
+                          setUtrNumber('');
+                          setUtrError('');
+                        }}
                         className="accent-[#2e7d32]" />
                       <span className="text-sm font-medium text-gray-800">{t.label}</span>
                     </div>
@@ -372,19 +395,24 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
               </div>
             </div>
 
-            {/* Payment confirmation checkbox */}
-            <label className={`flex items-start gap-3 rounded-xl border-2 px-4 py-4 cursor-pointer transition ${paymentConfirmed ? 'border-green-400 bg-green-50' : 'border-gray-200 hover:border-gray-300'}`}>
-              <input type="checkbox" checked={paymentConfirmed}
-                onChange={(e) => { setPaymentConfirmed(e.target.checked); setApiError(''); }}
-                className="mt-0.5 h-4 w-4 accent-[#2e7d32] shrink-0" />
-              <span className="text-sm text-gray-700 leading-relaxed">
-                I confirm that I have completed the payment of{' '}
-                <strong className="text-[#1a4a1a]">₹{amount.toLocaleString('en-IN')}</strong>{' '}
-                to UPI ID <strong className="font-mono text-[#1a4a1a]">{UPI_ID}</strong>{' '}
-                ({UPI_NAME}).
-              </span>
-            </label>
-
+            {/* ── UTR / Transaction ID — required proof of payment ── */}
+            <div className={`rounded-xl border-2 px-5 py-4 transition ${utrNumber.trim() ? 'border-green-400 bg-green-50' : 'border-amber-300 bg-amber-50'}`}>
+              <label htmlFor="utrNumber" className="block text-sm font-bold text-[#1a4a1a] mb-1">
+                UPI Transaction ID / UTR Number <Req />
+              </label>
+              <p className="text-xs text-gray-500 mb-3">
+                After paying, open your UPI app → Payment History → copy the Transaction ID or UTR. This is required to confirm your payment.
+              </p>
+              <input
+                id="utrNumber"
+                type="text"
+                value={utrNumber}
+                onChange={(e) => { setUtrNumber(e.target.value); setUtrError(''); }}
+                placeholder="e.g. 407812345678 or T2406031234567"
+                className={`input font-mono ${utrError ? 'border-red-500' : ''}`}
+              />
+              {utrError && <p className="err mt-1">{utrError}</p>}
+            </div>
 
             {apiError && (
               <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">

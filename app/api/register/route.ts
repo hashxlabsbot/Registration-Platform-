@@ -14,10 +14,15 @@ export async function POST(request: NextRequest) {
       name, email, phone, whatsapp, gender, nationality,
       firm, designation, address, district, state, pincode,
       registrationType, coaNumber, iiaMembershipNumber, totalAmount,
+      utrNumber,
     } = body;
 
     if (!name || !email || !phone || !registrationType) {
       return NextResponse.json({ error: 'Required fields are missing.' }, { status: 400 });
+    }
+
+    if (!utrNumber || String(utrNumber).trim().length < 6) {
+      return NextResponse.json({ error: 'UPI Transaction ID / UTR number is required.' }, { status: 400 });
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -57,6 +62,7 @@ export async function POST(request: NextRequest) {
       iiaMembershipNumber: iiaMembershipNumber || '',
       registrationType,
       totalAmount: Number(totalAmount),
+      utrNumber: String(utrNumber).trim(),
       address:  address  || '',
       district: district || '',
       state:    state    || '',
@@ -66,23 +72,36 @@ export async function POST(request: NextRequest) {
     try { appendRegistration(rowData); } catch (e) { console.error('[register] local sheet:', e); }
     appendToSheet(rowData).catch((e) => console.error('[register] gsheet:', e));
 
-    await Promise.all([
-      sendTicketEmail(ticketData),
-      sendAdminNotification({
-        ...ticketData,
-        gender: gender || '—',
-        nationality: nationality || '—',
-        whatsapp: whatsapp || '—',
-        address: address || '—',
-        district: district || '—',
-        state: state || '—',
-        pincode: pincode || '—',
-        coaNumber: coaNumber || '—',
-        iiaMembershipNumber: iiaMembershipNumber || '—',
-      }),
-    ]);
+    // TODO: re-enable once Gmail App Password is configured in env
+    // await Promise.all([
+    //   sendTicketEmail(ticketData),
+    //   sendAdminNotification({
+    //     ...ticketData,
+    //     gender: gender || '—',
+    //     nationality: nationality || '—',
+    //     whatsapp: whatsapp || '—',
+    //     address: address || '—',
+    //     district: district || '—',
+    //     state: state || '—',
+    //     pincode: pincode || '—',
+    //     coaNumber: coaNumber || '—',
+    //     iiaMembershipNumber: iiaMembershipNumber || '—',
+    //     utrNumber: String(utrNumber).trim(),
+    //   }),
+    // ]);
 
-    return NextResponse.json({ success: true, bookingId });
+    return NextResponse.json({
+      success: true,
+      bookingId,
+      name,
+      email,
+      phone,
+      organization: firm || '—',
+      designation: designation || '—',
+      registrationType,
+      totalAmount: Number(totalAmount),
+      utrNumber: String(utrNumber).trim(),
+    });
   } catch (error) {
     console.error('[register]', error);
     return NextResponse.json({ error: 'Registration failed. Please try again.' }, { status: 500 });

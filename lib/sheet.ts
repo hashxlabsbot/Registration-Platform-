@@ -10,6 +10,7 @@ const HEADERS = [
   'Booking ID', 'Name', 'Email', 'Phone', 'WhatsApp',
   'Gender', 'Nationality', 'Organization', 'Designation',
   'COA Number', 'IIA Membership No.', 'Registration Type', 'Amount (₹)',
+  'UPI Transaction ID / UTR',
   'Address', 'District', 'State', 'Pincode', 'Registered At (IST)',
 ];
 
@@ -27,6 +28,7 @@ export interface RegistrationRow {
   iiaMembershipNumber: string;
   registrationType: string;
   totalAmount: number;
+  utrNumber: string;
   address: string;
   district: string;
   state: string;
@@ -66,6 +68,7 @@ export function appendRegistration(data: RegistrationRow): void {
     data.iiaMembershipNumber || '—',
     data.registrationType,
     data.totalAmount,
+    data.utrNumber,
     data.address  || '—',
     data.district || '—',
     data.state    || '—',
