@@ -5,7 +5,7 @@ import { BookingResult } from '@/lib/types';
 
 // ── Registration types ────────────────────────────────────────────────────────
 const REGISTRATION_TYPES = [
-  { label: 'IIA Member',     price: 500  },
+  { label: 'IIA Member',     price: 1    }, // TODO: revert to 500 after testing
   { label: 'Non IIA Member', price: 1000 },
   { label: 'Visitor',        price: 2000 },
   { label: 'Exhibitor',      price: 3000 },
