@@ -1,35 +1,75 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getRegistrationsBuffer, getRegistrationCount } from '@/lib/sheet';
+import * as XLSX from 'xlsx';
+import { getRegistrations } from '@/lib/registrations';
 import { isValidSession, SESSION_COOKIE } from '@/lib/auth';
 
 export const runtime = 'nodejs';
+
+const HEADERS = [
+  'Booking ID', 'Name', 'Email', 'Phone', 'WhatsApp',
+  'Gender', 'Nationality', 'Organization', 'Designation',
+  'COA Number', 'IIA Membership No.', 'Registration Type', 'Amount (₹)',
+  'UPI Transaction ID / UTR',
+  'Address', 'District', 'State', 'Pincode', 'Registered At (IST)',
+  'Checked In', 'Check-in Time (IST)',
+];
 
 export async function GET(request: NextRequest) {
   const secret = request.nextUrl.searchParams.get('secret');
   const cookie = request.cookies.get(SESSION_COOKIE)?.value;
 
   const authorized =
-    (secret && process.env.ADMIN_SECRET && secret === process.env.ADMIN_SECRET) ||
+    (secret && process.env.ADMIN_SECRET && secret.trim() === process.env.ADMIN_SECRET.trim()) ||
     isValidSession(cookie);
 
   if (!authorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const buffer = getRegistrationsBuffer();
+  const registrations = await getRegistrations();
 
-  if (!buffer) {
+  if (registrations.length === 0) {
     return NextResponse.json({ error: 'No registrations yet.' }, { status: 404 });
   }
 
-  const count = getRegistrationCount();
-  const date  = new Date().toISOString().slice(0, 10);
+  const rows = registrations.map((r) => [
+    r.bookingId,
+    r.name,
+    r.email,
+    r.phone,
+    r.whatsapp,
+    r.gender,
+    r.nationality,
+    r.organization,
+    r.designation,
+    r.coaNumber,
+    r.iiaMembershipNumber,
+    r.registrationType,
+    r.amount,
+    r.utrNumber,
+    r.address,
+    r.district,
+    r.state,
+    r.pincode,
+    r.registeredAt,
+    r.checkedIn ? 'YES' : 'NO',
+    r.checkinTime,
+  ]);
+
+  const ws = XLSX.utils.aoa_to_sheet([HEADERS, ...rows]);
+  ws['!cols'] = HEADERS.map((h) => ({ wch: Math.max(h.length + 4, 20) }));
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Registrations');
+
+  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  const date   = new Date().toISOString().slice(0, 10);
 
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
       'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'Content-Disposition': `attachment; filename="prakriti2026-registrations-${count}-entries-${date}.xlsx"`,
-      'X-Registration-Count': String(count),
+      'Content-Disposition': `attachment; filename="prakriti2026-registrations-${registrations.length}-entries-${date}.xlsx"`,
+      'X-Registration-Count': String(registrations.length),
     },
   });
 }

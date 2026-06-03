@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getRegistrations } from '@/lib/sheet';
+import { getRegistrations } from '@/lib/registrations';
 import { isValidSession, SESSION_COOKIE } from '@/lib/auth';
 
 export const runtime = 'nodejs';
@@ -10,6 +10,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const registrations = getRegistrations();
+  const registrations = await getRegistrations();
   return NextResponse.json({ registrations });
 }

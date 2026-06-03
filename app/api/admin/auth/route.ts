@@ -6,16 +6,17 @@ export const runtime = 'nodejs';
 export async function POST(request: NextRequest) {
   const { secret } = await request.json();
 
-  if (!process.env.ADMIN_SECRET || secret !== process.env.ADMIN_SECRET) {
+  const adminSecret = (process.env.ADMIN_SECRET ?? '').trim();
+  if (!adminSecret || (secret ?? '').trim() !== adminSecret) {
     return NextResponse.json({ error: 'Invalid password.' }, { status: 401 });
   }
 
   const response = NextResponse.json({ success: true });
-  response.cookies.set(SESSION_COOKIE, process.env.ADMIN_SECRET, {
+  response.cookies.set(SESSION_COOKIE, adminSecret, {
     httpOnly: true,
-    sameSite: 'strict',
+    sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 60 * 60 * 24, // 24 hours
+    maxAge: 60 * 60 * 24 * 7, // 7 days
     path: '/',
   });
   return response;

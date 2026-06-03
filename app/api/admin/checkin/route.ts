@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkInRegistration } from '@/lib/sheet';
+import { checkInRegistration } from '@/lib/registrations';
 import { isValidSession, SESSION_COOKIE } from '@/lib/auth';
 
 export const runtime = 'nodejs';
@@ -15,6 +15,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'bookingId is required.' }, { status: 400 });
   }
 
-  const result = checkInRegistration(String(bookingId));
+  const result = await checkInRegistration(String(bookingId));
   return NextResponse.json(result);
 }

@@ -1,6 +1,7 @@
 export const SESSION_COOKIE = 'admin_session';
 
 export function isValidSession(cookieValue: string | undefined): boolean {
-  if (!cookieValue || !process.env.ADMIN_SECRET) return false;
-  return cookieValue === process.env.ADMIN_SECRET;
+  const secret = (process.env.ADMIN_SECRET ?? '').trim();
+  if (!cookieValue || !secret) return false;
+  return cookieValue.trim() === secret;
 }

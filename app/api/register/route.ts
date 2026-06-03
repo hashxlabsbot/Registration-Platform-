@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { nanoid } from 'nanoid';
 import { sendTicketEmail, sendAdminNotification } from '@/lib/mailer';
-import { appendRegistration } from '@/lib/sheet';
+import { appendRegistration } from '@/lib/registrations';
 
 export const runtime = 'nodejs';
 
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
       pincode:  pincode  || '',
     };
 
-    try { appendRegistration(rowData); } catch (e) { console.error('[register] sheet:', e); }
+    await appendRegistration(rowData);
 
     // TODO: re-enable once Gmail App Password is configured in env
     // await Promise.all([

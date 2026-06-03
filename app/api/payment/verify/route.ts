@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { nanoid } from 'nanoid';
-import { appendRegistration } from '@/lib/sheet';
+import { appendRegistration } from '@/lib/registrations';
 
 export const runtime = 'nodejs';
 
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       pincode:  pincode  || '',
     };
 
-    try { appendRegistration(rowData); } catch (e) { console.error('[verify] sheet:', e); }
+    await appendRegistration(rowData);
 
     return NextResponse.json({
       success: true,
