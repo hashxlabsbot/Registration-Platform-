@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import {
-  IIAEmblem, BlueprintGridOverlay, CompassRoseDecor, DraftingAnnotations,
-  ArchitecturalSkyline, CornerMark,
+  IIAEmblem, BlueprintGridOverlay, CornerMark,
   AmphitheaterIcon, CompassIcon, ArchIcon,
   ElevationIcon, ColumnsIcon, SkylineNightIcon,
 } from '@/components/arch-elements';
@@ -17,9 +16,9 @@ const HIGHLIGHTS = [
 
 const PRICING = [
   { type: 'Architect – IIA Member',     price: '₹1',      desc: 'Active IIA membership required' },
-  { type: 'Architect – Non-IIA Member', price: '₹1,000',    desc: 'Open to all architecture professionals' },
-  { type: "Member's Spouse",            price: '₹1,000',    desc: 'Spouse of an IIA member' },
-  { type: 'Non-Architect',              price: '₹2,500',    desc: 'Industry professionals & guests' },
+  { type: 'Architect – Non-IIA Member', price: '₹1,000',  desc: 'Open to all architecture professionals' },
+  { type: "Member's Spouse",            price: '₹1,000',  desc: 'Spouse of an IIA member' },
+  { type: 'Non-Architect',              price: '₹2,500',  desc: 'Industry professionals & guests' },
 ];
 
 const SPONSORS = [
@@ -47,18 +46,23 @@ export default function Home() {
 
       {/* ─── Sticky Header ──────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 bg-white/96 backdrop-blur-md border-b border-green-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-5 py-2.5 flex items-center justify-between">
-          <div className="flex items-center">
-            <IIAEmblem size={80} />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between">
+          {/* Logo */}
+          <div className="flex items-center shrink-0">
+            <IIAEmblem size={200} />
           </div>
-          <div className="flex items-center gap-4">
+
+          {/* Right side */}
+          <div className="flex items-center gap-3 sm:gap-4">
             <div className="hidden sm:block text-right">
               <p className="text-xs font-bold text-[#c8a96e] uppercase tracking-widest">Prakriti 2026</p>
               <p className="text-[11px] text-gray-400">20 June 2026 · Faridabad</p>
             </div>
-            <Link href="/register"
-              className="rounded-lg bg-[#2e7d32] px-4 py-2 text-xs font-bold text-white
-                hover:bg-[#1a4a1a] transition-colors">
+            <Link
+              href="/register"
+              className="rounded-lg bg-[#2e7d32] px-3 py-2 sm:px-4 text-xs font-bold text-white
+                hover:bg-[#1a4a1a] active:scale-95 transition-all whitespace-nowrap"
+            >
               Register Now
             </Link>
           </div>
@@ -66,44 +70,44 @@ export default function Home() {
       </header>
 
       {/* ─── Hero ───────────────────────────────────────────────────────────── */}
-      <section className="relative flex min-h-[80vh] overflow-hidden">
+      <section className="relative flex min-h-[85vh] sm:min-h-[80vh] overflow-hidden">
 
-        {/* Left panel — light content area */}
-        <div className="relative z-10 w-full lg:w-[48%] flex items-center bg-[#f4f7f0] px-8 sm:px-12 xl:px-16 py-16">
-          <div className="w-full max-w-lg">
+        {/* Left panel */}
+        <div className="relative z-10 w-full lg:w-[50%] flex items-center bg-[#f4f7f0] px-5 sm:px-10 xl:px-16 py-14 sm:py-20">
+          <div className="w-full max-w-xl mx-auto lg:mx-0">
 
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 border border-[#2e7d32]/40 rounded-full px-4 py-1.5 mb-7">
-              <span className="h-2 w-2 rounded-full bg-[#2e7d32]" />
-              <span className="text-[#1a4a1a] text-[11px] font-bold uppercase tracking-[0.15em]">
+            <div className="inline-flex items-center gap-2 border border-[#2e7d32]/40 rounded-full px-3 py-1.5 mb-6 sm:mb-8">
+              <span className="h-2 w-2 rounded-full bg-[#2e7d32] shrink-0" />
+              <span className="text-[#1a4a1a] text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.12em] sm:tracking-[0.15em]">
                 Entry Ticket — Limited Registration
               </span>
             </div>
 
-            {/* Title */}
+            {/* Prakriti Title image */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/Hindi-prakriti.png"
               alt="प्रकृति 2026"
-              className="h-[220px] sm:h-[260px] w-auto -my-10 -ml-8"
+              className="h-[180px] sm:h-[220px] lg:h-[260px] w-auto -my-8 sm:-my-10 -ml-4 sm:-ml-8"
             />
 
-            <p className="mt-5 text-[#2e7d32] text-lg sm:text-xl font-medium leading-snug">
+            <p className="mt-4 sm:mt-5 text-[#2e7d32] text-base sm:text-lg lg:text-xl font-medium leading-snug">
               Architects for a Sustainable Tomorrow
             </p>
-            <p className="mt-2 text-[#1a4a1a]/45 text-[11px] uppercase tracking-[0.35em]">
-              Design &nbsp;·&nbsp; Conserve &nbsp;·&nbsp; Restore
+            <p className="mt-2 text-[#1a4a1a]/45 text-[10px] sm:text-[11px] uppercase tracking-[0.3em] sm:tracking-[0.35em]">
+              Design&nbsp;·&nbsp;Conserve&nbsp;·&nbsp;Restore
             </p>
 
             {/* Info rows */}
-            <div className="mt-8 space-y-4">
+            <div className="mt-6 sm:mt-8 space-y-3 sm:space-y-4">
               {[
-                { label: 'Date',  value: 'Saturday, 20 June 2026',               icon: <CalIcon /> },
-                { label: 'Time',  value: '3:00 PM Onwards',                       icon: <ClockIcon /> },
+                { label: 'Date',  value: 'Saturday, 20 June 2026',                icon: <CalIcon /> },
+                { label: 'Time',  value: '3:00 PM Onwards',                        icon: <ClockIcon /> },
                 { label: 'Venue', value: 'Saffron Hall, Vardaan Grand, Faridabad', icon: <PinIcon /> },
               ].map((item) => (
-                <div key={item.label} className="flex items-center gap-3">
-                  <span className="text-[#2e7d32] shrink-0">{item.icon}</span>
+                <div key={item.label} className="flex items-start gap-3">
+                  <span className="text-[#2e7d32] shrink-0 mt-0.5">{item.icon}</span>
                   <div>
                     <p className="text-[9px] text-[#2e7d32]/60 uppercase tracking-widest leading-none mb-0.5">{item.label}</p>
                     <p className="text-sm font-semibold text-[#1a4a1a] leading-tight">{item.value}</p>
@@ -113,10 +117,13 @@ export default function Home() {
             </div>
 
             {/* CTA */}
-            <div className="mt-9">
-              <Link href="/register"
-                className="inline-flex items-center gap-2.5 bg-[#1a4a1a] hover:bg-[#2e7d32] text-white
-                  font-bold text-sm px-8 py-3.5 rounded-xl transition-colors shadow-md shadow-[#1a4a1a]/20">
+            <div className="mt-8 sm:mt-10 flex flex-col xs:flex-row gap-3">
+              <Link
+                href="/register"
+                className="inline-flex items-center justify-center gap-2.5 bg-[#1a4a1a] hover:bg-[#2e7d32]
+                  active:scale-95 text-white font-bold text-sm px-6 sm:px-8 py-3.5 rounded-xl
+                  transition-all shadow-md shadow-[#1a4a1a]/20"
+              >
                 Secure Your Spot
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
@@ -126,49 +133,56 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Right panel — full-bleed hero image */}
-        <div className="hidden lg:block absolute right-0 top-0 w-[52%] h-full">
+        {/* Right panel — desktop hero image */}
+        <div className="hidden lg:block absolute right-0 top-0 w-[50%] h-full">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/hero_forest_city.png" alt="Prakriti 2026 — Forest City"
-            className="w-full h-full object-cover object-center" />
-          {/* Soft fade where image meets left panel */}
-          <div className="absolute inset-y-0 left-0 w-28 bg-gradient-to-r from-[#f4f7f0] to-transparent pointer-events-none" />
+          <img
+            src="/hero_forest_city.png"
+            alt="Prakriti 2026 — Forest City"
+            className="w-full h-full object-cover object-center"
+          />
+          <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#f4f7f0] to-transparent pointer-events-none" />
         </div>
 
-        {/* Mobile fallback: image tinted behind text */}
+        {/* Mobile hero image — tinted overlay */}
         <div className="lg:hidden absolute inset-0 pointer-events-none">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/hero_forest_city.png" alt=""
-            className="w-full h-full object-cover object-center opacity-10" />
+          <img
+            src="/hero_forest_city.png"
+            alt=""
+            className="w-full h-full object-cover object-center opacity-[0.08]"
+          />
         </div>
-
       </section>
 
       {/* ─── Key Highlights ─────────────────────────────────────────────────── */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-14">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 lg:py-20">
         <SectionTitle label="Key Highlights" sub="What to expect at Prakriti 2026" />
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {HIGHLIGHTS.map((h) => (
-            <div key={h.num}
+            <div
+              key={h.num}
               className="relative bg-white rounded-2xl border border-green-100 shadow-sm overflow-hidden
-                hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
+                hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group"
+            >
               {/* Photo thumbnail */}
-              <div className="relative h-44 overflow-hidden bg-[#1a4a1a]">
+              <div className="relative h-40 sm:h-44 overflow-hidden bg-[#1a4a1a]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={h.img} alt={h.label}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90" />
+                <img
+                  src={h.img}
+                  alt={h.label}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90"
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#1a4a1a]/80 via-[#1a4a1a]/20 to-transparent" />
-                {/* Number */}
                 <span className="absolute top-3 left-3.5 text-[11px] font-black text-white/50 font-mono">{h.num}</span>
-                {/* Icon badge */}
                 <div className="absolute bottom-3 right-3 h-9 w-9 rounded-xl bg-white/15 backdrop-blur-sm
-                  border border-white/20 flex items-center justify-center text-white group-hover:bg-[#c8a96e]/80
-                  group-hover:border-[#c8a96e] group-hover:text-[#1a4a1a] transition-colors">
+                  border border-white/20 flex items-center justify-center text-white
+                  group-hover:bg-[#c8a96e]/80 group-hover:border-[#c8a96e] group-hover:text-[#1a4a1a] transition-colors">
                   {h.icon}
                 </div>
               </div>
               {/* Text */}
-              <div className="p-5">
+              <div className="p-4 sm:p-5">
                 <h3 className="text-sm font-extrabold text-[#1a4a1a]">{h.label}</h3>
                 <p className="mt-1 text-xs text-gray-500 leading-relaxed">{h.desc}</p>
               </div>
@@ -179,31 +193,32 @@ export default function Home() {
 
       {/* ─── About Section ──────────────────────────────────────────────────── */}
       <section className="bg-white border-y border-green-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-14">
-          <div className="flex flex-col lg:flex-row gap-12 items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 lg:py-20">
+          <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-center">
 
-            {/* Left: Sustainability photo */}
+            {/* Photo */}
             <div className="w-full lg:w-2/5">
-              <div className="relative rounded-2xl overflow-hidden h-80 shadow-md">
+              <div className="relative rounded-2xl overflow-hidden h-64 sm:h-80 shadow-md">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/sustainability.png" alt="Sustainability — Design, Conserve, Restore"
-                  className="w-full h-full object-cover" />
+                <img
+                  src="/sustainability.png"
+                  alt="Sustainability — Design, Conserve, Restore"
+                  className="w-full h-full object-cover"
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#1a4a1a]/75 via-transparent to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-5">
-                  <p className="text-white font-extrabold text-base leading-tight">
+                <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
+                  <p className="text-white font-extrabold text-sm sm:text-base leading-tight">
                     Design · Conserve · Restore
                   </p>
-                  <p className="text-green-300 text-xs mt-0.5">
-                    Architecture for a sustainable tomorrow
-                  </p>
+                  <p className="text-green-300 text-xs mt-0.5">Architecture for a sustainable tomorrow</p>
                 </div>
               </div>
             </div>
 
-            {/* Right: Text */}
+            {/* Text */}
             <div className="w-full lg:w-3/5">
               <SectionTitle label="About the Event" sub="" />
-              <div className="mt-5 space-y-4 text-gray-600 text-sm leading-relaxed">
+              <div className="mt-4 sm:mt-5 space-y-3 sm:space-y-4 text-gray-600 text-sm leading-relaxed">
                 <p>
                   <strong className="text-[#1a4a1a]">Prakriti 2026</strong> is a landmark annual gathering
                   convened by The Indian Institute of Architects — Faridabad Centre, bringing together
@@ -213,7 +228,7 @@ export default function Home() {
                 <p>
                   The 2026 edition is themed{' '}
                   <em className="text-[#2e7d32] font-semibold not-italic">
-                    "Architects for a Sustainable Tomorrow"
+                    &ldquo;Architects for a Sustainable Tomorrow&rdquo;
                   </em>{' '}
                   — exploring how the built environment can lead the transition toward greener cities,
                   energy-efficient structures, and nature-integrated design.
@@ -225,8 +240,8 @@ export default function Home() {
                 </p>
               </div>
 
-              {/* Organiser info */}
-              <div className="mt-7 flex items-center gap-4 p-4 rounded-xl bg-[#f9fdf8] border border-green-100">
+              {/* Organiser */}
+              <div className="mt-6 sm:mt-7 flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl bg-[#f9fdf8] border border-green-100">
                 <IIAEmblem size={44} />
                 <div>
                   <p className="text-sm font-extrabold text-[#1a4a1a]">The Indian Institute of Architects</p>
@@ -235,15 +250,21 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="mt-6 flex gap-3">
-                <Link href="/register"
-                  className="rounded-xl bg-[#1a4a1a] px-6 py-3 text-sm font-bold text-white
-                    hover:bg-[#2e7d32] transition-colors">
+              <div className="mt-5 sm:mt-6 flex flex-col xs:flex-row gap-3">
+                <Link
+                  href="/register"
+                  className="rounded-xl bg-[#1a4a1a] px-5 sm:px-6 py-3 text-sm font-bold text-white
+                    hover:bg-[#2e7d32] active:scale-95 transition-all text-center"
+                >
                   Register Now →
                 </Link>
-                <a href="https://www.indianinstituteofarchitects.com" target="_blank" rel="noopener noreferrer"
-                  className="rounded-xl border border-green-200 bg-white px-6 py-3 text-sm font-semibold
-                    text-[#2e7d32] hover:border-[#1a4a1a] hover:text-[#1a4a1a] transition-colors">
+                <a
+                  href="https://www.indianinstituteofarchitects.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-xl border border-green-200 bg-white px-5 sm:px-6 py-3 text-sm font-semibold
+                    text-[#2e7d32] hover:border-[#1a4a1a] hover:text-[#1a4a1a] active:scale-95 transition-all text-center"
+                >
                   Visit IIA Website
                 </a>
               </div>
@@ -253,20 +274,26 @@ export default function Home() {
       </section>
 
       {/* ─── Venue Section ──────────────────────────────────────────────────── */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-14">
-        <SectionTitle label="The Venue" sub="Saffron Hall, Vardaan Grand — Sector-21C, GymKhana Club, Surajkund Road, Faridabad" />
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 lg:py-20">
+        <SectionTitle
+          label="The Venue"
+          sub="Saffron Hall, Vardaan Grand — Sector-21C, GymKhana Club, Surajkund Road, Faridabad"
+        />
+        <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
-            { src: '/saffron hall .webp', label: 'Saffron Hall',  sub: 'Vardaan Grand, Faridabad' },
-            { src: '/venue stage.webp',   label: 'Main Stage',    sub: 'Grand auditorium stage' },
-            { src: '/dinner space.webp',  label: 'Dinner Space',  sub: 'Gala networking & dining' },
+            { src: '/saffron hall .webp', label: 'Saffron Hall', sub: 'Vardaan Grand, Faridabad' },
+            { src: '/venue stage.webp',   label: 'Main Stage',   sub: 'Grand auditorium stage' },
+            { src: '/dinner space.webp',  label: 'Dinner Space', sub: 'Gala networking & dining' },
           ].map((v) => (
-            <div key={v.label} className="relative rounded-2xl overflow-hidden h-64 shadow-md group">
+            <div key={v.label} className="relative rounded-2xl overflow-hidden h-52 sm:h-64 shadow-md group">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={v.src} alt={v.label}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <img
+                src={v.src}
+                alt={v.label}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-[#1a4a1a]/80 via-transparent to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-5">
+              <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
                 <p className="text-white font-extrabold text-sm">{v.label}</p>
                 <p className="text-green-300 text-xs mt-0.5">{v.sub}</p>
               </div>
@@ -275,7 +302,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── Registration CTA ───────────────────────────────────────────────── */}
+      {/* ─── Registration / Pricing CTA ─────────────────────────────────────── */}
       <section className="relative bg-[#1a4a1a] overflow-hidden">
         <BlueprintGridOverlay />
         <CornerMark pos="tl" color="gold" />
@@ -283,34 +310,43 @@ export default function Home() {
         <CornerMark pos="bl" color="gold" />
         <CornerMark pos="br" color="gold" />
 
-        <div className="relative max-w-7xl mx-auto px-6 py-14">
-          <div className="text-center mb-10">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 lg:py-20">
+          <div className="text-center mb-8 sm:mb-10">
             <p className="text-[11px] font-bold text-[#c8a96e] uppercase tracking-[0.3em]">Limited Seats</p>
-            <h2 className="mt-2 text-3xl font-extrabold text-white">Secure Your Spot at Prakriti 2026</h2>
-            <p className="mt-2 text-green-300 text-sm">
+            <h2 className="mt-2 text-2xl sm:text-3xl font-extrabold text-white leading-snug">
+              Secure Your Spot at Prakriti 2026
+            </h2>
+            <p className="mt-2 text-green-300 text-xs sm:text-sm">
               Saturday, 20 June 2026 &nbsp;·&nbsp; 3:00 PM &nbsp;·&nbsp; Saffron Hall, Vardaan Grand, Faridabad
             </p>
           </div>
 
-          {/* Pricing grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+          {/* Pricing grid — 1 col mobile, 2 col sm, 4 col lg */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8 sm:mb-10">
             {PRICING.map((p) => (
-              <div key={p.type}
-                className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur px-5 py-5 text-center
-                  hover:bg-white/10 hover:border-[#c8a96e]/40 transition-all">
-                <p className="text-xs font-bold text-green-300 uppercase tracking-widest">{p.type}</p>
-                <p className="mt-2 text-3xl font-black text-[#c8a96e]">{p.price}</p>
+              <div
+                key={p.type}
+                className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur px-4 sm:px-5 py-5
+                  text-center hover:bg-white/10 hover:border-[#c8a96e]/40 transition-all"
+              >
+                <p className="text-[10px] sm:text-xs font-bold text-green-300 uppercase tracking-widest leading-snug">
+                  {p.type}
+                </p>
+                <p className="mt-2 text-2xl sm:text-3xl font-black text-[#c8a96e]">{p.price}</p>
                 <p className="mt-1 text-[10px] text-green-500 leading-tight">{p.desc}</p>
               </div>
             ))}
           </div>
 
           <div className="text-center">
-            <Link href="/register"
-              className="inline-flex items-center gap-2.5 bg-[#c8a96e] hover:bg-[#b8995e] text-[#1a4a1a]
-                font-extrabold text-base px-10 py-4 rounded-xl transition-colors shadow-xl shadow-black/20">
+            <Link
+              href="/register"
+              className="inline-flex items-center justify-center gap-2.5 bg-[#c8a96e] hover:bg-[#b8995e]
+                active:scale-95 text-[#1a4a1a] font-extrabold text-sm sm:text-base
+                px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl transition-all shadow-xl shadow-black/20"
+            >
               Register Now
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
             </Link>
@@ -320,19 +356,21 @@ export default function Home() {
       </section>
 
       {/* ─── Sponsors ───────────────────────────────────────────────────────── */}
-      <section className="bg-white border-t border-green-100 py-12 px-6">
+      <section className="bg-white border-t border-green-100 py-10 sm:py-14 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-8">
+          <div className="text-center mb-6 sm:mb-8">
             <p className="text-[11px] font-extrabold uppercase tracking-[0.3em] text-[#1a4a1a]">Our Proud Sponsors</p>
             <div className="mt-2 h-0.5 w-14 bg-[#c8a96e] mx-auto rounded-full" />
           </div>
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 sm:gap-3">
             {SPONSORS.map((s) => (
-              <div key={s.name}
+              <div
+                key={s.name}
                 title={s.name}
-                className="rounded-2xl border border-green-100 bg-[#fafdf8] p-2 flex items-center justify-center
-                  aspect-square hover:border-[#2e7d32] hover:shadow-md hover:-translate-y-0.5
-                  transition-all duration-200 overflow-hidden group">
+                className="rounded-xl sm:rounded-2xl border border-green-100 bg-[#fafdf8] p-2 flex items-center
+                  justify-center aspect-square hover:border-[#2e7d32] hover:shadow-md hover:-translate-y-0.5
+                  transition-all duration-200 overflow-hidden group"
+              >
                 <img
                   src={s.logo}
                   alt={s.name}
@@ -346,21 +384,29 @@ export default function Home() {
 
       {/* ─── Footer ─────────────────────────────────────────────────────────── */}
       <footer className="bg-[#1a4a1a] relative overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.04]" style={{
-          backgroundImage: 'repeating-linear-gradient(45deg, #c8a96e 0, #c8a96e 1px, transparent 0, transparent 50%)',
-          backgroundSize: '18px 18px',
-        }} />
-        <div className="relative max-w-7xl mx-auto px-6 py-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-5">
-            <div className="flex items-center">
-              <IIAEmblem size={72} variant="light" />
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage: 'repeating-linear-gradient(45deg, #c8a96e 0, #c8a96e 1px, transparent 0, transparent 50%)',
+            backgroundSize: '18px 18px',
+          }}
+        />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+
+            {/* Logo */}
+            <div className="flex items-center justify-center sm:justify-start">
+              <IIAEmblem size={350} variant="light" />
             </div>
-            <div className="text-center sm:text-right space-y-0.5">
-              <p className="text-[#c8a96e] text-xs font-semibold">iafaridabadcentre@gmail.com</p>
+
+            {/* Contact info */}
+            <div className="text-center sm:text-right space-y-1">
+              <p className="text-[#c8a96e] text-sm font-semibold">iafaridabadcentre@gmail.com</p>
               <p className="text-green-400 text-xs">www.indianinstituteofarchitects.com</p>
             </div>
           </div>
-          <div className="mt-6 pt-5 border-t border-[#2e7d32]/40 flex flex-col sm:flex-row items-center justify-between gap-2">
+
+          <div className="mt-6 pt-5 border-t border-[#2e7d32]/40 flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
             <p className="text-[#c8a96e] text-sm font-extrabold tracking-wide">
               Let&apos;s Design a Better Future. Together.
             </p>
@@ -378,10 +424,10 @@ function SectionTitle({ label, sub }: { label: string; sub: string }) {
   return (
     <div>
       <div className="flex items-center gap-3">
-        <div className="h-5 w-1 rounded-full bg-[#c8a96e]" />
-        <h2 className="text-xl font-extrabold text-[#1a4a1a] tracking-tight">{label}</h2>
+        <div className="h-5 w-1 rounded-full bg-[#c8a96e] shrink-0" />
+        <h2 className="text-lg sm:text-xl font-extrabold text-[#1a4a1a] tracking-tight">{label}</h2>
       </div>
-      {sub && <p className="mt-1 text-sm text-gray-400 ml-4">{sub}</p>}
+      {sub && <p className="mt-1 text-xs sm:text-sm text-gray-400 ml-4 leading-snug">{sub}</p>}
     </div>
   );
 }

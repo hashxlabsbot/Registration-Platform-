@@ -10,30 +10,48 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  /* Custom xs breakpoint */
+  --breakpoint-xs: 480px;
 }
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', 'Noto Sans Devanagari', Arial, sans-serif;
+  /* Prevent horizontal overflow on mobile */
+  overflow-x: hidden;
 }
 
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ── Form utilities ─────────────────────────────────────────────── */
 .label {
   @apply block mb-1.5 text-sm font-semibold text-gray-700;
 }
 
 .input {
-  @apply block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-[#2e7d32] focus:ring-2 focus:ring-[#2e7d32]/20;
+  @apply block w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm
+    text-gray-900 placeholder-gray-400 outline-none transition
+    focus:border-[#2e7d32] focus:ring-2 focus:ring-[#2e7d32]/20;
 }
 
 .err {
   @apply mt-1 text-xs text-red-600;
+}
+
+/* ── Mobile touch improvements ──────────────────────────────────── */
+button,
+a[role="button"],
+[class*="rounded-lg"],
+[class*="rounded-xl"] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Responsive images ──────────────────────────────────────────── */
+img {
+  max-width: 100%;
+  height: auto;
 }
