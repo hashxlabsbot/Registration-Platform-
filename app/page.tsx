@@ -49,7 +49,7 @@ export default function Home() {
       <header className="sticky top-0 z-50 bg-white/96 backdrop-blur-md border-b border-green-100 shadow-sm">
         <div className="max-w-7xl mx-auto px-5 py-2.5 flex items-center justify-between">
           <div className="flex items-center">
-            <IIAEmblem size={56} />
+            <IIAEmblem size={80} />
           </div>
           <div className="flex items-center gap-4">
             <div className="hidden sm:block text-right">
@@ -352,12 +352,8 @@ export default function Home() {
         }} />
         <div className="relative max-w-7xl mx-auto px-6 py-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-5">
-            <div className="flex items-center gap-3">
-              <IIAEmblem size={40} variant="light" />
-              <div>
-                <p className="text-white font-bold text-sm">The Indian Institute of Architects</p>
-                <p className="text-green-400 text-xs">Faridabad Centre</p>
-              </div>
+            <div className="flex items-center">
+              <IIAEmblem size={72} variant="light" />
             </div>
             <div className="text-center sm:text-right space-y-0.5">
               <p className="text-[#c8a96e] text-xs font-semibold">iafaridabadcentre@gmail.com</p>
