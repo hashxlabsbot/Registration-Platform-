@@ -34,9 +34,11 @@ const LH = 430;           // logical height (pt)
 const W = LW * SCALE;     // 576 pt
 const H = LH * SCALE;     // 860 pt
 
-// White zone boundaries (from the original 1083×1453 image layout, scaled to LH)
-const ZONE_TOP    = Math.round(LH * 300  / 1453) * SCALE;  // ~89 → 178 scaled
-const ZONE_BOTTOM = Math.round(LH * 1090 / 1453) * SCALE;  // ~322 → 644 scaled
+// White zone boundaries derived from HTML ticket CSS:
+// pt-[38%] in CSS = 38% of element WIDTH (not height) → 38% × (LW/LH) of height
+// Inner div is aspect-square w-[62%], so zone height = 62% of width = 62% × (LW/LH) of height
+const ZONE_TOP    = Math.round(0.38 * LW / LH * H);          // ≈ 222
+const ZONE_BOTTOM = Math.round((0.38 + 0.62) * LW / LH * H); // ≈ 576
 
 const DARK_GREEN = '#0f2e14';
 const WHITE      = '#ffffff';
@@ -100,11 +102,13 @@ function drawCard(
   else       doc.rect(0, 0, W, H).fill(WHITE);
 
   // ── Layout ─────────────────────────────────────────────────────────────────
-  // Inner box width (logical) scaled up
-  const ibW = 178 * SCALE;
+  // Inner box width = 62% of page width (matches HTML w-[62%])
+  const ibW = Math.round(0.62 * W);
 
-  // Start Y inside the white zone with some padding
-  let currentY = ZONE_TOP + 30;
+  // Zone height and vertical centering with padding (matches HTML p-2 + justify-center)
+  const zoneH  = ZONE_BOTTOM - ZONE_TOP;
+  const padPt  = Math.round(0.04 * zoneH);   // ~4% padding each side
+  let currentY = ZONE_TOP + padPt;
 
   // 1. Name
   doc.font('Times-Bold').fontSize(16 * SCALE).fillColor('#1a3d21');

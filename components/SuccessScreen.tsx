@@ -29,31 +29,32 @@ export default function SuccessScreen({ booking }: { booking: BookingResult }) {
   async function handleDownload() {
     setDownloading(true);
     try {
-      const res = await fetch('/api/ticket', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          bookingId:        booking.bookingId,
-          name:             booking.name,
-          email:            booking.email,
-          phone:            booking.phone,
-          organization:     booking.organization,
-          designation:      booking.designation,
-          registrationType: booking.registrationType,
-          totalAmount:      booking.amount,
-          utrNumber:        booking.utrNumber,
-        }),
+      const el = document.getElementById('ticket-card');
+      if (!el) throw new Error('Ticket element not found');
+
+      const html2canvas = (await import('html2canvas')).default;
+      const { jsPDF }   = await import('jspdf');
+
+      const canvas = await html2canvas(el, {
+        scale: 4,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: null,
+        logging: false,
       });
 
-      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+      const imgData = canvas.toDataURL('image/png');
+      const pdfW = canvas.width  / 4;
+      const pdfH = canvas.height / 4;
 
-      const blob = await res.blob();
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a');
-      a.href     = url;
-      a.download = `prakriti2026-ticket-${booking.bookingId}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: [pdfW, pdfH],
+        hotfixes: ['px_scaling'],
+      });
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH);
+      pdf.save(`prakriti2026-ticket-${booking.bookingId}.pdf`);
     } catch (err) {
       console.error('[download]', err);
       alert('Could not generate PDF. Please screenshot your ticket.');
@@ -97,6 +98,7 @@ export default function SuccessScreen({ booking }: { booking: BookingResult }) {
 
       {/* ── THE TICKET ── */}
       <div
+        id="ticket-card"
         className="w-full max-w-[320px] mx-auto rounded-2xl overflow-hidden shadow-2xl relative border border-green-200"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
