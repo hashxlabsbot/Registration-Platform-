@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { nanoid } from 'nanoid';
 import { sendTicketEmail, sendAdminNotification } from '@/lib/mailer';
 import { appendRegistration } from '@/lib/sheet';
-import { appendToSheet }       from '@/lib/gsheets';
 
 export const runtime = 'nodejs';
 
@@ -47,7 +46,6 @@ export async function POST(request: NextRequest) {
       totalAmount: Number(totalAmount),
     };
 
-    // Save to local Excel + Google Sheet (both non-blocking)
     const rowData = {
       bookingId,
       name,
@@ -69,8 +67,7 @@ export async function POST(request: NextRequest) {
       pincode:  pincode  || '',
     };
 
-    try { appendRegistration(rowData); } catch (e) { console.error('[register] local sheet:', e); }
-    appendToSheet(rowData).catch((e) => console.error('[register] gsheet:', e));
+    try { appendRegistration(rowData); } catch (e) { console.error('[register] sheet:', e); }
 
     // TODO: re-enable once Gmail App Password is configured in env
     // await Promise.all([

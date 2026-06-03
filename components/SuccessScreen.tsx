@@ -11,10 +11,14 @@ export default function SuccessScreen({ booking }: { booking: BookingResult }) {
   const [downloading, setDownloading] = useState(false);
 
   const qrValue = JSON.stringify({
-    id: booking.bookingId,
-    n: booking.name,
-    t: booking.registrationType,
-    e: 'PRAKRITI2026',
+    id:   booking.bookingId,
+    name: booking.name,
+    type: booking.registrationType,
+    amt:  `Rs.${booking.amount}`,
+    ph:   booking.phone,
+    em:   booking.email,
+    ev:   'PRAKRITI2026',
+    dt:   '20-06-2026',
   });
 
   async function handleDownload() {

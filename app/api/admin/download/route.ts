@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRegistrationsBuffer, getRegistrationCount } from '@/lib/sheet';
+import { isValidSession, SESSION_COOKIE } from '@/lib/auth';
 
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   const secret = request.nextUrl.searchParams.get('secret');
+  const cookie = request.cookies.get(SESSION_COOKIE)?.value;
 
-  if (!process.env.ADMIN_SECRET || secret !== process.env.ADMIN_SECRET) {
+  const authorized =
+    (secret && process.env.ADMIN_SECRET && secret === process.env.ADMIN_SECRET) ||
+    isValidSession(cookie);
+
+  if (!authorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

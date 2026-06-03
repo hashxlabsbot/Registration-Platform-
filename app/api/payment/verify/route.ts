@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { nanoid } from 'nanoid';
 import { appendRegistration } from '@/lib/sheet';
-import { appendToSheet } from '@/lib/gsheets';
 
 export const runtime = 'nodejs';
 
@@ -54,8 +53,7 @@ export async function POST(request: NextRequest) {
       pincode:  pincode  || '',
     };
 
-    try { appendRegistration(rowData); } catch (e) { console.error('[verify] local sheet:', e); }
-    appendToSheet(rowData).catch((e) => console.error('[verify] gsheet:', e));
+    try { appendRegistration(rowData); } catch (e) { console.error('[verify] sheet:', e); }
 
     return NextResponse.json({
       success: true,
