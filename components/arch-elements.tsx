@@ -1,23 +1,16 @@
 // Shared architectural SVG components used across pages
 
-// ─── IIA Column Emblem ────────────────────────────────────────────────────────
+// ─── IIA Logo ─────────────────────────────────────────────────────────────────
 export function IIAEmblem({ size = 40, variant = 'dark' }: { size?: number; variant?: 'dark' | 'light' }) {
-  const stroke = variant === 'light' ? '#c8a96e' : '#1a4a1a';
-  const fill   = variant === 'light' ? 'rgba(200,169,110,0.12)' : '#f1f8e9';
-  const text   = variant === 'light' ? '#c8a96e' : '#1a4a1a';
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className="shrink-0">
-      <circle cx="24" cy="24" r="22" stroke={stroke} strokeWidth="1.5" fill={fill} />
-      <circle cx="24" cy="24" r="18" stroke={stroke} strokeWidth="0.5" strokeDasharray="2 3" />
-      <rect x="14"  y="16" width="3" height="14" rx="1" fill={stroke} opacity="0.7" />
-      <rect x="22.5" y="14" width="3" height="16" rx="1" fill={stroke} opacity="0.9" />
-      <rect x="31"  y="16" width="3" height="14" rx="1" fill={stroke} opacity="0.7" />
-      <rect x="12"  y="13" width="24" height="2.5" rx="0.5" fill={stroke} opacity="0.8" />
-      <rect x="12"  y="30" width="24" height="2"   rx="0.5" fill={stroke} opacity="0.6" />
-      <path d="M 12 13 L 24 6 L 36 13" stroke={stroke} strokeWidth="1" fill="none" opacity="0.7" />
-      <text x="24" y="38" textAnchor="middle" fontSize="5" fontWeight="800"
-        fill={text} fontFamily="sans-serif" letterSpacing="0.5">IIA</text>
-    </svg>
+    <img
+      src="/IIA-Logo.svg"
+      alt="IIA Logo"
+      width={size}
+      height={size}
+      className="shrink-0 object-contain"
+      style={variant === 'light' ? { filter: 'brightness(0) invert(1)' } : undefined}
+    />
   );
 }
 

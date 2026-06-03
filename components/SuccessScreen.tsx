@@ -86,13 +86,8 @@ export default function SuccessScreen({ booking }: { booking: BookingResult }) {
           {/* IIA header row */}
           <div className="relative flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full border-2 border-[#c8a96e] flex items-center justify-center shrink-0">
-                <svg viewBox="0 0 40 40" className="w-5 h-5" fill="none">
-                  <circle cx="20" cy="20" r="18" stroke="#c8a96e" strokeWidth="1.5"/>
-                  <text x="20" y="16" textAnchor="middle" fontSize="7" fontWeight="bold" fill="#c8a96e" fontFamily="serif">IIA</text>
-                  <text x="20" y="25" textAnchor="middle" fontSize="4.5" fill="#c8a96e" fontFamily="serif">FARIDABAD</text>
-                  <text x="20" y="31" textAnchor="middle" fontSize="3.5" fill="#c8a96e" fontFamily="serif">CENTRE</text>
-                </svg>
+              <div className="h-8 w-8 rounded-full border-2 border-[#c8a96e] flex items-center justify-center shrink-0 bg-white/10 p-0.5">
+                <img src="/IIA-Logo.svg" alt="IIA" className="w-full h-full object-contain" style={{ filter: 'brightness(0) invert(1)' }} />
               </div>
               <div className="leading-tight">
                 <p className="text-[9px] font-bold text-[#c8a96e] uppercase tracking-widest">Indian Institute of Architects</p>

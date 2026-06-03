@@ -1,5 +1,8 @@
 import PDFDocument from 'pdfkit';
 import QRCode from 'qrcode';
+import sharp from 'sharp';
+import path from 'path';
+import fs from 'fs';
 
 export interface TicketData {
   bookingId: string;
@@ -28,6 +31,16 @@ const GRAY        = '#666666';
 const DARK_TEXT   = '#1a1a1a';
 
 export async function generateTicketPDF(ticket: TicketData): Promise<Buffer> {
+  // Convert IIA-Logo.svg → PNG for PDFKit embedding
+  let logoPng: Buffer | null = null;
+  try {
+    const svgPath = path.join(process.cwd(), 'public', 'IIA-Logo.svg');
+    const svgBuf  = fs.readFileSync(svgPath);
+    logoPng = await sharp(svgBuf).resize(120, 120, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer();
+  } catch {
+    // logo not found — continue without it
+  }
+
   return new Promise(async (resolve, reject) => {
     const doc = new PDFDocument({ size: [595, 420], margin: 0 });
     const chunks: Buffer[] = [];
@@ -96,6 +109,16 @@ export async function generateTicketPDF(ticket: TicketData): Promise<Buffer> {
       .text('BOOKING ID', qrX - 8, qrY + 173, { width: 156, align: 'center' });
     doc.fillColor(DARK_GREEN).fontSize(11).font('Helvetica-Bold')
       .text(ticket.bookingId, qrX - 8, qrY + 183, { width: 156, align: 'center' });
+
+    // ── IIA Logo at top of left panel ────────────────────────────────────────
+    if (logoPng) {
+      const logoSize = 64;
+      const logoX = (LEFT_W - logoSize) / 2;
+      doc.image(logoPng, logoX, 16, { width: logoSize, height: logoSize });
+    } else {
+      doc.fillColor(GOLD).fontSize(11).font('Helvetica-Bold')
+        .text('IIA', 0, 26, { width: LEFT_W, align: 'center' });
+    }
 
     // ── Event title in left panel ─────────────────────────────────────────────
     doc.fillColor(WHITE).fontSize(24).font('Helvetica-Bold')
