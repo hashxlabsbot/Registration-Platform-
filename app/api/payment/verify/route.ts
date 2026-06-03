@@ -73,8 +73,8 @@ export async function POST(request: NextRequest) {
       eventVenue:      process.env.EVENT_VENUE    || 'Saffron Hall, Faridabad',
       organizer:       process.env.ORGANIZER      || 'The Indian Institute of Architects — Faridabad Centre',
     };
-    Promise.all([
-      sendTicketEmail(ticketData, true),
+    await Promise.all([
+      sendTicketEmail(ticketData, true).catch(err => console.error('[email:ticket]', err)),
       sendAdminNotification({
         ...ticketData,
         gender:              gender              || '',
@@ -86,8 +86,8 @@ export async function POST(request: NextRequest) {
         pincode:             pincode             || '',
         coaNumber:           coaNumber           || '',
         iiaMembershipNumber: iiaMembershipNumber || '',
-      }),
-    ]).catch(err => console.error('[email]', err));
+      }).catch(err => console.error('[email:admin]', err)),
+    ]);
 
     return NextResponse.json({
       success: true,
