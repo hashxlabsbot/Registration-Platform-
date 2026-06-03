@@ -33,31 +33,33 @@ export default function SuccessScreen({ booking }: { booking: BookingResult }) {
       if (!el) throw new Error('Ticket element not found');
 
       const html2canvas = (await import('html2canvas')).default;
-      const { jsPDF }   = await import('jspdf');
 
       const canvas = await html2canvas(el, {
-        scale: 4,
+        scale: 3,
         useCORS: true,
         allowTaint: false,
-        backgroundColor: null,
+        backgroundColor: '#ffffff',
         logging: false,
       });
 
-      const imgData = canvas.toDataURL('image/png');
-      const pdfW = canvas.width  / 4;
-      const pdfH = canvas.height / 4;
-
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'px',
-        format: [pdfW, pdfH],
-        hotfixes: ['px_scaling'],
+      // Download as high-res PNG — no jsPDF dependency, works everywhere
+      await new Promise<void>((resolve, reject) => {
+        canvas.toBlob((blob) => {
+          if (!blob) { reject(new Error('Canvas export failed')); return; }
+          const url = URL.createObjectURL(blob);
+          const a   = document.createElement('a');
+          a.href     = url;
+          a.download = `prakriti2026-ticket-${booking.bookingId}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          resolve();
+        }, 'image/png');
       });
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH);
-      pdf.save(`prakriti2026-ticket-${booking.bookingId}.pdf`);
     } catch (err) {
       console.error('[download]', err);
-      alert('Could not generate PDF. Please screenshot your ticket.');
+      alert('Could not export ticket. Please screenshot your ticket.');
     } finally {
       setDownloading(false);
     }
@@ -89,7 +91,7 @@ export default function SuccessScreen({ booking }: { booking: BookingResult }) {
         <div className="min-w-0">
           <p className="text-sm font-bold text-blue-800">Ticket sent to your email</p>
           <p className="text-xs text-blue-600 break-all mt-0.5">
-            A copy of your ticket (PDF) has been sent to{' '}
+            A copy of your ticket has been sent to{' '}
             <span className="font-semibold">{booking.email}</span>
           </p>
           <p className="text-xs text-blue-400 mt-1">Check your spam/junk folder if you don&apos;t see it.</p>
@@ -173,7 +175,7 @@ export default function SuccessScreen({ booking }: { booking: BookingResult }) {
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v13m0 0l-4-4m4 4l4-4M3 21h18" />
             </svg>
-            Download Ticket PDF
+            Download Ticket
           </>
         )}
       </button>

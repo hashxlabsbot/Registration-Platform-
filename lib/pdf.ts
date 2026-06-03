@@ -108,7 +108,7 @@ function drawCard(
   // Zone height and vertical centering with padding (matches HTML p-2 + justify-center)
   const zoneH  = ZONE_BOTTOM - ZONE_TOP;
   const padPt  = Math.round(0.04 * zoneH);   // ~4% padding each side
-  let currentY = ZONE_TOP + padPt;
+  let currentY = ZONE_TOP + padPt + 12 * SCALE;
 
   // 1. Name
   doc.font('Times-Bold').fontSize(16 * SCALE).fillColor('#1a3d21');
