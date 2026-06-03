@@ -76,8 +76,7 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
     if (!s1.gender) e.gender = 'Please select your gender.';
     if (!s1.nationality.trim()) e.nationality = 'Nationality is required.';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s1.email)) e.email = 'Enter a valid email address.';
-    if (!/^[6-9]\d{9}$/.test(s1.phone)) e.phone = 'Enter a valid 10-digit mobile number.';
-    if (s1.whatsapp && !/^[6-9]\d{9}$/.test(s1.whatsapp)) e.whatsapp = 'Enter a valid WhatsApp number.';
+    if (!s1.phone || !/^[6-9]\d{9}$/.test(s1.phone)) e.phone = 'Enter a valid 10-digit Indian phone number.';
     if (!s1.district.trim()) e.district = 'District is required.';
     if (!s1.state.trim()) e.state = 'State is required.';
     if (!/^\d{6}$/.test(s1.pincode)) e.pincode = 'Enter a valid 6-digit pincode.';
@@ -279,13 +278,9 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
                 <Field label="Email Address" id="email" name="email" type="email" value={s1.email}
                   onChange={handleS1Change} placeholder="you@example.com" error={s1Errors.email} required />
               </div>
-              <div>
+              <div className="sm:col-span-2">
                 <label className="label" htmlFor="phone">Phone Number <Req /></label>
                 <PhoneInput id="phone" name="phone" value={s1.phone} onChange={handleS1Change} error={s1Errors.phone} />
-              </div>
-              <div>
-                <label className="label" htmlFor="whatsapp">WhatsApp Number</label>
-                <PhoneInput id="whatsapp" name="whatsapp" value={s1.whatsapp} onChange={handleS1Change} error={s1Errors.whatsapp} />
               </div>
               <div className="sm:col-span-2">
                 <label className="label" htmlFor="address">Full Address</label>

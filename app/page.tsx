@@ -100,7 +100,7 @@ export default function Home() {
               {[
                 { label: 'Date',  value: 'Saturday, 20 June 2026',               icon: <CalIcon /> },
                 { label: 'Time',  value: '3:00 PM Onwards',                       icon: <ClockIcon /> },
-                { label: 'Venue', value: 'Saffron Hall, Vardaan Group, Faridabad', icon: <PinIcon /> },
+                { label: 'Venue', value: 'Saffron Hall, Vardaan Grand, Faridabad', icon: <PinIcon /> },
               ].map((item) => (
                 <div key={item.label} className="flex items-center gap-3">
                   <span className="text-[#2e7d32] shrink-0">{item.icon}</span>
@@ -254,10 +254,10 @@ export default function Home() {
 
       {/* ─── Venue Section ──────────────────────────────────────────────────── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-14">
-        <SectionTitle label="The Venue" sub="Saffron Hall, Vardaan Group — Sector-21C, GymKhana Club, Surajkund Road, Faridabad" />
+        <SectionTitle label="The Venue" sub="Saffron Hall, Vardaan Grand — Sector-21C, GymKhana Club, Surajkund Road, Faridabad" />
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
-            { src: '/saffron hall .webp', label: 'Saffron Hall',  sub: 'Vardaan Group, Faridabad' },
+            { src: '/saffron hall .webp', label: 'Saffron Hall',  sub: 'Vardaan Grand, Faridabad' },
             { src: '/venue stage.webp',   label: 'Main Stage',    sub: 'Grand auditorium stage' },
             { src: '/dinner space.webp',  label: 'Dinner Space',  sub: 'Gala networking & dining' },
           ].map((v) => (
@@ -288,7 +288,7 @@ export default function Home() {
             <p className="text-[11px] font-bold text-[#c8a96e] uppercase tracking-[0.3em]">Limited Seats</p>
             <h2 className="mt-2 text-3xl font-extrabold text-white">Secure Your Spot at Prakriti 2026</h2>
             <p className="mt-2 text-green-300 text-sm">
-              Saturday, 20 June 2026 &nbsp;·&nbsp; 3:00 PM &nbsp;·&nbsp; Saffron Hall, Vardaan Group, Faridabad
+              Saturday, 20 June 2026 &nbsp;·&nbsp; 3:00 PM &nbsp;·&nbsp; Saffron Hall, Vardaan Grand, Faridabad
             </p>
           </div>
 

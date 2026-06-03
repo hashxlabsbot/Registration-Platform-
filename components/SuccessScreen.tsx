@@ -5,7 +5,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { BookingResult } from '@/lib/types';
 
 const EVENT_DATE  = process.env.NEXT_PUBLIC_EVENT_DATE  ?? 'Saturday, 20 June 2026 · 3:00 PM';
-const EVENT_VENUE = process.env.NEXT_PUBLIC_EVENT_VENUE ?? 'Saffron Hall, Vardaan Group, Faridabad';
+const EVENT_VENUE = process.env.NEXT_PUBLIC_EVENT_VENUE ?? 'Saffron Hall, Vardaan Grand, Faridabad';
 
 export default function SuccessScreen({ booking }: { booking: BookingResult }) {
   const [downloading, setDownloading] = useState(false);

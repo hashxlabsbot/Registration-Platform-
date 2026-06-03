@@ -214,7 +214,7 @@ function render (doc, t, logo, qr) {
   doc.fillColor(GOLD).fontSize(7).font('Helvetica-Bold')
      .text('20 JUNE 2026', 0, 400, { width:W, align:'center', characterSpacing:1.8 });
   doc.fillColor(GDIM).fontSize(5.3).font('Helvetica')
-     .text('SAFFRON HALL  ·  VARDAAN GROUP  ·  FARIDABAD', 0, 411,
+     .text('SAFFRON HALL  ·  VARDAAN GRAND  ·  FARIDABAD', 0, 411,
            { width:W, align:'center', characterSpacing:0.5 });
 }
 
