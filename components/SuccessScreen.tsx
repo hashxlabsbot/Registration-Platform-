@@ -29,37 +29,36 @@ export default function SuccessScreen({ booking }: { booking: BookingResult }) {
   async function handleDownload() {
     setDownloading(true);
     try {
-      const el = document.getElementById('ticket-card');
-      if (!el) throw new Error('Ticket element not found');
-
-      const html2canvas = (await import('html2canvas')).default;
-
-      const canvas = await html2canvas(el, {
-        scale: 3,
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: '#ffffff',
-        logging: false,
+      const res = await fetch('/api/ticket', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bookingId:        booking.bookingId,
+          name:             booking.name,
+          email:            booking.email,
+          phone:            booking.phone,
+          organization:     booking.organization,
+          designation:      booking.designation,
+          registrationType: booking.registrationType,
+          totalAmount:      booking.amount,
+          utrNumber:        booking.utrNumber,
+        }),
       });
 
-      // Download as high-res PNG — no jsPDF dependency, works everywhere
-      await new Promise<void>((resolve, reject) => {
-        canvas.toBlob((blob) => {
-          if (!blob) { reject(new Error('Canvas export failed')); return; }
-          const url = URL.createObjectURL(blob);
-          const a   = document.createElement('a');
-          a.href     = url;
-          a.download = `prakriti2026-ticket-${booking.bookingId}.png`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-          resolve();
-        }, 'image/png');
-      });
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = `prakriti2026-ticket-${booking.bookingId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     } catch (err) {
       console.error('[download]', err);
-      alert('Could not export ticket. Please screenshot your ticket.');
+      alert('Could not download ticket. Please check your email for the PDF copy.');
     } finally {
       setDownloading(false);
     }
@@ -168,7 +167,7 @@ export default function SuccessScreen({ booking }: { booking: BookingResult }) {
         {downloading ? (
           <>
             <Spinner />
-            Generating PDF…
+            Downloading…
           </>
         ) : (
           <>
