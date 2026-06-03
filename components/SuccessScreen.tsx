@@ -90,7 +90,7 @@ export default function SuccessScreen({ booking }: { booking: BookingResult }) {
                 <img src="/IIA-Logo.svg" alt="IIA" className="w-full h-full object-contain" style={{ filter: 'brightness(0) invert(1)' }} />
               </div>
               <div className="leading-tight">
-                <p className="text-[9px] font-bold text-[#c8a96e] uppercase tracking-widest">Indian Institute of Architects</p>
+                <p className="text-[9px] font-bold text-[#c8a96e] uppercase tracking-widest">The Indian Institute of Architects</p>
                 <p className="text-[8px] text-green-500 uppercase tracking-wider">Faridabad Centre</p>
               </div>
             </div>

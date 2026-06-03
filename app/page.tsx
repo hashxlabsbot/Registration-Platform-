@@ -49,14 +49,8 @@ export default function Home() {
       {/* ─── Sticky Header ──────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 bg-white/96 backdrop-blur-md border-b border-green-100 shadow-sm">
         <div className="max-w-7xl mx-auto px-5 py-2.5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <IIAEmblem size={36} />
-            <div className="leading-tight">
-              <p className="text-xs font-extrabold text-[#1a4a1a] uppercase tracking-wider">
-                Indian Institute of Architects
-              </p>
-              <p className="text-[11px] text-[#2e7d32] font-semibold">Faridabad Centre</p>
-            </div>
+          <div className="flex items-center">
+            <IIAEmblem size={56} />
           </div>
           <div className="flex items-center gap-4">
             <div className="hidden sm:block text-right">
@@ -92,7 +86,7 @@ export default function Home() {
             <img
               src="/Hindi-prakriti.png"
               alt="प्रकृति 2026"
-              className="w-full max-w-[420px] sm:max-w-[520px] -ml-3"
+              className="h-[220px] sm:h-[260px] w-auto -my-10 -ml-8"
             />
 
             <p className="mt-5 text-[#2e7d32] text-lg sm:text-xl font-medium leading-snug">
@@ -213,7 +207,7 @@ export default function Home() {
               <div className="mt-5 space-y-4 text-gray-600 text-sm leading-relaxed">
                 <p>
                   <strong className="text-[#1a4a1a]">Prakriti 2026</strong> is a landmark annual gathering
-                  convened by the Indian Institute of Architects — Faridabad Centre, bringing together
+                  convened by The Indian Institute of Architects — Faridabad Centre, bringing together
                   architects, urban designers, sustainability professionals, and students for a full day
                   of meaningful exchange.
                 </p>
@@ -236,7 +230,7 @@ export default function Home() {
               <div className="mt-7 flex items-center gap-4 p-4 rounded-xl bg-[#f9fdf8] border border-green-100">
                 <IIAEmblem size={44} />
                 <div>
-                  <p className="text-sm font-extrabold text-[#1a4a1a]">Indian Institute of Architects</p>
+                  <p className="text-sm font-extrabold text-[#1a4a1a]">The Indian Institute of Architects</p>
                   <p className="text-xs text-gray-500 mt-0.5">Faridabad Centre</p>
                   <p className="text-xs text-[#2e7d32] mt-0.5">iafaridabadcentre@gmail.com</p>
                 </div>
@@ -362,7 +356,7 @@ export default function Home() {
             <div className="flex items-center gap-3">
               <IIAEmblem size={40} variant="light" />
               <div>
-                <p className="text-white font-bold text-sm">Indian Institute of Architects</p>
+                <p className="text-white font-bold text-sm">The Indian Institute of Architects</p>
                 <p className="text-green-400 text-xs">Faridabad Centre</p>
               </div>
             </div>

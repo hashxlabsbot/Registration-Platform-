@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       eventSubtitle: 'Architects for a Sustainable Tomorrow',
       eventDate: eventDate || 'Saturday, 20 June 2026 · 3:00 PM',
       eventVenue: eventVenue || 'Saffron Hall, Vardaan Group, Faridabad',
-      organizer: 'Indian Institute of Architects — Faridabad Centre',
+      organizer: 'The Indian Institute of Architects — Faridabad Centre',
     });
 
     return new NextResponse(new Uint8Array(pdfBuffer), {

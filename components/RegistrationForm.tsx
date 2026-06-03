@@ -270,7 +270,7 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
                 {s1Errors.gender && <p className="err">{s1Errors.gender}</p>}
               </div>
               <Field label="Nationality" id="nationality" name="nationality" value={s1.nationality}
-                onChange={handleS1Change} placeholder="Indian" error={s1Errors.nationality} required />
+                onChange={handleS1Change} placeholder="The Indian" error={s1Errors.nationality} required />
               <Field label="Firm / Company Name" id="firm" name="firm" value={s1.firm}
                 onChange={handleS1Change} placeholder="Firm Name & Associates" />
               <Field label="Designation" id="designation" name="designation" value={s1.designation}
