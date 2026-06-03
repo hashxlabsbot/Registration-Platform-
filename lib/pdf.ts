@@ -21,238 +21,188 @@ export interface TicketData {
   organizer: string;
 }
 
-// ── Constants ─────────────────────────────────────────────────────────────────
-const W = 288;   // 4 inches — standard conference badge width
-const H = 440;   // ~6.1 inches — standard badge height
+// W stays at 288pt; H is slightly taller than the image's natural ratio so
+// the white zone has comfortable room for all rows + QR.
+// Background is stretched ~11 % vertically — imperceptible for a decorative image.
+const W = 288;
+const H = 430;
 
-const DARK_GREEN  = '#0f2e14';
-const MID_GREEN   = '#2e7d32';
-const GOLD        = '#c8a96e';
-const WHITE       = '#ffffff';
-const OFF_WHITE   = '#f4f7f0';
-const GRAY        = '#888888';
-const LIGHT_GRAY  = '#cccccc';
+// White zone boundaries (scaled from original 1083×1453 image → H=430)
+const ZONE_TOP    = Math.round(H * 300  / 1453);   //  89 — header/branding ends
+const ZONE_BOTTOM = Math.round(H * 1090 / 1453);   // 322 — dark footer begins
 
-// Colour per registration type (for the badge pill)
-function typeAccent(regType: string): { bg: string; text: string } {
-  if (regType.includes('IIA Member') && !regType.includes('Non')) return { bg: '#1a4a1a', text: '#c8a96e' };
-  if (regType.includes('Non-IIA'))    return { bg: '#1a2a4a', text: '#93c5fd' };
-  if (regType.includes('Spouse'))     return { bg: '#2d1a4a', text: '#d8b4fe' };
-  if (regType.includes('Non-Arch'))   return { bg: '#4a2a0a', text: '#fbbf24' };
-  if (regType.includes('Special'))    return { bg: '#3d2e0a', text: '#c8a96e' };
-  return { bg: '#1a4a1a', text: '#c8a96e' };
+const DARK_GREEN = '#0f2e14';
+const GOLD       = '#c8a96e';
+const WHITE      = '#ffffff';
+const GRAY       = '#444444';
+
+// ── Icon drawing ──────────────────────────────────────────────────────────────
+type IconType = 'person' | 'tag' | 'cert' | 'id';
+
+function drawIcon(
+  doc: InstanceType<typeof PDFDocument>,
+  cx: number, cy: number, r: number,
+  type: IconType,
+) {
+  // White ring — makes icon pop against the dark left-side building
+  doc.circle(cx, cy, r + 2.5).fill(WHITE);
+  // Dark green fill
+  doc.circle(cx, cy, r).fill(DARK_GREEN);
+
+  doc.save();
+  doc.circle(cx, cy, r - 0.5).clip();
+
+  switch (type) {
+    case 'person':
+      doc.circle(cx, cy - r * 0.22, r * 0.28).fill(WHITE);
+      doc.moveTo(cx - r * 0.55, cy + r)
+         .lineTo(cx - r * 0.55, cy + r * 0.14)
+         .quadraticCurveTo(cx - r * 0.52, cy + r * 0.01, cx - r * 0.2, cy + r * 0.01)
+         .lineTo(cx + r * 0.2,  cy + r * 0.01)
+         .quadraticCurveTo(cx + r * 0.52, cy + r * 0.01, cx + r * 0.55, cy + r * 0.14)
+         .lineTo(cx + r * 0.55, cy + r)
+         .fill(WHITE);
+      break;
+
+    case 'tag': {
+      const bW = r * 0.90, bH = r * 1.12;
+      const bX = cx - bW / 2, bY = cy - bH * 0.47;
+      doc.roundedRect(bX, bY, bW, bH, 1.5).fill(WHITE);
+      doc.circle(cx, bY + 0.5, r * 0.11).fill(DARK_GREEN);
+      doc.rect(bX + bW * 0.12, bY + bH * 0.30, bW * 0.76, r * 0.12).fill(DARK_GREEN);
+      doc.rect(bX + bW * 0.18, bY + bH * 0.54, bW * 0.64, r * 0.09).fill(DARK_GREEN);
+      doc.rect(bX + bW * 0.18, bY + bH * 0.70, bW * 0.50, r * 0.09).fill(DARK_GREEN);
+      break;
+    }
+
+    case 'cert': {
+      const outerR = r * 0.66, innerR = r * 0.28;
+      const a0 = -Math.PI / 2, step = (2 * Math.PI) / 5;
+      let first = true;
+      for (let i = 0; i < 5; i++) {
+        const oa = a0 + i * step, ia = oa + step / 2;
+        const ox = cx + outerR * Math.cos(oa), oy = cy + outerR * Math.sin(oa);
+        const ix = cx + innerR * Math.cos(ia), iy = cy + innerR * Math.sin(ia);
+        if (first) { doc.moveTo(ox, oy); first = false; } else doc.lineTo(ox, oy);
+        doc.lineTo(ix, iy);
+      }
+      doc.closePath().fill(WHITE);
+      break;
+    }
+
+    case 'id': {
+      const cW = r * 1.55, cH = r * 0.98;
+      const cX = cx - cW / 2, cY = cy - cH / 2;
+      doc.roundedRect(cX, cY, cW, cH, 1.5).fill(WHITE);
+      const pS = r * 0.38, pX = cX + r * 0.1, pY = cY + (cH - pS) / 2;
+      doc.rect(pX, pY, pS, pS).fill(DARK_GREEN);
+      const lX = pX + pS + r * 0.1, lW = cW - (lX - cX) - r * 0.1;
+      doc.rect(lX, cY + cH * 0.20, lW,        r * 0.11).fill(DARK_GREEN);
+      doc.rect(lX, cY + cH * 0.46, lW * 0.80, r * 0.09).fill(DARK_GREEN);
+      doc.rect(lX, cY + cH * 0.67, lW * 0.60, r * 0.09).fill(DARK_GREEN);
+      break;
+    }
+  }
+
+  doc.restore();
 }
 
 // ── Main export ───────────────────────────────────────────────────────────────
 export async function generateTicketPDF(ticket: TicketData): Promise<Buffer> {
-
-  // 1. Load IIA logo → PNG
-  let logoPng: Buffer | null = null;
+  let bgBuf: Buffer | null = null;
   try {
-    const svgBuf = fs.readFileSync(path.join(process.cwd(), 'public', 'IIA-Logo.svg'));
-    logoPng = await sharp(svgBuf)
-      .resize(140, 140, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
-      .png()
-      .toBuffer();
-  } catch { /* logo unavailable — continue */ }
+    const raw = fs.readFileSync(path.join(process.cwd(), 'public', 'Id-background.png'));
+    bgBuf = await sharp(raw).resize(W, H, { fit: 'fill' }).png().toBuffer();
+  } catch { /* proceed without background */ }
 
-  // 2. Generate QR code
   const qrPayload = JSON.stringify({
-    id:   ticket.bookingId,
-    name: ticket.name,
-    type: ticket.registrationType,
-    amt:  `Rs.${ticket.totalAmount}`,
-    ph:   ticket.phone,
-    em:   ticket.email,
-    ev:   'PRAKRITI2026',
-    dt:   '20-06-2026',
+    id: ticket.bookingId, name: ticket.name, type: ticket.registrationType,
+    amt: `Rs.${ticket.totalAmount}`, ph: ticket.phone, em: ticket.email,
+    ev: 'PRAKRITI2026', dt: '20-06-2026',
   });
   const qrBuf = await QRCode.toBuffer(qrPayload, {
-    width: 300, margin: 1,
-    errorCorrectionLevel: 'M',
+    width: 300, margin: 1, errorCorrectionLevel: 'M',
     color: { dark: DARK_GREEN, light: WHITE },
   });
 
-  // 3. Render PDF
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: [W, H], margin: 0 });
     const chunks: Buffer[] = [];
-    doc.on('data', (c) => chunks.push(c));
+    doc.on('data', c => chunks.push(c));
     doc.on('end',  () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
-
-    drawCard(doc, ticket, logoPng, qrBuf);
-
+    drawCard(doc, ticket, bgBuf, qrBuf);
     doc.end();
   });
 }
 
-// ── Card drawing ──────────────────────────────────────────────────────────────
+// ── Card ──────────────────────────────────────────────────────────────────────
 function drawCard(
   doc: InstanceType<typeof PDFDocument>,
   ticket: TicketData,
-  logoPng: Buffer | null,
+  bgBuf: Buffer | null,
   qrBuf: Buffer,
 ) {
-  const cx = W / 2; // center x
+  const cx     = W / 2;
+  const ICON_R = 10;
+  const ICON_X = 20;
+  const TEXT_X = ICON_X + ICON_R + 2.5 + 6;   // right of white ring + gap = 38.5
+  const PAD_R  = 14;
+  const ROW_H  = 27;
 
-  // ────────────────────────────────────────────────────────────────────────────
-  // SECTION 1 — Dark green header  (y: 0 → 168)
-  // ────────────────────────────────────────────────────────────────────────────
-  const HEADER_H = 168;
-  doc.rect(0, 0, W, HEADER_H).fill(DARK_GREEN);
+  // ── Background — fully visible, no overlays ────────────────────────────────
+  if (bgBuf) doc.image(bgBuf, 0, 0, { width: W, height: H });
+  else       doc.rect(0, 0, W, H).fill(WHITE);
 
-  // Subtle dot grid texture
-  for (let row = 0; row < 10; row++) {
-    for (let col = 0; col < 16; col++) {
-      doc.circle(col * 19 + 9, row * 19 + 9, 0.8).fill('rgba(200,169,110,0.08)');
+  // ── Rows — vertically centred in the white zone ────────────────────────────
+  const qrSz     = 64;
+  const qrCardH  = qrSz + 5 * 2;                             // 74
+  const totalH   = ROW_H * 4 + qrCardH + 10;                 // 192
+  const topPad   = Math.round((ZONE_BOTTOM - ZONE_TOP - totalH) / 2);  // ~21
+
+  let y = ZONE_TOP + topPad;   // ≈ 110
+
+  const drawRow = (icon: IconType, label: string, value: string, highlighted: boolean) => {
+    const iconCY = y + ROW_H / 2;
+    drawIcon(doc, ICON_X, iconCY, ICON_R, icon);
+
+    if (highlighted) {
+      doc.roundedRect(TEXT_X - 3, y + 2, W - TEXT_X - PAD_R + 3, ROW_H - 4, 3)
+         .fill(DARK_GREEN);
+      doc.fillColor(GOLD).fontSize(5.5).font('Helvetica')
+         .text(label, TEXT_X + 2, y + 5, { characterSpacing: 0.8 });
+      const fs = value.length > 26 ? 9 : value.length > 20 ? 10.5 : 12;
+      doc.fillColor(WHITE).fontSize(fs).font('Helvetica-Bold')
+         .text(value, TEXT_X + 2, y + 13, { width: W - TEXT_X - PAD_R - 4 });
+    } else {
+      doc.fillColor(GRAY).fontSize(5.5).font('Helvetica')
+         .text(label, TEXT_X, y + 4, { characterSpacing: 0.8 });
+      const fs = value.length > 24 ? 10 : value.length > 18 ? 11.5 : 13;
+      doc.fillColor(DARK_GREEN).fontSize(fs).font('Helvetica-Bold')
+         .text(value, TEXT_X, y + 13, { width: W - TEXT_X - PAD_R });
     }
-  }
 
-  // Gold top border stripe
-  doc.rect(0, 0, W, 3).fill(GOLD);
+    // Thin separator
+    doc.moveTo(TEXT_X, y + ROW_H + 1).lineTo(W - PAD_R, y + ROW_H + 1)
+       .strokeColor('#cccccc').lineWidth(0.4).stroke();
 
-  // IIA Logo — centered at top
-  if (logoPng) {
-    const logoSize = 48;
-    doc.image(logoPng, cx - logoSize / 2, 12, { width: logoSize, height: logoSize });
-  } else {
-    doc.fillColor(GOLD).fontSize(10).font('Helvetica-Bold')
-      .text('IIA', 0, 28, { width: W, align: 'center' });
-  }
+    y += ROW_H + 3;
+  };
 
-  // Thin gold rule below logo
-  doc.moveTo(cx - 40, 64).lineTo(cx + 40, 64)
-    .strokeColor(GOLD).lineWidth(0.5).opacity(0.5).stroke().opacity(1);
+  const desig = ticket.designation && ticket.designation !== '—'
+    ? ticket.designation.toUpperCase() : '—';
 
-  // "PRAKRITI" — large decorative gold lettering
-  doc.fillColor(GOLD).fontSize(34).font('Helvetica-Bold')
-    .text('PRAKRITI', 0, 70, { width: W, align: 'center', characterSpacing: 4 });
+  drawRow('person', 'NAME OF ATTENDEE',  ticket.name.toUpperCase(),             false);
+  drawRow('tag',    'DESIGNATION',       desig,                                  false);
+  drawRow('cert',   'REGISTRATION TYPE', ticket.registrationType.toUpperCase(), true);
+  drawRow('id',     'REGISTRATION ID',   ticket.bookingId,                      false);
 
-  // "2026" — white, below
-  doc.fillColor(WHITE).fontSize(15).font('Helvetica-Bold')
-    .text('2026', 0, 106, { width: W, align: 'center', characterSpacing: 6 });
+  y += 8;
 
-  // Subtitle
-  doc.fillColor(GOLD).fontSize(5.5).font('Helvetica')
-    .text('ARCHITECTS FOR A SUSTAINABLE TOMORROW', 0, 124, {
-      width: W, align: 'center', characterSpacing: 1.2,
-    });
-
-  // Gold ornamental rule at bottom of header
-  doc.moveTo(24, 144).lineTo(W - 24, 144)
-    .strokeColor(GOLD).lineWidth(0.4).opacity(0.4).stroke().opacity(1);
-
-  doc.fillColor(MID_GREEN).fontSize(5.5).font('Helvetica')
-    .text('INDIAN INSTITUTE OF ARCHITECTS — FARIDABAD CENTRE', 0, 150, {
-      width: W, align: 'center', characterSpacing: 0.6,
-    });
-
-  // ────────────────────────────────────────────────────────────────────────────
-  // SECTION 2 — Attendee details  (y: 168 → 300)
-  // ────────────────────────────────────────────────────────────────────────────
-  doc.rect(0, HEADER_H, W, 132).fill(WHITE);
-
-  const bodyY = HEADER_H + 18;
-  const PAD   = 22;
-
-  // "REGISTERED ATTENDEE" label
-  doc.fillColor(LIGHT_GRAY).fontSize(6).font('Helvetica')
-    .text('REGISTERED ATTENDEE', PAD, bodyY, { characterSpacing: 1.5 });
-
-  // Name — large and bold
-  const name = ticket.name.toUpperCase();
-  const nameFontSize = name.length > 22 ? 16 : 19;
-  doc.fillColor(DARK_GREEN).fontSize(nameFontSize).font('Helvetica-Bold')
-    .text(name, PAD, bodyY + 9, { width: W - PAD * 2 });
-
-  // Designation
-  const desig = ticket.designation && ticket.designation !== '—' ? ticket.designation : '';
-  const org   = ticket.organization && ticket.organization !== '—' ? ticket.organization : '';
-  const desigLine = [desig, org].filter(Boolean).join('  ·  ');
-
-  let detailY = bodyY + 9 + nameFontSize + 4;
-  if (desigLine) {
-    doc.fillColor(GRAY).fontSize(8).font('Helvetica')
-      .text(desigLine, PAD, detailY, { width: W - PAD * 2 });
-    detailY += 13;
-  }
-
-  // Thin rule
-  doc.moveTo(PAD, detailY + 4).lineTo(W - PAD, detailY + 4)
-    .strokeColor('#e0e0e0').lineWidth(0.5).stroke();
-
-  // Registration type badge
-  const accent  = typeAccent(ticket.registrationType);
-  const typeLabel = ticket.registrationType.toUpperCase();
-  const badgeY  = detailY + 12;
-  const badgeW  = Math.min(W - PAD * 2, typeLabel.length * 5.2 + 20);
-
-  doc.roundedRect(PAD, badgeY, badgeW, 16, 3).fill(accent.bg);
-  doc.fillColor(accent.text).fontSize(6.5).font('Helvetica-Bold')
-    .text(typeLabel, PAD, badgeY + 5, { width: badgeW, align: 'center', characterSpacing: 0.8 });
-
-  // Amount (right-aligned)
-  if (ticket.totalAmount > 0) {
-    doc.fillColor(DARK_GREEN).fontSize(8).font('Helvetica-Bold')
-      .text(`Rs. ${ticket.totalAmount.toLocaleString('en-IN')}`, PAD + badgeW + 8, badgeY + 4);
-  }
-
-  // ────────────────────────────────────────────────────────────────────────────
-  // SECTION 3 — QR code  (y: 300 → 408)
-  // ────────────────────────────────────────────────────────────────────────────
-  const QR_TOP = HEADER_H + 132;
-  const QR_H   = H - QR_TOP - 32;
-
-  doc.rect(0, QR_TOP, W, QR_H + 32).fill(OFF_WHITE);
-
-  // Dashed top border
-  doc.moveTo(0, QR_TOP).lineTo(W, QR_TOP)
-    .dash(3, { space: 3 }).strokeColor(LIGHT_GRAY).lineWidth(0.6).stroke().undash();
-
-  // "ENTRY PASS" label
-  doc.fillColor(GRAY).fontSize(6).font('Helvetica')
-    .text('ENTRY PASS — SCAN AT VENUE ENTRANCE', 0, QR_TOP + 10, {
-      width: W, align: 'center', characterSpacing: 1.2,
-    });
-
-  // QR code — centered, large
-  const qrSize = 108;
-  const qrX    = cx - qrSize / 2;
-  const qrY    = QR_TOP + 22;
-
-  // White background + subtle shadow via rounded rect
-  doc.roundedRect(qrX - 5, qrY - 5, qrSize + 10, qrSize + 10, 4)
-    .fill(WHITE);
-  doc.image(qrBuf, qrX, qrY, { width: qrSize, height: qrSize });
-
-  // Corner accents
-  const ca = (x: number, y: number, dx: number, dy: number) =>
-    doc.moveTo(x, y + dy).lineTo(x, y).lineTo(x + dx, y)
-      .strokeColor(GOLD).lineWidth(1.2).stroke();
-  ca(qrX - 5, qrY - 5,  10,  10);
-  ca(qrX + qrSize + 5, qrY - 5,  -10,  10);
-  ca(qrX - 5, qrY + qrSize + 5,  10, -10);
-  ca(qrX + qrSize + 5, qrY + qrSize + 5, -10, -10);
-
-  // Booking ID below QR
-  doc.fillColor(GRAY).fontSize(5.5).font('Helvetica')
-    .text('BOOKING ID', 0, qrY + qrSize + 14, { width: W, align: 'center', characterSpacing: 1.5 });
-  doc.fillColor(DARK_GREEN).fontSize(9.5).font('Helvetica-Bold')
-    .text(ticket.bookingId, 0, qrY + qrSize + 22, { width: W, align: 'center', characterSpacing: 2 });
-
-  // ────────────────────────────────────────────────────────────────────────────
-  // SECTION 4 — Footer stripe  (y: H-32 → H)
-  // ────────────────────────────────────────────────────────────────────────────
-  doc.rect(0, H - 32, W, 32).fill(DARK_GREEN);
-
-  // Gold top border on footer
-  doc.rect(0, H - 32, W, 1.5).fill(GOLD);
-
-  doc.fillColor(GOLD).fontSize(6.5).font('Helvetica-Bold')
-    .text('20 JUNE 2026', 0, H - 23, { width: W, align: 'center', characterSpacing: 1 });
-  doc.fillColor(MID_GREEN).fontSize(5.5).font('Helvetica')
-    .text('SAFFRON HALL, VARDAAN GROUP, FARIDABAD', 0, H - 13, {
-      width: W, align: 'center', characterSpacing: 0.5,
-    });
+  // ── QR code ────────────────────────────────────────────────────────────────
+  const qrCardX = cx - (qrSz + 10) / 2;
+  doc.roundedRect(qrCardX, y, qrSz + 10, qrCardH, 5).fill(WHITE);
+  doc.roundedRect(qrCardX, y, qrSz + 10, qrCardH, 5)
+     .strokeColor(GOLD).lineWidth(0.6).stroke();
+  doc.image(qrBuf, qrCardX + 5, y + 5, { width: qrSz, height: qrSz });
 }

@@ -88,12 +88,12 @@ export default function Home() {
             </div>
 
             {/* Title */}
-            <h1 className="text-[80px] sm:text-[100px] font-black text-[#1a3a1a] leading-none tracking-tight">
-              Prakriti
-            </h1>
-            <p className="text-[80px] sm:text-[100px] font-black text-[#1a3a1a] leading-none tracking-tight -mt-3">
-              2026
-            </p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/Hindi-prakriti.png"
+              alt="प्रकृति 2026"
+              className="w-full max-w-[420px] sm:max-w-[520px] -ml-3"
+            />
 
             <p className="mt-5 text-[#2e7d32] text-lg sm:text-xl font-medium leading-snug">
               Architects for a Sustainable Tomorrow

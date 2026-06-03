@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { nanoid } from 'nanoid';
 import { appendRegistration } from '@/lib/registrations';
+import { sendTicketEmail, sendAdminNotification } from '@/lib/mailer';
 
 export const runtime = 'nodejs';
 
@@ -54,6 +55,39 @@ export async function POST(request: NextRequest) {
     };
 
     await appendRegistration(rowData);
+
+    // Send confirmation email + admin notification (fire-and-forget)
+    const ticketData = {
+      bookingId,
+      name,
+      email,
+      phone,
+      organization:    firm        || '—',
+      designation:     designation || '—',
+      registrationType,
+      totalAmount:     Number(totalAmount),
+      utrNumber:       razorpay_payment_id,
+      eventName:       process.env.EVENT_NAME     || 'Prakriti 2026',
+      eventSubtitle:   process.env.EVENT_SUBTITLE || 'Architects for a Sustainable Tomorrow',
+      eventDate:       process.env.EVENT_DATE     || 'Saturday, 20 June 2026 · 3:00 PM',
+      eventVenue:      process.env.EVENT_VENUE    || 'Saffron Hall, Faridabad',
+      organizer:       process.env.ORGANIZER      || 'The Indian Institute of Architects — Faridabad Centre',
+    };
+    Promise.all([
+      sendTicketEmail(ticketData, true),
+      sendAdminNotification({
+        ...ticketData,
+        gender:              gender              || '',
+        nationality:         nationality         || '',
+        whatsapp:            whatsapp            || '',
+        address:             address             || '',
+        district:            district            || '',
+        state:               state               || '',
+        pincode:             pincode             || '',
+        coaNumber:           coaNumber           || '',
+        iiaMembershipNumber: iiaMembershipNumber || '',
+      }),
+    ]).catch(err => console.error('[email]', err));
 
     return NextResponse.json({
       success: true,
