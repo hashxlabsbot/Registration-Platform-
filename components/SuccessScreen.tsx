@@ -1,14 +1,20 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
+import { QRCodeCanvas } from 'qrcode.react';
 import { BookingResult } from '@/lib/types';
 
-const EVENT_DATE  = process.env.NEXT_PUBLIC_EVENT_DATE  ?? 'Saturday, 20 June 2026 · 3:00 PM';
-const EVENT_VENUE = process.env.NEXT_PUBLIC_EVENT_VENUE ?? 'Saffron Hall, Vardaan Grand, Faridabad';
+function nameSize(name: string): string {
+  const l = name.length;
+  if (l <= 14) return '17px';
+  if (l <= 18) return '14px';
+  if (l <= 24) return '12px';
+  return '10px';
+}
 
 export default function SuccessScreen({ booking }: { booking: BookingResult }) {
   const [downloading, setDownloading] = useState(false);
+  const ticketRef = useRef<HTMLDivElement>(null);
 
   const qrValue = JSON.stringify({
     id:   booking.bookingId,
@@ -22,34 +28,35 @@ export default function SuccessScreen({ booking }: { booking: BookingResult }) {
   });
 
   async function handleDownload() {
+    if (!ticketRef.current) return;
     setDownloading(true);
     try {
-      const res = await fetch('/api/ticket', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          bookingId: booking.bookingId,
-          name: booking.name,
-          email: booking.email,
-          phone: booking.phone,
-          organization: booking.organization,
-          designation: booking.designation,
-          registrationType: booking.registrationType,
-          totalAmount: booking.amount,
-          utrNumber: booking.utrNumber,
-          eventDate: EVENT_DATE,
-          eventVenue: EVENT_VENUE,
-        }),
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf'),
+      ]);
+
+      const canvas = await html2canvas(ticketRef.current, {
+        scale: 3,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: null,
+        logging: false,
       });
-      if (!res.ok) throw new Error('PDF generation failed');
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `prakriti2026-ticket-${booking.bookingId}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch {
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const imgW    = canvas.width;
+      const imgH    = canvas.height;
+
+      // Card-sized PDF — 85 mm wide, proportional height, full bleed
+      const pdfW = 85;
+      const pdfH = (imgH / imgW) * pdfW;
+
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pdfW, pdfH] });
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
+      pdf.save(`prakriti2026-ticket-${booking.bookingId}.pdf`);
+    } catch (err) {
+      console.error('[download]', err);
       alert('Could not generate PDF. Please screenshot your ticket.');
     } finally {
       setDownloading(false);
@@ -72,47 +79,78 @@ export default function SuccessScreen({ booking }: { booking: BookingResult }) {
         </div>
       </div>
 
+      {/* Email confirmation notice */}
+      <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-2xl px-5 py-4">
+        <div className="shrink-0 h-9 w-9 flex items-center justify-center rounded-full bg-blue-100">
+          <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-blue-800">Ticket sent to your email</p>
+          <p className="text-xs text-blue-600 break-all mt-0.5">
+            A copy of your ticket (PDF) has been sent to{' '}
+            <span className="font-semibold">{booking.email}</span>
+          </p>
+          <p className="text-xs text-blue-400 mt-1">Check your spam/junk folder if you don&apos;t see it.</p>
+        </div>
+      </div>
+
       {/* ── THE TICKET ── */}
-      <div className="w-full max-w-[320px] mx-auto rounded-2xl overflow-hidden shadow-2xl relative border border-green-200">
+      <div
+        ref={ticketRef}
+        className="w-full max-w-[320px] mx-auto rounded-2xl overflow-hidden shadow-2xl relative border border-green-200"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/Id-background.png" alt="Prakriti 2026 Ticket" className="w-full block" />
         <div className="absolute inset-0 flex items-start justify-center pt-[38%] pb-[25%]">
           <div className="rounded-[14px] flex flex-col items-center justify-center aspect-square w-[62%] gap-1.5 p-2 bg-transparent">
-             <div 
-               className="font-serif font-bold text-[#1a3d21] text-center leading-tight whitespace-nowrap w-full overflow-hidden text-ellipsis text-[18px]" 
-               style={{ textShadow: '0 1px 8px rgba(255,255,255,0.8)' }}>
-               {booking.name.toUpperCase()}
-             </div>
-             <div className="w-[82%] h-[1.5px] bg-[#a5d6a7]/70 shrink-0"></div>
-             <div 
-               className="text-[#1a5c2a] font-semibold text-center leading-snug text-[11px]" 
-               style={{ textShadow: '0 1px 6px rgba(255,255,255,0.8)' }}>
-               {booking.designation && booking.designation !== '—' ? booking.designation : booking.organization}
-             </div>
-             <div className="flex gap-1.5 flex-wrap justify-center mt-1">
-               <div className="bg-[#1a5c2a] text-white rounded px-2 py-0.5 font-bold text-[9px]">
-                 {booking.registrationType.toUpperCase()}
-               </div>
-               <div className="bg-[#e8f5e9]/85 text-[#1b5e20] border border-[#a5d6a7] rounded px-2 py-0.5 font-bold text-[9px]">
-                 {booking.bookingId}
-               </div>
-             </div>
-             <div className="flex flex-col items-center gap-1 mt-1">
-               <div className="p-0.5 border-[1.5px] border-[#a5d6a7]/80 rounded bg-white">
-                 <QRCodeSVG
-                    value={qrValue}
-                    size={76}
-                    fgColor="#1a4a1a"
-                    bgColor="#ffffff"
-                    level="M"
-                    style={{ display: 'block' }}
-                  />
-               </div>
-               <div 
-                 className="font-semibold text-[#2d5a35] text-[9px]" 
-                 style={{ textShadow: '0 1px 3px rgba(255,255,255,0.6)' }}>
-                 Scan at Venue Entrance
-               </div>
-             </div>
+
+            {/* Name — font scales with length so it never truncates */}
+            <div
+              className="font-serif font-bold text-[#1a3d21] text-center leading-tight w-full break-words"
+              style={{ fontSize: nameSize(booking.name), textShadow: '0 1px 8px rgba(255,255,255,0.8)' }}
+            >
+              {booking.name.toUpperCase()}
+            </div>
+
+            <div className="w-[82%] h-[1.5px] bg-[#a5d6a7]/70 shrink-0" />
+
+            <div
+              className="text-[#1a5c2a] font-semibold text-center leading-snug text-[11px]"
+              style={{ textShadow: '0 1px 6px rgba(255,255,255,0.8)' }}
+            >
+              {booking.designation && booking.designation !== '—' ? booking.designation : booking.organization}
+            </div>
+
+            <div className="flex gap-1.5 flex-wrap justify-center mt-1">
+              <div className="bg-[#1a5c2a] text-white rounded px-2 py-0.5 font-bold text-[9px]">
+                {booking.registrationType.toUpperCase()}
+              </div>
+              <div className="bg-[#e8f5e9]/85 text-[#1b5e20] border border-[#a5d6a7] rounded px-2 py-0.5 font-bold text-[9px]">
+                {booking.bookingId}
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center gap-1 mt-1">
+              <div className="p-0.5 border-[1.5px] border-[#a5d6a7]/80 rounded bg-white">
+                <QRCodeCanvas
+                  value={qrValue}
+                  size={76}
+                  fgColor="#1a4a1a"
+                  bgColor="#ffffff"
+                  level="M"
+                  style={{ display: 'block' }}
+                />
+              </div>
+              <div
+                className="font-semibold text-[#2d5a35] text-[9px]"
+                style={{ textShadow: '0 1px 3px rgba(255,255,255,0.6)' }}
+              >
+                Scan at Venue Entrance
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
@@ -123,7 +161,8 @@ export default function SuccessScreen({ booking }: { booking: BookingResult }) {
         disabled={downloading}
         className="w-full flex items-center justify-center gap-2.5 bg-[#1a4a1a] hover:bg-[#2e7d32]
           disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold text-sm
-          px-6 py-4 rounded-xl transition-colors shadow-md shadow-[#1a4a1a]/20">
+          px-6 py-4 rounded-xl transition-colors shadow-md shadow-[#1a4a1a]/20"
+      >
         {downloading ? (
           <>
             <Spinner />
@@ -141,22 +180,10 @@ export default function SuccessScreen({ booking }: { booking: BookingResult }) {
 
       <button
         onClick={() => window.location.reload()}
-        className="w-full rounded-xl border border-gray-200 py-3 text-sm font-semibold text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition">
+        className="w-full rounded-xl border border-gray-200 py-3 text-sm font-semibold text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition"
+      >
         Register another attendee
       </button>
-    </div>
-  );
-}
-
-function DetailCell({ label, value, span, highlight, mono }: {
-  label: string; value: string; span?: boolean; highlight?: boolean; mono?: boolean;
-}) {
-  return (
-    <div className={span ? 'col-span-2' : ''}>
-      <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{label}</p>
-      <p className={`text-xs font-semibold leading-tight ${highlight ? 'text-[#2e7d32] font-bold' : 'text-[#1a4a1a]'} ${mono ? 'font-mono text-[11px]' : ''}`}>
-        {value}
-      </p>
     </div>
   );
 }

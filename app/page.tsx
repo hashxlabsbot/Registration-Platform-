@@ -46,10 +46,14 @@ export default function Home() {
 
       {/* ─── Sticky Header ──────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 bg-white/96 backdrop-blur-md border-b border-green-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between">
-          {/* Logo */}
-          <div className="flex items-center shrink-0">
-            <IIAEmblem size={200} />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+          {/* Logo + name */}
+          <div className="flex items-center gap-2.5 shrink-0 min-w-0">
+            <IIAEmblem size={44} />
+            <div className="hidden xs:block min-w-0">
+              <p className="text-[11px] font-bold text-[#1a4a1a] leading-tight truncate">The Indian Institute</p>
+              <p className="text-[11px] font-bold text-[#1a4a1a] leading-tight truncate">of Architects</p>
+            </div>
           </div>
 
           {/* Right side */}
@@ -70,16 +74,16 @@ export default function Home() {
       </header>
 
       {/* ─── Hero ───────────────────────────────────────────────────────────── */}
-      <section className="relative flex min-h-[85vh] sm:min-h-[80vh] overflow-hidden">
+      <section className="relative flex min-h-[90vh] sm:min-h-[80vh] overflow-hidden">
 
         {/* Left panel */}
-        <div className="relative z-10 w-full lg:w-[50%] flex items-center bg-[#f4f7f0] px-5 sm:px-10 xl:px-16 py-14 sm:py-20">
-          <div className="w-full max-w-xl mx-auto lg:mx-0">
+        <div className="relative z-10 w-full lg:w-[50%] flex items-center bg-[#f4f7f0] px-6 sm:px-10 xl:px-16 py-12 sm:py-20">
+          <div className="w-full max-w-lg mx-auto lg:mx-0">
 
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 border border-[#2e7d32]/40 rounded-full px-3 py-1.5 mb-6 sm:mb-8">
-              <span className="h-2 w-2 rounded-full bg-[#2e7d32] shrink-0" />
-              <span className="text-[#1a4a1a] text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.12em] sm:tracking-[0.15em]">
+            <div className="inline-flex items-center gap-2 border border-[#2e7d32]/40 rounded-full px-3 py-1.5 mb-5">
+              <span className="h-2 w-2 rounded-full bg-[#2e7d32] animate-pulse shrink-0" />
+              <span className="text-[#1a4a1a] text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.12em]">
                 Entry Ticket — Limited Registration
               </span>
             </div>
@@ -89,18 +93,18 @@ export default function Home() {
             <img
               src="/Hindi-prakriti.png"
               alt="प्रकृति 2026"
-              className="h-[180px] sm:h-[220px] lg:h-[260px] w-auto -my-8 sm:-my-10 -ml-4 sm:-ml-8"
+              className="h-[160px] sm:h-[200px] lg:h-[240px] w-auto -mb-2"
             />
 
-            <p className="mt-4 sm:mt-5 text-[#2e7d32] text-base sm:text-lg lg:text-xl font-medium leading-snug">
+            <p className="mt-3 text-[#2e7d32] text-base sm:text-lg lg:text-xl font-semibold leading-snug">
               Architects for a Sustainable Tomorrow
             </p>
-            <p className="mt-2 text-[#1a4a1a]/45 text-[10px] sm:text-[11px] uppercase tracking-[0.3em] sm:tracking-[0.35em]">
+            <p className="mt-1.5 text-[#1a4a1a]/45 text-[10px] sm:text-[11px] uppercase tracking-[0.25em]">
               Design&nbsp;·&nbsp;Conserve&nbsp;·&nbsp;Restore
             </p>
 
             {/* Info rows */}
-            <div className="mt-6 sm:mt-8 space-y-3 sm:space-y-4">
+            <div className="mt-6 space-y-3.5">
               {[
                 { label: 'Date',  value: 'Saturday, 20 June 2026',                icon: <CalIcon /> },
                 { label: 'Time',  value: '3:00 PM Onwards',                        icon: <ClockIcon /> },
@@ -117,11 +121,11 @@ export default function Home() {
             </div>
 
             {/* CTA */}
-            <div className="mt-8 sm:mt-10 flex flex-col xs:flex-row gap-3">
+            <div className="mt-8 flex gap-3">
               <Link
                 href="/register"
                 className="inline-flex items-center justify-center gap-2.5 bg-[#1a4a1a] hover:bg-[#2e7d32]
-                  active:scale-95 text-white font-bold text-sm px-6 sm:px-8 py-3.5 rounded-xl
+                  active:scale-95 text-white font-bold text-sm px-7 py-3.5 rounded-xl
                   transition-all shadow-md shadow-[#1a4a1a]/20"
               >
                 Secure Your Spot
@@ -250,7 +254,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="mt-5 sm:mt-6 flex flex-col xs:flex-row gap-3">
+              <div className="mt-5 sm:mt-6 flex flex-col sm:flex-row gap-3">
                 <Link
                   href="/register"
                   className="rounded-xl bg-[#1a4a1a] px-5 sm:px-6 py-3 text-sm font-bold text-white
@@ -395,8 +399,13 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
 
             {/* Logo */}
-            <div className="flex items-center justify-center sm:justify-start">
-              <IIAEmblem size={350} variant="light" />
+            <div className="flex items-center gap-3 justify-center sm:justify-start">
+              <IIAEmblem size={64} variant="light" />
+              <div>
+                <p className="text-white text-sm font-bold leading-tight">The Indian Institute</p>
+                <p className="text-white text-sm font-bold leading-tight">of Architects</p>
+                <p className="text-green-400 text-xs mt-0.5">Faridabad Centre</p>
+              </div>
             </div>
 
             {/* Contact info */}

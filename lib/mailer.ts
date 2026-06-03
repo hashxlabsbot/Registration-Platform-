@@ -2,12 +2,14 @@ import nodemailer from 'nodemailer';
 import { generateTicketPDF, TicketData } from './pdf';
 
 function createTransporter() {
+  const user = process.env.GMAIL_USER;
+  const pass = process.env.GMAIL_APP_PASSWORD;
+  if (!user || !pass) {
+    throw new Error('GMAIL_USER or GMAIL_APP_PASSWORD environment variable is not set');
+  }
   return nodemailer.createTransport({
     service: 'gmail',
-    auth: {
-      user: process.env.GMAIL_USER,
-      pass: process.env.GMAIL_APP_PASSWORD,
-    },
+    auth: { user, pass },
   });
 }
 
