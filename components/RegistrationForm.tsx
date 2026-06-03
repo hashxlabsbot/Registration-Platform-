@@ -287,7 +287,7 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
                     <div className="flex items-center gap-2.5">
                       <input type="radio" name="registrationType" value={t.label}
                         checked={s2.registrationType === t.label}
-                        onChange={(e) => setS2((p) => ({ ...p, registrationType: e.target.value as RegType }))}
+                        onChange={(e) => setS2((p) => ({ ...p, registrationType: e.target.value as RegType, coaNumber: '', iiaMembershipNumber: '' }))}
                         className="accent-[#2e7d32] h-4 w-4" />
                       <span className={`text-sm font-semibold ${s2.registrationType === t.label ? 'text-[#1a4a1a]' : 'text-gray-600'}`}>
                         {t.label}
@@ -301,18 +301,19 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
               </div>
             </div>
 
-            {/* COA + IIA */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="COA Number" id="coaNumber" name="coaNumber" value={s2.coaNumber}
-                onChange={(e) => setS2((p) => ({ ...p, coaNumber: e.target.value }))}
-                placeholder="CA/XXXX/XXXX" />
-              <Field
-                label={`IIA Membership No.${s2.registrationType === 'IIA Member' ? '' : ' (optional)'}`}
-                id="iiaMembershipNumber" name="iiaMembershipNumber" value={s2.iiaMembershipNumber}
-                onChange={(e) => setS2((p) => ({ ...p, iiaMembershipNumber: e.target.value }))}
-                placeholder="IIA/XXXX/XXXX"
-                required={s2.registrationType === 'IIA Member'} />
-            </div>
+            {/* COA + IIA — only for IIA Members */}
+            {s2.registrationType === 'IIA Member' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field label="COA Number" id="coaNumber" name="coaNumber" value={s2.coaNumber}
+                  onChange={(e) => setS2((p) => ({ ...p, coaNumber: e.target.value }))}
+                  placeholder="CA/XXXX/XXXX" />
+                <Field label="IIA Membership No." id="iiaMembershipNumber" name="iiaMembershipNumber"
+                  value={s2.iiaMembershipNumber}
+                  onChange={(e) => setS2((p) => ({ ...p, iiaMembershipNumber: e.target.value }))}
+                  placeholder="IIA/XXXX/XXXX"
+                  required />
+              </div>
+            )}
 
             {/* ── Order summary card ── */}
             <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
