@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { BookingResult } from '@/lib/types';
 
@@ -14,7 +14,6 @@ function nameSize(name: string): string {
 
 export default function SuccessScreen({ booking }: { booking: BookingResult }) {
   const [downloading, setDownloading] = useState(false);
-  const ticketRef = useRef<HTMLDivElement>(null);
 
   const qrValue = JSON.stringify({
     id:   booking.bookingId,
@@ -28,33 +27,33 @@ export default function SuccessScreen({ booking }: { booking: BookingResult }) {
   });
 
   async function handleDownload() {
-    if (!ticketRef.current) return;
     setDownloading(true);
     try {
-      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
-        import('html2canvas'),
-        import('jspdf'),
-      ]);
-
-      const canvas = await html2canvas(ticketRef.current, {
-        scale: 3,
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: null,
-        logging: false,
+      const res = await fetch('/api/ticket', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bookingId:        booking.bookingId,
+          name:             booking.name,
+          email:            booking.email,
+          phone:            booking.phone,
+          organization:     booking.organization,
+          designation:      booking.designation,
+          registrationType: booking.registrationType,
+          totalAmount:      booking.amount,
+          utrNumber:        booking.utrNumber,
+        }),
       });
 
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
-      const imgW    = canvas.width;
-      const imgH    = canvas.height;
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
 
-      // Card-sized PDF — 85 mm wide, proportional height, full bleed
-      const pdfW = 85;
-      const pdfH = (imgH / imgW) * pdfW;
-
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pdfW, pdfH] });
-      pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
-      pdf.save(`prakriti2026-ticket-${booking.bookingId}.pdf`);
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = `prakriti2026-ticket-${booking.bookingId}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
     } catch (err) {
       console.error('[download]', err);
       alert('Could not generate PDF. Please screenshot your ticket.');
@@ -98,7 +97,6 @@ export default function SuccessScreen({ booking }: { booking: BookingResult }) {
 
       {/* ── THE TICKET ── */}
       <div
-        ref={ticketRef}
         className="w-full max-w-[320px] mx-auto rounded-2xl overflow-hidden shadow-2xl relative border border-green-200"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}

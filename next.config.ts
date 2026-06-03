@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: __dirname,
   },
-  serverExternalPackages: ['pdfkit'],
+  serverExternalPackages: ['pdfkit', 'sharp', 'nodemailer', 'canvas'],
 };
 
 export default nextConfig;
