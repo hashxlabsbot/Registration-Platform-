@@ -1,4 +1,4 @@
-import { sql, initSchema } from './db';
+import { getDb, initSchema } from './db';
 
 export interface RegistrationInput {
   bookingId: string;
@@ -57,28 +57,29 @@ function rowToRegistration(row: any): Registration {
     name:                row.name,
     email:               row.email,
     phone:               row.phone,
-    whatsapp:            row.whatsapp            ?? '',
-    gender:              row.gender              ?? '',
-    nationality:         row.nationality         ?? '',
-    organization:        row.organization        ?? '',
-    designation:         row.designation         ?? '',
-    coaNumber:           row.coa_number          ?? '',
+    whatsapp:            row.whatsapp             ?? '',
+    gender:              row.gender               ?? '',
+    nationality:         row.nationality          ?? '',
+    organization:        row.organization         ?? '',
+    designation:         row.designation          ?? '',
+    coaNumber:           row.coa_number           ?? '',
     iiaMembershipNumber: row.iia_membership_number ?? '',
     registrationType:    row.registration_type,
     amount:              Number(row.amount),
-    utrNumber:           row.utr_number          ?? '',
-    address:             row.address             ?? '',
-    district:            row.district            ?? '',
-    state:               row.state               ?? '',
-    pincode:             row.pincode             ?? '',
+    utrNumber:           row.utr_number           ?? '',
+    address:             row.address              ?? '',
+    district:            row.district             ?? '',
+    state:               row.state                ?? '',
+    pincode:             row.pincode              ?? '',
     registeredAt:        toIST(row.registered_at),
-    checkedIn:           row.checked_in          ?? false,
+    checkedIn:           row.checked_in           ?? false,
     checkinTime:         toIST(row.checkin_time),
   };
 }
 
 export async function appendRegistration(data: RegistrationInput): Promise<void> {
   await initSchema();
+  const sql = getDb();
   await sql`
     INSERT INTO registrations (
       booking_id, name, email, phone, whatsapp, gender, nationality,
@@ -99,6 +100,7 @@ export async function appendRegistration(data: RegistrationInput): Promise<void>
 
 export async function getRegistrations(): Promise<Registration[]> {
   await initSchema();
+  const sql = getDb();
   const rows = await sql`
     SELECT * FROM registrations ORDER BY registered_at DESC
   `;
@@ -107,6 +109,7 @@ export async function getRegistrations(): Promise<Registration[]> {
 
 export async function getRegistrationById(bookingId: string): Promise<Registration | null> {
   await initSchema();
+  const sql = getDb();
   const rows = await sql`
     SELECT * FROM registrations WHERE booking_id = ${bookingId} LIMIT 1
   `;
@@ -118,6 +121,7 @@ export async function checkInRegistration(bookingId: string): Promise<{
   registration?: Registration;
 }> {
   await initSchema();
+  const sql = getDb();
 
   const rows = await sql`
     SELECT * FROM registrations WHERE booking_id = ${bookingId} LIMIT 1
