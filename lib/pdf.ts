@@ -143,66 +143,79 @@ function drawCard(
   bgBuf: Buffer | null,
   qrBuf: Buffer,
 ) {
-  const cx     = W / 2;
-  const ICON_R = 10;
-  const ICON_X = 20;
-  const TEXT_X = ICON_X + ICON_R + 2.5 + 6;   // right of white ring + gap = 38.5
-  const PAD_R  = 14;
-  const ROW_H  = 27;
+  const cx = W / 2;
 
-  // ── Background — fully visible, no overlays ────────────────────────────────
+  // ── Background ────────────────────────────────
   if (bgBuf) doc.image(bgBuf, 0, 0, { width: W, height: H });
   else       doc.rect(0, 0, W, H).fill(WHITE);
 
-  // ── Rows — vertically centred in the white zone ────────────────────────────
-  const qrSz     = 64;
-  const qrCardH  = qrSz + 5 * 2;                             // 74
-  const totalH   = ROW_H * 4 + qrCardH + 10;                 // 192
-  const topPad   = Math.round((ZONE_BOTTOM - ZONE_TOP - totalH) / 2);  // ~21
+  // ── Layout math ────────────────────────────────
+  const ibW = 178;
+  const startY = 160; 
+  
+  let currentY = startY;
 
-  let y = ZONE_TOP + topPad;   // ≈ 110
+  // 1. Name (.nm)
+  doc.font('Times-Bold').fontSize(16).fillColor('#1a3d21');
+  const nameText = ticket.name.toUpperCase();
+  const nameWidth = doc.widthOfString(nameText);
+  if (nameWidth > ibW) {
+    doc.fontSize(16 * (ibW / nameWidth)); // scale down
+  }
+  doc.text(nameText, cx - ibW / 2, currentY, { width: ibW, align: 'center' });
+  currentY += doc.heightOfString(nameText) + 4;
 
-  const drawRow = (icon: IconType, label: string, value: string, highlighted: boolean) => {
-    const iconCY = y + ROW_H / 2;
-    drawIcon(doc, ICON_X, iconCY, ICON_R, icon);
+  // 2. Divider (.divider)
+  const divW = ibW * 0.82;
+  doc.moveTo(cx - divW / 2, currentY)
+     .lineTo(cx + divW / 2, currentY)
+     .lineWidth(1.5).strokeColor('#a5d6a7').strokeOpacity(0.7).stroke();
+  doc.strokeOpacity(1); // reset
+  currentY += 6;
 
-    if (highlighted) {
-      doc.roundedRect(TEXT_X - 3, y + 2, W - TEXT_X - PAD_R + 3, ROW_H - 4, 3)
-         .fill(DARK_GREEN);
-      doc.fillColor(GOLD).fontSize(5.5).font('Helvetica')
-         .text(label, TEXT_X + 2, y + 5, { characterSpacing: 0.8 });
-      const fs = value.length > 26 ? 9 : value.length > 20 ? 10.5 : 12;
-      doc.fillColor(WHITE).fontSize(fs).font('Helvetica-Bold')
-         .text(value, TEXT_X + 2, y + 13, { width: W - TEXT_X - PAD_R - 4 });
-    } else {
-      doc.fillColor(GRAY).fontSize(5.5).font('Helvetica')
-         .text(label, TEXT_X, y + 4, { characterSpacing: 0.8 });
-      const fs = value.length > 24 ? 10 : value.length > 18 ? 11.5 : 13;
-      doc.fillColor(DARK_GREEN).fontSize(fs).font('Helvetica-Bold')
-         .text(value, TEXT_X, y + 13, { width: W - TEXT_X - PAD_R });
-    }
+  // 3. Designation (.dg)
+  const desig = ticket.designation && ticket.designation !== '—' ? ticket.designation : ticket.organization;
+  doc.font('Helvetica-Bold').fontSize(9).fillColor('#1a5c2a');
+  doc.text(desig, cx - ibW / 2, currentY, { width: ibW, align: 'center' });
+  currentY += doc.heightOfString(desig) + 6;
 
-    // Thin separator
-    doc.moveTo(TEXT_X, y + ROW_H + 1).lineTo(W - PAD_R, y + ROW_H + 1)
-       .strokeColor('#cccccc').lineWidth(0.4).stroke();
+  // 4. Badges (.bd)
+  doc.fontSize(7).font('Helvetica-Bold');
+  const typeText = ticket.registrationType.toUpperCase();
+  const idText = ticket.bookingId;
+  
+  const b1W = doc.widthOfString(typeText) + 12;
+  const b2W = doc.widthOfString(idText) + 12;
+  const gap = 4;
+  const totalBdW = b1W + b2W + gap;
+  const bdStartX = cx - totalBdW / 2;
+  
+  // Draw b1
+  doc.roundedRect(bdStartX, currentY, b1W, 12, 3).fill('#1a5c2a');
+  doc.fillColor('#ffffff').text(typeText, bdStartX + 6, currentY + 3);
+  
+  // Draw b2
+  const b2X = bdStartX + b1W + gap;
+  doc.roundedRect(b2X, currentY, b2W, 12, 3).fillOpacity(0.85).fill('#e8f5e9');
+  doc.fillOpacity(1); // reset
+  doc.roundedRect(b2X, currentY, b2W, 12, 3).lineWidth(0.5).strokeColor('#a5d6a7').stroke();
+  doc.fillColor('#1b5e20').text(idText, b2X + 6, currentY + 3.5);
+  
+  currentY += 12 + 10;
 
-    y += ROW_H + 3;
-  };
-
-  const desig = ticket.designation && ticket.designation !== '—'
-    ? ticket.designation.toUpperCase() : '—';
-
-  drawRow('person', 'NAME OF ATTENDEE',  ticket.name.toUpperCase(),             false);
-  drawRow('tag',    'DESIGNATION',       desig,                                  false);
-  drawRow('cert',   'REGISTRATION TYPE', ticket.registrationType.toUpperCase(), true);
-  drawRow('id',     'REGISTRATION ID',   ticket.bookingId,                      false);
-
-  y += 8;
-
-  // ── QR code ────────────────────────────────────────────────────────────────
-  const qrCardX = cx - (qrSz + 10) / 2;
-  doc.roundedRect(qrCardX, y, qrSz + 10, qrCardH, 5).fill(WHITE);
-  doc.roundedRect(qrCardX, y, qrSz + 10, qrCardH, 5)
-     .strokeColor(GOLD).lineWidth(0.6).stroke();
-  doc.image(qrBuf, qrCardX + 5, y + 5, { width: qrSz, height: qrSz });
+  // 5. QR Code Area (.qs)
+  const qrSz = 60;
+  const qrX = cx - qrSz / 2;
+  
+  // Canvas border
+  doc.roundedRect(qrX - 1, currentY - 1, qrSz + 2, qrSz + 2, 4)
+     .lineWidth(1.5).strokeColor('#a5d6a7').strokeOpacity(0.8).stroke();
+  doc.strokeOpacity(1);
+  
+  doc.image(qrBuf, qrX, currentY, { width: qrSz, height: qrSz });
+  currentY += qrSz + 6;
+  
+  // QR Label (.ql)
+  doc.fontSize(7).font('Helvetica-Bold').fillColor('#2d5a35');
+  doc.text("Scan at Venue Entrance", cx - ibW / 2, currentY, { width: ibW, align: 'center' });
 }

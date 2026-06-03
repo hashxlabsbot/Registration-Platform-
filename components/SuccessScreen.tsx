@@ -73,143 +73,47 @@ export default function SuccessScreen({ booking }: { booking: BookingResult }) {
       </div>
 
       {/* ── THE TICKET ── */}
-      <div className="w-full rounded-3xl overflow-hidden shadow-2xl border border-green-200" style={{ background: '#fff' }}>
-
-        {/* Top band: dark green */}
-        <div className="relative bg-[#1a4a1a] px-6 pt-6 pb-0 overflow-hidden">
-          {/* Subtle dot pattern */}
-          <div className="absolute inset-0 opacity-[0.07]" style={{
-            backgroundImage: 'radial-gradient(circle, #c8a96e 1px, transparent 1px)',
-            backgroundSize: '18px 18px',
-          }} />
-
-          {/* IIA header row */}
-          <div className="relative flex items-center justify-between mb-5">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full border-2 border-[#c8a96e] flex items-center justify-center shrink-0 bg-white/10 p-0.5">
-                <img src="/IIA-Logo.svg" alt="IIA" className="w-full h-full object-contain" style={{ filter: 'brightness(0) invert(1)' }} />
-              </div>
-              <div className="leading-tight">
-                <p className="text-[9px] font-bold text-[#c8a96e] uppercase tracking-widest">The Indian Institute of Architects</p>
-                <p className="text-[8px] text-green-500 uppercase tracking-wider">Faridabad Centre</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-1.5 bg-[#c8a96e]/15 border border-[#c8a96e]/30 rounded-full px-3 py-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#c8a96e]" />
-              <span className="text-[9px] font-bold text-[#c8a96e] uppercase tracking-wider">Entry Ticket</span>
-            </div>
+      <div className="w-full max-w-[320px] mx-auto rounded-2xl overflow-hidden shadow-2xl relative border border-green-200">
+        <img src="/Id-background.png" alt="Prakriti 2026 Ticket" className="w-full block" />
+        <div className="absolute inset-0 flex items-start justify-center pt-[38%] pb-[25%]">
+          <div className="rounded-[14px] flex flex-col items-center justify-center aspect-square w-[62%] gap-1.5 p-2 bg-transparent">
+             <div 
+               className="font-serif font-bold text-[#1a3d21] text-center leading-tight whitespace-nowrap w-full overflow-hidden text-ellipsis text-[18px]" 
+               style={{ textShadow: '0 1px 8px rgba(255,255,255,0.8)' }}>
+               {booking.name.toUpperCase()}
+             </div>
+             <div className="w-[82%] h-[1.5px] bg-[#a5d6a7]/70 shrink-0"></div>
+             <div 
+               className="text-[#1a5c2a] font-semibold text-center leading-snug text-[11px]" 
+               style={{ textShadow: '0 1px 6px rgba(255,255,255,0.8)' }}>
+               {booking.designation && booking.designation !== '—' ? booking.designation : booking.organization}
+             </div>
+             <div className="flex gap-1.5 flex-wrap justify-center mt-1">
+               <div className="bg-[#1a5c2a] text-white rounded px-2 py-0.5 font-bold text-[9px]">
+                 {booking.registrationType.toUpperCase()}
+               </div>
+               <div className="bg-[#e8f5e9]/85 text-[#1b5e20] border border-[#a5d6a7] rounded px-2 py-0.5 font-bold text-[9px]">
+                 {booking.bookingId}
+               </div>
+             </div>
+             <div className="flex flex-col items-center gap-1 mt-1">
+               <div className="p-0.5 border-[1.5px] border-[#a5d6a7]/80 rounded bg-white">
+                 <QRCodeSVG
+                    value={qrValue}
+                    size={76}
+                    fgColor="#1a4a1a"
+                    bgColor="#ffffff"
+                    level="M"
+                    style={{ display: 'block' }}
+                  />
+               </div>
+               <div 
+                 className="font-semibold text-[#2d5a35] text-[9px]" 
+                 style={{ textShadow: '0 1px 3px rgba(255,255,255,0.6)' }}>
+                 Scan at Venue Entrance
+               </div>
+             </div>
           </div>
-
-          {/* Event title */}
-          <div className="relative text-center pb-6">
-            <h1 className="text-[52px] font-black text-white leading-none tracking-tight">Prakriti</h1>
-            <p className="text-[40px] font-black text-[#c8a96e] leading-none tracking-[0.08em] -mt-1">2026</p>
-            <p className="mt-2 text-green-300 text-[11px] font-medium tracking-wide">Architects for a Sustainable Tomorrow</p>
-            <p className="text-[9px] text-[#c8a96e]/50 uppercase tracking-[0.35em] mt-0.5">Design · Conserve · Restore</p>
-          </div>
-
-          {/* Perforated edge — scallops at bottom of dark band */}
-          <div className="relative -mx-0 h-4 flex">
-            {Array.from({ length: 32 }).map((_, i) => (
-              <div key={i} className="flex-1 flex justify-center">
-                <div className="h-4 w-4 rounded-full bg-[#f4f7f0] -mb-2" />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Middle white section — QR code */}
-        <div className="bg-[#f4f7f0] px-6 py-6 flex flex-col items-center gap-3">
-
-          <p className="text-[9px] font-bold text-[#2e7d32]/60 uppercase tracking-[0.3em]">Scan at Venue Entrance</p>
-
-          {/* QR code with frame */}
-          <div className="relative p-3 bg-white rounded-2xl shadow-md border-2 border-[#2e7d32]/20">
-            <QRCodeSVG
-              value={qrValue}
-              size={180}
-              fgColor="#1a4a1a"
-              bgColor="#ffffff"
-              level="M"
-              imageSettings={{
-                src: '',
-                height: 0,
-                width: 0,
-                excavate: false,
-              }}
-            />
-            {/* Corner accents */}
-            <svg className="absolute top-2 left-2" width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M 6,0 L 0,0 L 0,6" stroke="#c8a96e" strokeWidth="1.5" fill="none"/>
-            </svg>
-            <svg className="absolute top-2 right-2" width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M 6,0 L 12,0 L 12,6" stroke="#c8a96e" strokeWidth="1.5" fill="none"/>
-            </svg>
-            <svg className="absolute bottom-2 left-2" width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M 0,6 L 0,12 L 6,12" stroke="#c8a96e" strokeWidth="1.5" fill="none"/>
-            </svg>
-            <svg className="absolute bottom-2 right-2" width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M 12,6 L 12,12 L 6,12" stroke="#c8a96e" strokeWidth="1.5" fill="none"/>
-            </svg>
-          </div>
-
-          {/* Booking ID pill */}
-          <div className="flex items-center gap-2 bg-[#1a4a1a] rounded-xl px-5 py-2.5">
-            <span className="text-[9px] font-bold text-green-400 uppercase tracking-widest">Booking ID</span>
-            <span className="text-base font-black text-[#c8a96e] font-mono tracking-wider">{booking.bookingId}</span>
-          </div>
-
-          {/* Event info pills */}
-          <div className="w-full grid grid-cols-2 gap-2 mt-1">
-            <div className="bg-white rounded-xl px-3 py-2.5 border border-green-100 text-center">
-              <p className="text-[8px] text-[#2e7d32]/50 uppercase tracking-widest font-bold">Date</p>
-              <p className="text-[11px] font-bold text-[#1a4a1a] mt-0.5 leading-tight">20 June 2026</p>
-              <p className="text-[9px] text-gray-400">Saturday · 3:00 PM</p>
-            </div>
-            <div className="bg-white rounded-xl px-3 py-2.5 border border-green-100 text-center">
-              <p className="text-[8px] text-[#2e7d32]/50 uppercase tracking-widest font-bold">Venue</p>
-              <p className="text-[11px] font-bold text-[#1a4a1a] mt-0.5 leading-tight">Saffron Hall</p>
-              <p className="text-[9px] text-gray-400">Vardaan Group, Faridabad</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Perforated divider */}
-        <div className="relative bg-[#f4f7f0] flex items-center px-4 gap-1.5 py-1">
-          <div className="h-4 w-4 rounded-full bg-white -ml-6 shrink-0" />
-          <div className="flex-1 border-t-2 border-dashed border-[#2e7d32]/20" />
-          <div className="h-4 w-4 rounded-full bg-white -mr-6 shrink-0" />
-        </div>
-
-        {/* Attendee details section */}
-        <div className="bg-white px-6 py-5 space-y-0">
-          <p className="text-[9px] font-extrabold text-[#2e7d32]/50 uppercase tracking-[0.3em] mb-4">Attendee Details</p>
-
-          <div className="grid grid-cols-2 gap-x-5 gap-y-4">
-            <DetailCell label="Full Name" value={booking.name} span />
-            <DetailCell label="Registration Type" value={booking.registrationType} highlight />
-            <DetailCell label="Amount Paid" value={`₹${booking.amount.toLocaleString('en-IN')}`} highlight />
-            <DetailCell label="Email" value={booking.email} span />
-            <DetailCell label="Phone" value={`+91 ${booking.phone}`} />
-            <DetailCell label="Organization" value={booking.organization} />
-            {booking.designation && booking.designation !== '—' && (
-              <DetailCell label="Designation" value={booking.designation} />
-            )}
-            <DetailCell label="UPI Ref / UTR" value={booking.utrNumber} mono />
-          </div>
-        </div>
-
-        {/* Important notice */}
-        <div className="bg-amber-50 border-t border-amber-100 px-6 py-3">
-          <p className="text-[10px] text-amber-700 leading-relaxed">
-            <strong>Carry a valid photo ID</strong> · Non-transferable · Entry subject to payment verification · Gates open at 2:30 PM
-          </p>
-        </div>
-
-        {/* Footer */}
-        <div className="bg-[#1a4a1a] px-6 py-3 flex items-center justify-between">
-          <p className="text-[9px] text-green-600">Computer generated · No signature required</p>
-          <p className="text-[9px] font-bold text-[#c8a96e] uppercase tracking-wider">Prakriti 2026</p>
         </div>
       </div>
 
