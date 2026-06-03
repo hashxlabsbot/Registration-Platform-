@@ -5,7 +5,7 @@ import { BookingResult } from '@/lib/types';
 
 // ── Registration types ────────────────────────────────────────────────────────
 const REGISTRATION_TYPES = [
-  { label: 'Architect - IIA Member',     price: 500  },
+  { label: 'Architect - IIA Member',     price: 1  },
   { label: 'Architect - Non-IIA Member', price: 1000 },
   { label: "Member's Spouse",            price: 1000 },
   { label: 'Non-Architect',              price: 2500 },
