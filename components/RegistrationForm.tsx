@@ -5,10 +5,11 @@ import { BookingResult } from '@/lib/types';
 
 // ── Registration types ────────────────────────────────────────────────────────
 const REGISTRATION_TYPES = [
-  { label: 'IIA Member',     price: 1  },
-  { label: 'Non IIA Member', price: 1000 },
-  { label: 'Visitor',        price: 2000 },
-  { label: 'Exhibitor',      price: 3000 },
+  { label: 'Architect - IIA Member',     price: 500  },
+  { label: 'Architect - Non-IIA Member', price: 1000 },
+  { label: "Member's Spouse",            price: 1000 },
+  { label: 'Non-Architect',              price: 2500 },
+  { label: 'Special Invitee',            price: 0    },
 ] as const;
 
 type RegType = (typeof REGISTRATION_TYPES)[number]['label'];
@@ -26,6 +27,7 @@ interface Step2 {
   registrationType: RegType;
   coaNumber: string;
   iiaMembershipNumber: string;
+  inviteCode: string;
 }
 
 declare global {
@@ -41,14 +43,17 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
   });
   const [s1Errors, setS1Errors] = useState<Step1Errors>({});
   const [s2, setS2] = useState<Step2>({
-    registrationType: 'IIA Member', coaNumber: '', iiaMembershipNumber: '',
+    registrationType: 'Architect - IIA Member', coaNumber: '', iiaMembershipNumber: '', inviteCode: '',
   });
   const [paying,   setPaying]   = useState(false);
   const [apiError, setApiError] = useState('');
 
-  const amount = REGISTRATION_TYPES.find((t) => t.label === s2.registrationType)!.price;
+  const regType = s2.registrationType;
+  const isIIAMember      = regType === 'Architect - IIA Member';
+  const isSpecialInvitee = regType === 'Special Invitee';
+  const amount = REGISTRATION_TYPES.find((t) => t.label === regType)!.price;
 
-  // Load Razorpay script on mount
+  // Load Razorpay script
   useEffect(() => {
     if (document.getElementById('rzp-script')) return;
     const s = document.createElement('script');
@@ -85,12 +90,56 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
     if (validateStep1()) setStep(2);
   }
 
-  // ── Step 2 — open Razorpay ───────────────────────────────────────────────────
+  // ── Step 2 — free registration (Special Invitee) ────────────────────────────
+  async function handleFreeRegister(e: React.SyntheticEvent) {
+    e.preventDefault();
+    setApiError('');
+    if (!s2.inviteCode.trim()) { setApiError('Please enter your invite code.'); return; }
+
+    setPaying(true);
+    try {
+      // Pre-validate invite code for instant feedback
+      const checkRes = await fetch('/api/validate-invite', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ code: s2.inviteCode }),
+      });
+      const checkData = await checkRes.json();
+      if (!checkRes.ok) throw new Error(checkData.error ?? 'Invalid invite code.');
+
+      // Register directly (no payment)
+      const regRes = await fetch('/api/register', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ ...s1, ...s2, totalAmount: 0, utrNumber: 'INVITE' }),
+      });
+      const regData = await regRes.json();
+      if (!regRes.ok) throw new Error(regData.error ?? 'Registration failed.');
+
+      onSuccess({
+        bookingId:        regData.bookingId,
+        name:             regData.name,
+        email:            regData.email,
+        phone:            regData.phone,
+        organization:     regData.organization,
+        designation:      regData.designation,
+        registrationType: regData.registrationType,
+        amount:           0,
+        utrNumber:        'INVITE',
+      });
+    } catch (err) {
+      setApiError((err as Error).message);
+    } finally {
+      setPaying(false);
+    }
+  }
+
+  // ── Step 2 — paid registration via Razorpay ──────────────────────────────────
   async function openPayment(e: React.SyntheticEvent) {
     e.preventDefault();
     setApiError('');
 
-    if (s2.registrationType === 'IIA Member' && !s2.iiaMembershipNumber.trim()) {
+    if (isIIAMember && !s2.iiaMembershipNumber.trim()) {
       setApiError('IIA Membership Number is required for IIA Members.');
       return;
     }
@@ -101,16 +150,14 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
 
     setPaying(true);
     try {
-      // 1. Create Razorpay order
       const orderRes = await fetch('/api/payment/create-order', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount, registrationType: s2.registrationType, name: s1.name, email: s1.email }),
+        body:    JSON.stringify({ amount, registrationType: regType, name: s1.name, email: s1.email }),
       });
       const { orderId, error: orderErr } = await orderRes.json();
       if (!orderRes.ok || !orderId) throw new Error(orderErr ?? 'Could not initiate payment.');
 
-      // 2. Open checkout
       await new Promise<void>((resolve, reject) => {
         const rzp = new window.Razorpay({
           key:         RAZORPAY_KEY,
@@ -118,30 +165,24 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
           currency:    'INR',
           order_id:    orderId,
           name:        'IIA Faridabad Centre',
-          description: `Prakriti 2026 — ${s2.registrationType}`,
-          prefill: {
-            name:    s1.name,
-            email:   s1.email,
-            contact: `+91${s1.phone}`,
-          },
+          description: `Prakriti 2026 — ${regType}`,
+          prefill: { name: s1.name, email: s1.email, contact: `+91${s1.phone}` },
           theme:  { color: '#1a4a1a' },
           modal: {
             backdropclose: false,
             escape: false,
             ondismiss: () => { setPaying(false); resolve(); },
           },
-
           handler: async (response: {
             razorpay_payment_id: string;
             razorpay_order_id:   string;
             razorpay_signature:  string;
           }) => {
-            // 3. Verify payment server-side → create booking
             try {
               const verifyRes = await fetch('/api/payment/verify', {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...response, ...s1, ...s2, totalAmount: amount }),
+                body:    JSON.stringify({ ...response, ...s1, ...s2, totalAmount: amount }),
               });
               const data = await verifyRes.json();
               if (!verifyRes.ok) throw new Error(data.error ?? 'Payment verification failed.');
@@ -160,14 +201,11 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
             } catch (err) { reject(err); }
           },
         });
-
         rzp.on('payment.failed', (resp: { error: { description: string } }) => {
           reject(new Error(resp.error?.description ?? 'Payment failed.'));
         });
-
         rzp.open();
       });
-
     } catch (err) {
       setApiError((err as Error).message);
     } finally {
@@ -265,14 +303,14 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
             </div>
             <button type="submit"
               className="mt-7 w-full rounded-xl bg-[#2e7d32] py-4 text-base font-bold text-white hover:bg-[#1a4a1a] transition">
-              Proceed to Payment →
+              Proceed to Registration →
             </button>
           </form>
         )}
 
         {/* ── STEP 2 ── */}
         {step === 2 && (
-          <form onSubmit={openPayment} noValidate className="space-y-5">
+          <form onSubmit={isSpecialInvitee ? handleFreeRegister : openPayment} noValidate className="space-y-5">
 
             {/* Registration type */}
             <div>
@@ -287,44 +325,71 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
                     <div className="flex items-center gap-2.5">
                       <input type="radio" name="registrationType" value={t.label}
                         checked={s2.registrationType === t.label}
-                        onChange={(e) => setS2((p) => ({ ...p, registrationType: e.target.value as RegType, coaNumber: '', iiaMembershipNumber: '' }))}
+                        onChange={(e) => setS2((p) => ({
+                          ...p,
+                          registrationType: e.target.value as RegType,
+                          coaNumber: '',
+                          iiaMembershipNumber: '',
+                          inviteCode: '',
+                        }))}
                         className="accent-[#2e7d32] h-4 w-4" />
                       <span className={`text-sm font-semibold ${s2.registrationType === t.label ? 'text-[#1a4a1a]' : 'text-gray-600'}`}>
                         {t.label}
                       </span>
                     </div>
                     <span className={`text-sm font-black ${s2.registrationType === t.label ? 'text-[#2e7d32]' : 'text-gray-400'}`}>
-                      ₹{t.price.toLocaleString('en-IN')}
+                      {t.price === 0 ? (
+                        <span className="text-purple-600">By Invite</span>
+                      ) : (
+                        `₹${t.price.toLocaleString('en-IN')}`
+                      )}
                     </span>
                   </label>
                 ))}
               </div>
             </div>
 
-            {/* COA + IIA — only for IIA Members */}
-            {s2.registrationType === 'IIA Member' && (
+            {/* COA — for both IIA and Non-IIA architects */}
+            {(isIIAMember || regType === 'Architect - Non-IIA Member') && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="COA Number" id="coaNumber" name="coaNumber" value={s2.coaNumber}
                   onChange={(e) => setS2((p) => ({ ...p, coaNumber: e.target.value }))}
                   placeholder="CA/XXXX/XXXX" />
-                <Field label="IIA Membership No." id="iiaMembershipNumber" name="iiaMembershipNumber"
-                  value={s2.iiaMembershipNumber}
-                  onChange={(e) => setS2((p) => ({ ...p, iiaMembershipNumber: e.target.value }))}
-                  placeholder="IIA/XXXX/XXXX"
-                  required />
+                {/* IIA Membership No. — only for IIA Member */}
+                {isIIAMember && (
+                  <Field label="IIA Membership No." id="iiaMembershipNumber" name="iiaMembershipNumber"
+                    value={s2.iiaMembershipNumber}
+                    onChange={(e) => setS2((p) => ({ ...p, iiaMembershipNumber: e.target.value }))}
+                    placeholder="IIA/XXXX/XXXX"
+                    required />
+                )}
               </div>
             )}
 
-            {/* ── Order summary card ── */}
+            {/* Invite code — only for Special Invitee */}
+            {isSpecialInvitee && (
+              <div className="rounded-xl border-2 border-purple-100 bg-purple-50 p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-purple-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                  </svg>
+                  <p className="text-sm font-semibold text-purple-700">Special Invitee — Invite Code Required</p>
+                </div>
+                <Field label="Invite Code" id="inviteCode" name="inviteCode" value={s2.inviteCode}
+                  onChange={(e) => setS2((p) => ({ ...p, inviteCode: e.target.value.toUpperCase() }))}
+                  placeholder="INV-XXXXXX"
+                  required />
+                <p className="text-xs text-purple-500">Enter the invite code shared with you by the organiser.</p>
+              </div>
+            )}
+
+            {/* Order summary */}
             <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
-              {/* Top: event info */}
               <div className="bg-[#f4f7f0] px-5 py-4 border-b border-gray-100">
                 <p className="text-[10px] font-bold text-[#2e7d32] uppercase tracking-widest mb-1">Order Summary</p>
                 <p className="text-sm font-bold text-[#1a4a1a]">Prakriti 2026 — Entry Ticket</p>
                 <p className="text-xs text-gray-500 mt-0.5">Saturday, 20 June 2026 · Saffron Hall, Faridabad</p>
               </div>
-
-              {/* Middle: attendee + price */}
               <div className="bg-white px-5 py-4 flex items-center justify-between gap-4">
                 <div className="min-w-0">
                   <p className="text-xs text-gray-400 mb-0.5">Attendee</p>
@@ -332,20 +397,24 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
                   <p className="text-xs text-gray-400 truncate">{s1.email}</p>
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="text-xs text-gray-400 mb-0.5">{s2.registrationType}</p>
-                  <p className="text-3xl font-black text-[#1a4a1a] leading-none">
-                    ₹{amount.toLocaleString('en-IN')}
-                  </p>
+                  <p className="text-xs text-gray-400 mb-0.5">{regType}</p>
+                  {isSpecialInvitee ? (
+                    <p className="text-2xl font-black text-purple-600">Free</p>
+                  ) : (
+                    <p className="text-3xl font-black text-[#1a4a1a] leading-none">
+                      ₹{amount.toLocaleString('en-IN')}
+                    </p>
+                  )}
                 </div>
               </div>
-
-              {/* Bottom: accepted methods */}
-              <div className="bg-gray-50 px-5 py-3 flex items-center gap-2 border-t border-gray-100">
-                <svg className="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                <p className="text-[10px] text-gray-400">UPI · GPay · PhonePe · Paytm · Debit/Credit Card · Net Banking</p>
-              </div>
+              {!isSpecialInvitee && (
+                <div className="bg-gray-50 px-5 py-3 flex items-center gap-2 border-t border-gray-100">
+                  <svg className="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  <p className="text-[10px] text-gray-400">UPI · GPay · PhonePe · Paytm · Debit/Credit Card · Net Banking</p>
+                </div>
+              )}
             </div>
 
             {apiError && (
@@ -357,18 +426,27 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
               </div>
             )}
 
-            {/* Action buttons */}
             <div className="flex gap-3 pt-1">
               <button type="button" onClick={() => { setStep(1); setApiError(''); }}
                 className="flex-1 rounded-xl border border-gray-200 py-3.5 text-sm font-semibold text-gray-500 hover:bg-gray-50 transition">
                 ← Back
               </button>
               <button type="submit" disabled={paying}
-                className="flex-[2] rounded-xl bg-[#1a4a1a] py-3.5 text-base font-bold text-white
-                  hover:bg-[#2e7d32] disabled:opacity-50 disabled:cursor-not-allowed
-                  flex items-center justify-center gap-2.5 transition-colors shadow-lg shadow-green-950/20">
+                className={`flex-[2] rounded-xl py-3.5 text-base font-bold text-white
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                  flex items-center justify-center gap-2.5 transition-colors shadow-lg
+                  ${isSpecialInvitee
+                    ? 'bg-purple-600 hover:bg-purple-700 shadow-purple-900/20'
+                    : 'bg-[#1a4a1a] hover:bg-[#2e7d32] shadow-green-950/20'}`}>
                 {paying ? (
-                  <><Spinner />Processing…</>
+                  <><Spinner />{isSpecialInvitee ? 'Verifying…' : 'Processing…'}</>
+                ) : isSpecialInvitee ? (
+                  <>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Complete Registration
+                  </>
                 ) : (
                   <>
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -380,15 +458,16 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
               </button>
             </div>
 
-            {/* Trust badge */}
-            <div className="flex items-center justify-center gap-2 py-1">
-              <svg className="w-3.5 h-3.5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"/>
-              </svg>
-              <p className="text-[11px] text-gray-400">
-                Secured by <span className="font-bold text-[#528FF0]">Razorpay</span> · 256-bit SSL encryption
-              </p>
-            </div>
+            {!isSpecialInvitee && (
+              <div className="flex items-center justify-center gap-2 py-1">
+                <svg className="w-3.5 h-3.5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"/>
+                </svg>
+                <p className="text-[11px] text-gray-400">
+                  Secured by <span className="font-bold text-[#528FF0]">Razorpay</span> · 256-bit SSL encryption
+                </p>
+              </div>
+            )}
 
           </form>
         )}

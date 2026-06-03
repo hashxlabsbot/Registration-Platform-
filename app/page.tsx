@@ -16,10 +16,11 @@ const HIGHLIGHTS = [
 ];
 
 const PRICING = [
-  { type: 'IIA Member',      price: '₹1',     desc: 'Active IIA membership required' },
-  { type: 'Non IIA Member',  price: '₹1,000', desc: 'Open to all architecture professionals' },
-  { type: 'Visitor',         price: '₹2,000', desc: 'Students, enthusiasts & guests' },
-  { type: 'Exhibitor',       price: '₹3,000', desc: 'Showcase your firm or products' },
+  { type: 'Architect – IIA Member',     price: '₹500',      desc: 'Active IIA membership required' },
+  { type: 'Architect – Non-IIA Member', price: '₹1,000',    desc: 'Open to all architecture professionals' },
+  { type: "Member's Spouse",            price: '₹1,000',    desc: 'Spouse of an IIA member' },
+  { type: 'Non-Architect',              price: '₹2,500',    desc: 'Industry professionals & guests' },
+  { type: 'Special Invitee',            price: 'By Invite', desc: 'Invitation-only, by admin' },
 ];
 
 const SPONSORS = [
