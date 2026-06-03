@@ -77,6 +77,32 @@ export default function RegisterPage() {
         </div>
       )}
 
+      {/* ─── Venue photos ───────────────────────────────────────────────────── */}
+      {!booking && (
+        <div className="max-w-3xl mx-auto px-4 pt-5 pb-1">
+          <div className="grid grid-cols-3 gap-2 rounded-2xl overflow-hidden">
+            <div className="relative h-28 overflow-hidden rounded-xl">
+              <img src="/saffron hall .webp" alt="Saffron Hall" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+              <p className="absolute bottom-2 left-2.5 text-white text-[9px] font-bold uppercase tracking-wider">Saffron Hall</p>
+            </div>
+            <div className="relative h-28 overflow-hidden rounded-xl">
+              <img src="/venue stage.webp" alt="Stage" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+              <p className="absolute bottom-2 left-2.5 text-white text-[9px] font-bold uppercase tracking-wider">Main Stage</p>
+            </div>
+            <div className="relative h-28 overflow-hidden rounded-xl">
+              <img src="/dinner space.webp" alt="Dinner Space" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+              <p className="absolute bottom-2 left-2.5 text-white text-[9px] font-bold uppercase tracking-wider">Dinner Space</p>
+            </div>
+          </div>
+          <p className="text-center text-[10px] text-gray-400 mt-2 font-medium tracking-wide uppercase">
+            Vardaan Group · Saffron Hall · Faridabad
+          </p>
+        </div>
+      )}
+
       {/* ─── Content ─────────────────────────────────────────────────────────── */}
       <div className="max-w-3xl mx-auto px-4 py-10">
         {booking ? (
