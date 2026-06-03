@@ -261,10 +261,11 @@ export default function Home() {
       {/* ─── Venue Section ──────────────────────────────────────────────────── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-14">
         <SectionTitle label="The Venue" sub="Saffron Hall, Vardaan Group — Sector-21C, GymKhana Club, Surajkund Road, Faridabad" />
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
-            { src: '/venue_exterior.png', label: 'Venue Exterior', sub: 'Saffron Hall, Vardaan Group' },
-            { src: '/venue_interior.png', label: 'Grand Ballroom Interior', sub: 'Capacity for 500+ guests' },
+            { src: '/saffron hall .webp', label: 'Saffron Hall',  sub: 'Vardaan Group, Faridabad' },
+            { src: '/venue stage.webp',   label: 'Main Stage',    sub: 'Grand auditorium stage' },
+            { src: '/dinner space.webp',  label: 'Dinner Space',  sub: 'Gala networking & dining' },
           ].map((v) => (
             <div key={v.label} className="relative rounded-2xl overflow-hidden h-64 shadow-md group">
               {/* eslint-disable-next-line @next/next/no-img-element */}
