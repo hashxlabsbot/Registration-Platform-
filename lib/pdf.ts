@@ -59,10 +59,11 @@ export async function generateTicketPDF(ticket: TicketData): Promise<Buffer> {
     /* proceed without background */
   }
 
-  // 2. Get AI layout (Gemini analyses the background image)
-  const layout: TicketLayout = bgBase64
-    ? await analyzeBackgroundLayout(bgBase64)
-    : FALLBACK_LAYOUT;
+  // 2. Get AI layout (Bypassed AI analysis for now, using fallback layout)
+  // const layout: TicketLayout = bgBase64
+  //   ? await analyzeBackgroundLayout(bgBase64)
+  //   : FALLBACK_LAYOUT;
+  const layout: TicketLayout = FALLBACK_LAYOUT;
 
   // 3. Generate QR code as sharp-resized PNG
   const qrSize = layout.qrCode.size;
