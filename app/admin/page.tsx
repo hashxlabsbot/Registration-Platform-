@@ -8,6 +8,7 @@ interface Registration {
   email: string;
   phone: string;
   organization: string;
+  designation: string;
   registrationType: string;
   amount: number;
   utrNumber: string;
@@ -303,6 +304,7 @@ export default function AdminPage() {
                     <th className="px-5 py-3.5 text-left text-[10px] font-black uppercase tracking-widest text-white/25 hidden lg:table-cell">Phone</th>
                     <th className="px-5 py-3.5 text-left text-[10px] font-black uppercase tracking-widest text-white/25 hidden lg:table-cell">Registered</th>
                     <th className="px-5 py-3.5 text-left text-[10px] font-black uppercase tracking-widest text-white/25">Status</th>
+                    <th className="px-5 py-3.5 text-left text-[10px] font-black uppercase tracking-widest text-white/25 hidden md:table-cell">Ticket</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -343,7 +345,48 @@ export default function AdminPage() {
 // ── Table row ────────────────────────────────────────────────────────────────
 function TableRow({ r, i }: { r: Registration; i: number }) {
   const [hovered, setHovered] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const base = i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.012)';
+
+  const displayRegType =
+    r.registrationType === 'Non-Architect' || r.registrationType === 'Non - Architect'
+      ? 'Delegate'
+      : r.registrationType;
+
+  async function downloadTicket() {
+    setDownloading(true);
+    try {
+      const res = await fetch('/api/ticket', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bookingId: r.bookingId,
+          name: r.name,
+          email: r.email,
+          phone: r.phone,
+          organization: r.organization,
+          designation: r.designation,
+          registrationType: r.registrationType,
+          totalAmount: r.amount,
+          utrNumber: r.utrNumber,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `prakriti2026-ticket-${r.bookingId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      alert('Could not download ticket.');
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   return (
     <tr
@@ -371,7 +414,7 @@ function TableRow({ r, i }: { r: Registration; i: number }) {
             border: '1px solid rgba(74,222,128,0.2)',
           }}
         >
-          {r.registrationType}
+          {displayRegType}
         </span>
       </td>
       <td className="px-5 py-4 hidden md:table-cell">
@@ -413,6 +456,31 @@ function TableRow({ r, i }: { r: Registration; i: number }) {
             Pending
           </span>
         )}
+      </td>
+      <td className="px-5 py-4 hidden md:table-cell">
+        <button
+          onClick={downloadTicket}
+          disabled={downloading}
+          title="Download ticket PDF"
+          className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wide px-2.5 py-1.5 rounded-lg transition-all disabled:opacity-40"
+          style={{
+            background: downloading ? 'rgba(200,169,110,0.08)' : 'rgba(200,169,110,0.12)',
+            color: '#c8a96e',
+            border: '1px solid rgba(200,169,110,0.2)',
+          }}
+        >
+          {downloading ? (
+            <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+            </svg>
+          ) : (
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v13m0 0l-4-4m4 4l4-4M3 21h18" />
+            </svg>
+          )}
+          {downloading ? 'Saving…' : 'PDF'}
+        </button>
       </td>
     </tr>
   );

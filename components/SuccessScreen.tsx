@@ -147,7 +147,7 @@ export default function SuccessScreen({ booking }: { booking: BookingResult }) {
               >
                 Scan at Venue Entrance
               </div>
-              <div className="bg-[#1a5c2a] text-white rounded-full px-3 py-1 mt-1 font-bold text-[10px] shadow-md tracking-wider">
+              <div className="bg-[#1a5c2a] text-white rounded-full px-9 py-3 mt-3 font-bold text-[30px] shadow-md tracking-wider leading-none">
                 {(booking.registrationType === 'Non-Architect' || booking.registrationType === 'Non - Architect') ? 'DELEGATE' : booking.registrationType.toUpperCase()}
               </div>
             </div>
