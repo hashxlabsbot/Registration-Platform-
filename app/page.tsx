@@ -48,12 +48,8 @@ export default function Home() {
       <header className="sticky top-0 z-50 bg-white/96 backdrop-blur-md border-b border-green-100 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
           {/* Logo + name */}
-          <div className="flex items-center gap-2.5 shrink-0 min-w-0">
-            <IIAEmblem size={44} />
-            <div className="hidden xs:block min-w-0">
-              <p className="text-[11px] font-bold text-[#1a4a1a] leading-tight truncate">The Indian Institute</p>
-              <p className="text-[11px] font-bold text-[#1a4a1a] leading-tight truncate">of Architects</p>
-            </div>
+          <div className="flex items-center shrink-0 min-w-0">
+            <IIAEmblem size={220} />
           </div>
 
           {/* Right side */}
@@ -399,13 +395,8 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
 
             {/* Logo */}
-            <div className="flex items-center gap-3 justify-center sm:justify-start">
-              <IIAEmblem size={64} variant="light" />
-              <div>
-                <p className="text-white text-sm font-bold leading-tight">The Indian Institute</p>
-                <p className="text-white text-sm font-bold leading-tight">of Architects</p>
-                <p className="text-green-400 text-xs mt-0.5">Faridabad Centre</p>
-              </div>
+            <div className="flex items-center justify-center sm:justify-start">
+              <IIAEmblem size={320} variant="light" />
             </div>
 
             {/* Contact info */}
