@@ -180,11 +180,11 @@ function drawCard(
       : ticket.registrationType;
   const typeText = regType.toUpperCase();
 
-  doc.fontSize(27 * SCALE).font('Helvetica-Bold');
-  const typeW = doc.widthOfString(typeText) + 60 * SCALE;
-  const typeH = 42 * SCALE;
+  doc.fontSize(13 * SCALE).font('Helvetica-Bold');
+  const typeW = Math.min(doc.widthOfString(typeText) + 28 * SCALE, ibW);
+  const typeH = 18 * SCALE;
   const typeX = cx - typeW / 2;
 
   doc.roundedRect(typeX, currentY, typeW, typeH, typeH / 2).fill('#1a5c2a');
-  doc.fillColor('#ffffff').text(typeText, typeX + 30 * SCALE, currentY + 10 * SCALE);
+  doc.fillColor('#ffffff').text(typeText, typeX + 14 * SCALE, currentY + 4 * SCALE, { width: typeW - 28 * SCALE, align: 'center' });
 }
