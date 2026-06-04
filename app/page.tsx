@@ -22,18 +22,26 @@ const PRICING = [
 ];
 
 const SPONSORS = [
-  { name: 'Sponsor',             logo: '/sponsors/sponsor_peacock.png' },
-  { name: 'Ledure',              logo: '/sponsors/sponsor_ledure.png' },
-  { name: 'Supertech',           logo: '/sponsors/sponsor_supertech.png' },
-  { name: 'Creative Facade',     logo: '/sponsors/sponsor_creativefacade.png' },
-  { name: 'Roller Pest Control', logo: '/sponsors/sponsor_roller.png' },
-  { name: 'Arya Niratech',       logo: '/sponsors/sponsor_arya.png' },
-  { name: 'Jai Ambey',           logo: '/sponsors/sponsor_jaiambey.png' },
-  { name: 'Mitra',               logo: '/sponsors/sponsor_mitra.png' },
-  { name: 'Rover Industry',      logo: '/sponsors/sponsor_rover.png' },
-  { name: 'Shriram',             logo: '/sponsors/sponsor_shriram.png' },
-  { name: 'Skydecor',            logo: '/sponsors/sponsor_skydecor.png' },
-  { name: 'Orientbell Tiles',    logo: '/sponsors/sponsor_orientbell.png' },
+  { name: 'Bharat Steel',                    logo: '/sponsors/sponsor_bharat-steel.png' },
+  { name: 'Nebastar',                        logo: '/sponsors/sponsor_nebastar.png' },
+  { name: 'Arora Developers P.P. Ltd.',      logo: '/sponsors/sponsor_arora-developers.png' },
+  { name: 'Mitra',                           logo: '/sponsors/sponsor_mitra.png' },
+  { name: 'NPYA Interact',                   logo: '/sponsors/sponsor_npya-interact.png' },
+  { name: 'Ali Empire',                      logo: '/sponsors/sponsor_ali-empire.png' },
+  { name: 'Saibo5 Enterprises',              logo: '/sponsors/sponsor_saibo5-enterprises.png' },
+  { name: 'Greenlam Laminates',              logo: '/sponsors/sponsor_greenlam.png' },
+  { name: 'Rover Industry',                  logo: '/sponsors/sponsor_rover-industry.png' },
+  { name: 'Roller Pest Control',             logo: '/sponsors/sponsor_roller-pest-control.png' },
+  { name: 'Jai Ambe Developers',             logo: '/sponsors/sponsor_jai-ambe-developers.png' },
+  { name: 'Birla Pivot',                     logo: '/sponsors/sponsor_birla-pivot.png' },
+  { name: 'Supertech',                       logo: '/sponsors/sponsor_supertech.png' },
+  { name: 'Excellence Office Furniture',     logo: '/sponsors/sponsor_excellence-furniture.png' },
+  { name: 'Skydecor',                        logo: '/sponsors/sponsor_skydecor.png' },
+  { name: 'Creative Facade Art & Glass',     logo: '/sponsors/sponsor_creative-facade.png' },
+  { name: 'Ledure Smart Lighting',           logo: '/sponsors/sponsor_ledure.png' },
+  { name: 'Orientbell Tiles',                logo: '/sponsors/sponsor_orientbell.png' },
+  { name: 'SRTS Complete Construction',      logo: '/sponsors/sponsor_srts.png' },
+  { name: 'Supertech India Pvt. Ltd.',       logo: '/sponsors/sponsor_supertech-india.png' },
 ];
 
 export default function Home() {
@@ -93,7 +101,7 @@ export default function Home() {
             />
 
             <p className="mt-3 text-[#2e7d32] text-base sm:text-lg lg:text-xl font-semibold leading-snug">
-              Architects for a Sustainable Tomorrow
+              An Architects&apos; Meet-Up &ldquo;For a Sustainable Tomorrow&rdquo;
             </p>
             <p className="mt-1.5 text-[#1a4a1a]/45 text-[10px] sm:text-[11px] uppercase tracking-[0.25em]">
               Design&nbsp;·&nbsp;Conserve&nbsp;·&nbsp;Restore
@@ -359,7 +367,7 @@ export default function Home() {
       <section className="bg-white border-t border-green-100 py-10 sm:py-14 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-6 sm:mb-8">
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.3em] text-[#1a4a1a]">Our Proud Sponsors</p>
+            <p className="text-base sm:text-lg font-extrabold uppercase tracking-[0.3em] text-[#1a4a1a]">Our Proud Sponsors</p>
             <div className="mt-2 h-0.5 w-14 bg-[#c8a96e] mx-auto rounded-full" />
           </div>
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 sm:gap-3">
