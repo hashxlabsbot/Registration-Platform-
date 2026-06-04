@@ -55,14 +55,6 @@ export async function sendTicketEmail(ticket: TicketData, confirmed = false): Pr
     ? `You're Confirmed! Welcome to Prakriti 2026 · ${ticket.bookingId}`
     : `Registration Received — Prakriti 2026 · ${ticket.bookingId}`;
 
-  const imageAttachments = [
-    {
-      filename: 'hero.jpg',
-      path: path.join(process.cwd(), 'public/email/hero.jpg'),
-      cid: 'hero_image',
-    },
-  ];
-
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -85,10 +77,10 @@ export async function sendTicketEmail(ticket: TicketData, confirmed = false): Pr
 
   <!-- HEADER WITH BACKGROUND HERO IMAGE -->
   <tr>
-    <td background="cid:hero_image" bgcolor="#0b2310" style="background-image: url('cid:hero_image'); background-size: cover; background-position: center; padding: 0; text-align: center; vertical-align: middle;">
+    <td background="https://kommodo.ai/i/Li04PcBDEyHiygdeCewp" bgcolor="#0b2310" style="background-image: url('https://kommodo.ai/i/Li04PcBDEyHiygdeCewp'); background-size: cover; background-position: center; padding: 0; text-align: center; vertical-align: middle;">
       <!--[if gte mso 9]>
       <v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:600px;height:320px;">
-        <v:fill type="tile" src="cid:hero_image" color="#0b2310" />
+        <v:fill type="tile" src="https://kommodo.ai/i/Li04PcBDEyHiygdeCewp" color="#0b2310" />
         <v:textbox inset="0,0,0,0">
       <![endif]-->
       <div style="background-color: rgba(11, 35, 16, 0.80); padding: 64px 40px 56px; text-align: center;">
@@ -252,8 +244,7 @@ export async function sendTicketEmail(ticket: TicketData, confirmed = false): Pr
         filename: `ticket-${ticket.bookingId}.pdf`,
         content: pdfBuffer,
         contentType: 'application/pdf',
-      },
-      ...imageAttachments,
+      }
     ],
   });
 }
