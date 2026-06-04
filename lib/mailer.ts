@@ -61,41 +61,6 @@ export async function sendTicketEmail(ticket: TicketData, confirmed = false): Pr
       path: path.join(process.cwd(), 'public/email/hero.jpg'),
       cid: 'hero_image',
     },
-    {
-      filename: 'venue.jpg',
-      path: path.join(process.cwd(), 'public/email/venue.jpg'),
-      cid: 'venue_image',
-    },
-    {
-      filename: 'panel.jpg',
-      path: path.join(process.cwd(), 'public/email/panel.jpg'),
-      cid: 'panel_image',
-    },
-    {
-      filename: 'tech.jpg',
-      path: path.join(process.cwd(), 'public/email/tech.jpg'),
-      cid: 'tech_image',
-    },
-    {
-      filename: 'cultural.jpg',
-      path: path.join(process.cwd(), 'public/email/cultural.jpg'),
-      cid: 'cultural_image',
-    },
-    {
-      filename: 'exhibition.jpg',
-      path: path.join(process.cwd(), 'public/email/exhibition.jpg'),
-      cid: 'exhibition_image',
-    },
-    {
-      filename: 'gala.jpg',
-      path: path.join(process.cwd(), 'public/email/gala.jpg'),
-      cid: 'gala_image',
-    },
-    {
-      filename: 'sustainability.jpg',
-      path: path.join(process.cwd(), 'public/email/sustainability.jpg'),
-      cid: 'sustainability_image',
-    },
   ];
 
   const html = `<!DOCTYPE html>
@@ -118,22 +83,26 @@ export async function sendTicketEmail(ticket: TicketData, confirmed = false): Pr
   <!-- TOP ACCENT LINE -->
   <tr><td style="background:#c8a96e;height:6px;font-size:0;line-height:0;">&nbsp;</td></tr>
 
-  <!-- HEADER -->
+  <!-- HEADER WITH BACKGROUND HERO IMAGE -->
   <tr>
-    <td style="background:#0b2310;padding:48px 40px 32px;text-align:center;">
-      <p style="margin:0 0 12px;color:#c8a96e;font-size:10px;font-weight:700;letter-spacing:4px;text-transform:uppercase;line-height:1.2;">The Indian Institute of Architects &middot; Faridabad Centre</p>
-      <h1 style="margin:0 0 8px;color:#ffffff;font-size:36px;font-weight:800;letter-spacing:-0.5px;line-height:1.1;">Prakriti 2026</h1>
-      <p style="margin:0 0 24px;color:#a5d6a7;font-size:15px;font-weight:400;letter-spacing:0.5px;font-style:italic;">${ticket.eventSubtitle}</p>
-      <div style="margin:0 auto;text-align:center;">
-        ${badgeHtml}
+    <td background="cid:hero_image" bgcolor="#0b2310" style="background-image: url('cid:hero_image'); background-size: cover; background-position: center; padding: 0; text-align: center; vertical-align: middle;">
+      <!--[if gte mso 9]>
+      <v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:600px;height:320px;">
+        <v:fill type="tile" src="cid:hero_image" color="#0b2310" />
+        <v:textbox inset="0,0,0,0">
+      <![endif]-->
+      <div style="background-color: rgba(11, 35, 16, 0.80); padding: 64px 40px 56px; text-align: center;">
+        <p style="margin:0 0 12px;color:#c8a96e;font-size:10px;font-weight:700;letter-spacing:4px;text-transform:uppercase;line-height:1.2;">The Indian Institute of Architects &middot; Faridabad Centre</p>
+        <h1 style="margin:0 0 8px;color:#ffffff;font-size:36px;font-weight:800;letter-spacing:-0.5px;line-height:1.1;">Prakriti 2026</h1>
+        <p style="margin:0 0 24px;color:#a5d6a7;font-size:15px;font-weight:400;letter-spacing:0.5px;font-style:italic;">${ticket.eventSubtitle}</p>
+        <div style="margin:0 auto;text-align:center;">
+          ${badgeHtml}
+        </div>
       </div>
-    </td>
-  </tr>
-
-  <!-- HERO IMAGE -->
-  <tr>
-    <td style="padding:0;background:#0b2310;text-align:center;">
-      <img src="cid:hero_image" alt="Prakriti 2026 - Sustainable Landscape" width="600" style="width:100%;max-width:600px;height:auto;display:block;border:0;" />
+      <!--[if gte mso 9]>
+        </v:textbox>
+      </v:rect>
+      <![endif]-->
     </td>
   </tr>
 
@@ -229,83 +198,23 @@ export async function sendTicketEmail(ticket: TicketData, confirmed = false): Pr
     </td>
   </tr>
 
-  <!-- EVENT HIGHLIGHTS SECTION -->
+  <!-- VENUE LOCATION -->
   <tr>
-    <td style="padding:30px 40px 20px;background:#fafcf9;border-top:1px solid #eef3ef;border-bottom:1px solid #eef3ef;">
-      <p style="margin:0 0 4px;font-size:11px;font-weight:800;color:#0b2310;letter-spacing:2px;text-transform:uppercase;text-align:center;">Prakriti 2026</p>
-      <h3 style="margin:0 0 24px;font-size:22px;color:#0b2310;font-weight:800;letter-spacing:-0.5px;text-align:center;">Event Highlights &amp; Experience</h3>
-      
-      <!-- Highlight 1: Technical & Panels -->
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
-        <tr>
-          <td style="width:48%;padding-right:2%;vertical-align:top;">
-            <img src="cid:tech_image" alt="Technical Session" style="width:100%;max-width:250px;height:auto;border-radius:8px;display:block;" />
-          </td>
-          <td style="width:48%;padding-left:2%;vertical-align:top;">
-            <img src="cid:panel_image" alt="Panel Discussion" style="width:100%;max-width:250px;height:auto;border-radius:8px;display:block;" />
-          </td>
-        </tr>
-        <tr>
-          <td colspan="2" style="padding-top:10px;">
-            <h4 style="margin:0 0 4px;font-size:14px;color:#0b2310;font-weight:700;">Expert Panels &amp; Technical Sessions</h4>
-            <p style="margin:0;font-size:12px;color:#666666;line-height:1.5;">Hear from leading visionaries on sustainable urban design, carbon-neutral architecture, and green building technologies driving our tomorrow.</p>
-          </td>
-        </tr>
-      </table>
-
-      <!-- Highlight 2: Exhibition & Green Init -->
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
-        <tr>
-          <td style="width:48%;padding-right:2%;vertical-align:top;">
-            <img src="cid:exhibition_image" alt="Architecture Exhibition" style="width:100%;max-width:250px;height:auto;border-radius:8px;display:block;" />
-          </td>
-          <td style="width:48%;padding-left:2%;vertical-align:top;">
-            <img src="cid:sustainability_image" alt="Sustainability Initiative" style="width:100%;max-width:250px;height:auto;border-radius:8px;display:block;" />
-          </td>
-        </tr>
-        <tr>
-          <td colspan="2" style="padding-top:10px;">
-            <h4 style="margin:0 0 4px;font-size:14px;color:#0b2310;font-weight:700;">Building Materials Exhibition &amp; Green Initiatives</h4>
-            <p style="margin:0;font-size:12px;color:#666666;line-height:1.5;">Explore state-of-the-art building materials exhibition and discover eco-friendly innovations shaping the landscape of green architecture.</p>
-          </td>
-        </tr>
-      </table>
-
-      <!-- Highlight 3: Cultural & Gala -->
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0;">
-        <tr>
-          <td style="width:48%;padding-right:2%;vertical-align:top;">
-            <img src="cid:cultural_image" alt="Cultural Dance" style="width:100%;max-width:250px;height:auto;border-radius:8px;display:block;" />
-          </td>
-          <td style="width:48%;padding-left:2%;vertical-align:top;">
-            <img src="cid:gala_image" alt="Gala Night" style="width:100%;max-width:250px;height:auto;border-radius:8px;display:block;" />
-          </td>
-        </tr>
-        <tr>
-          <td colspan="2" style="padding-top:10px;">
-            <h4 style="margin:0 0 4px;font-size:14px;color:#0b2310;font-weight:700;">Cultural Programs &amp; Gala Dinner</h4>
-            <p style="margin:0;font-size:12px;color:#666666;line-height:1.5;">Unwind with vibrant cultural performances followed by a grand networking Gala Dinner to connect with industry leaders and colleagues.</p>
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-
-  <!-- VENUE SPOTLIGHT -->
-  <tr>
-    <td style="padding:30px 40px 20px;">
-      <p style="margin:0 0 12px;font-size:11px;font-weight:800;color:#0b2310;letter-spacing:2px;text-transform:uppercase;">Venue Spotlight</p>
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e1ebe2;border-radius:12px;overflow:hidden;background:#ffffff;box-shadow:0 4px 16px rgba(0,0,0,0.03);">
-        <tr>
-          <td style="padding:0;">
-            <img src="cid:venue_image" alt="Vardaan Grand Venue" width="520" style="width:100%;max-width:520px;height:auto;display:block;border:0;" />
-          </td>
-        </tr>
+    <td style="padding:10px 40px 30px;">
+      <p style="margin:0 0 12px;font-size:11px;font-weight:800;color:#0b2310;letter-spacing:2px;text-transform:uppercase;">Location Details</p>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e1ebe2;border-radius:12px;overflow:hidden;background:#ffffff;box-shadow:0 2px 8px rgba(0,0,0,0.02);">
         <tr>
           <td style="padding:20px;">
-            <h3 style="margin:0 0 6px;font-size:17px;color:#0b2310;font-weight:800;">${ticket.eventVenue.split(',')[0]} · ${ticket.eventVenue.split(',')[1]}</h3>
-            <p style="margin:0 0 16px;font-size:13px;color:#666666;line-height:1.5;">${ticket.eventVenue}</p>
-            <a href="https://maps.google.com/?q=${encodeURIComponent(ticket.eventVenue)}" target="_blank" style="display:inline-block;background:#0b2310;border:1px solid #0b2310;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:700;color:#ffffff;text-decoration:none;text-align:center;">🧭 Open in Google Maps</a>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="width:24px;vertical-align:top;font-size:18px;line-height:1;">📍</td>
+                <td style="padding-left:12px;vertical-align:top;">
+                  <h3 style="margin:0 0 6px;font-size:16px;color:#0b2310;font-weight:800;line-height:1.2;">${ticket.eventVenue.split(',')[0]}</h3>
+                  <p style="margin:0 0 16px;font-size:13px;color:#666666;line-height:1.5;">${ticket.eventVenue}</p>
+                  <a href="https://maps.google.com/?q=${encodeURIComponent(ticket.eventVenue)}" target="_blank" style="display:inline-block;background:#0b2310;border:1px solid #0b2310;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:700;color:#ffffff;text-decoration:none;text-align:center;">🧭 Open in Google Maps</a>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
       </table>
