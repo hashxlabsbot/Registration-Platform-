@@ -346,6 +346,7 @@ export default function AdminPage() {
 function TableRow({ r, i }: { r: Registration; i: number }) {
   const [hovered, setHovered] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [viewing, setViewing] = useState(false);
   const base = i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.012)';
 
   const displayRegType =
@@ -353,26 +354,44 @@ function TableRow({ r, i }: { r: Registration; i: number }) {
       ? 'Delegate'
       : r.registrationType;
 
+  async function fetchTicketBlob(): Promise<Blob> {
+    const res = await fetch('/api/ticket', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        bookingId: r.bookingId,
+        name: r.name,
+        email: r.email,
+        phone: r.phone,
+        organization: r.organization,
+        designation: r.designation,
+        registrationType: r.registrationType,
+        totalAmount: r.amount,
+        utrNumber: r.utrNumber,
+      }),
+    });
+    if (!res.ok) throw new Error('Failed');
+    return res.blob();
+  }
+
+  async function viewTicket() {
+    setViewing(true);
+    try {
+      const blob = await fetchTicketBlob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch {
+      alert('Could not load ticket preview.');
+    } finally {
+      setViewing(false);
+    }
+  }
+
   async function downloadTicket() {
     setDownloading(true);
     try {
-      const res = await fetch('/api/ticket', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          bookingId: r.bookingId,
-          name: r.name,
-          email: r.email,
-          phone: r.phone,
-          organization: r.organization,
-          designation: r.designation,
-          registrationType: r.registrationType,
-          totalAmount: r.amount,
-          utrNumber: r.utrNumber,
-        }),
-      });
-      if (!res.ok) throw new Error('Failed');
-      const blob = await res.blob();
+      const blob = await fetchTicketBlob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -458,29 +477,58 @@ function TableRow({ r, i }: { r: Registration; i: number }) {
         )}
       </td>
       <td className="px-5 py-4 hidden md:table-cell">
-        <button
-          onClick={downloadTicket}
-          disabled={downloading}
-          title="Download ticket PDF"
-          className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wide px-2.5 py-1.5 rounded-lg transition-all disabled:opacity-40"
-          style={{
-            background: downloading ? 'rgba(200,169,110,0.08)' : 'rgba(200,169,110,0.12)',
-            color: '#c8a96e',
-            border: '1px solid rgba(200,169,110,0.2)',
-          }}
-        >
-          {downloading ? (
-            <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-            </svg>
-          ) : (
-            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v13m0 0l-4-4m4 4l4-4M3 21h18" />
-            </svg>
-          )}
-          {downloading ? 'Saving…' : 'PDF'}
-        </button>
+        <div className="flex items-center gap-1.5">
+          {/* View button */}
+          <button
+            onClick={viewTicket}
+            disabled={viewing || downloading}
+            title="View ticket in new tab"
+            className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wide px-2.5 py-1.5 rounded-lg transition-all disabled:opacity-40"
+            style={{
+              background: viewing ? 'rgba(99,179,237,0.08)' : 'rgba(99,179,237,0.12)',
+              color: '#63b3ed',
+              border: '1px solid rgba(99,179,237,0.2)',
+            }}
+          >
+            {viewing ? (
+              <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+              </svg>
+            ) : (
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.964-7.178z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            )}
+            {viewing ? '…' : 'View'}
+          </button>
+
+          {/* Download button */}
+          <button
+            onClick={downloadTicket}
+            disabled={downloading || viewing}
+            title="Download ticket PDF"
+            className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wide px-2.5 py-1.5 rounded-lg transition-all disabled:opacity-40"
+            style={{
+              background: downloading ? 'rgba(200,169,110,0.08)' : 'rgba(200,169,110,0.12)',
+              color: '#c8a96e',
+              border: '1px solid rgba(200,169,110,0.2)',
+            }}
+          >
+            {downloading ? (
+              <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+              </svg>
+            ) : (
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v13m0 0l-4-4m4 4l4-4M3 21h18" />
+              </svg>
+            )}
+            {downloading ? '…' : 'PDF'}
+          </button>
+        </div>
       </td>
     </tr>
   );

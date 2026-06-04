@@ -206,7 +206,7 @@ function drawTextLayer(
   const capsuleY  = qrBottom + doc.heightOfString('Scan at Venue Entrance', { width: ibW }) + 6 * SCALE;
 
   doc.fontSize(13 * SCALE).font('Helvetica-Bold');
-  const capW = Math.min(doc.widthOfString(regLabel) + 28 * SCALE, ibW);
+  const capW = doc.widthOfString(regLabel) + 28 * SCALE;
   const capH = 18 * SCALE;
   const capX = cx - capW / 2;
 
