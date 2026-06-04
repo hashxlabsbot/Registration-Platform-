@@ -77,10 +77,10 @@ export async function sendTicketEmail(ticket: TicketData, confirmed = false): Pr
 
   <!-- HEADER WITH BACKGROUND HERO IMAGE -->
   <tr>
-    <td background="https://plain-apac-prod-public.komododecks.com/202606/04/Li04PcBDEyHiygdeCewp/image.jpg" bgcolor="#0b2310" style="background-image: url('https://plain-apac-prod-public.komododecks.com/202606/04/Li04PcBDEyHiygdeCewp/image.jpg'); background-size: cover; background-position: center; padding: 0; text-align: center; vertical-align: middle;">
+    <td background="https://img.sanishtech.com/u/c02df2ca1883f430e77e5ce5a5add772.jpg" bgcolor="#0b2310" style="background-image: url('https://img.sanishtech.com/u/c02df2ca1883f430e77e5ce5a5add772.jpg'); background-size: cover; background-position: center; padding: 0; text-align: center; vertical-align: middle;">
       <!--[if gte mso 9]>
       <v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:600px;height:320px;">
-        <v:fill type="tile" src="https://plain-apac-prod-public.komododecks.com/202606/04/Li04PcBDEyHiygdeCewp/image.jpg" color="#0b2310" />
+        <v:fill type="tile" src="https://img.sanishtech.com/u/c02df2ca1883f430e77e5ce5a5add772.jpg" color="#0b2310" />
         <v:textbox inset="0,0,0,0">
       <![endif]-->
       <div style="background-color: rgba(11, 35, 16, 0.80); padding: 64px 40px 56px; text-align: center;">
