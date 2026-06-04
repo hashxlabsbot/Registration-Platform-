@@ -1,190 +1,218 @@
 import PDFDocument from 'pdfkit';
-import QRCode from 'qrcode';
-import sharp from 'sharp';
-import path from 'path';
-import fs from 'fs';
+import QRCode      from 'qrcode';
+import sharp       from 'sharp';
+import path        from 'path';
+import fs          from 'fs';
+import { analyzeBackgroundLayout, FALLBACK_LAYOUT, TicketLayout } from './gemini-layout';
 
+// ── Ticket data shape ────────────────────────────────────────────────────────
 export interface TicketData {
-  bookingId: string;
-  name: string;
-  email: string;
-  phone: string;
-  organization: string;
-  designation: string;
+  bookingId:        string;
+  name:             string;
+  email:            string;
+  phone:            string;
+  organization:     string;
+  designation:      string;
   registrationType: string;
-  totalAmount: number;
-  utrNumber?: string;
-  eventName: string;
-  eventSubtitle: string;
-  eventDate: string;
-  eventVenue: string;
-  organizer: string;
+  totalAmount:      number;
+  utrNumber?:       string;
+  eventName:        string;
+  eventSubtitle:    string;
+  eventDate:        string;
+  eventVenue:       string;
+  organizer:        string;
 }
 
-// ── Scale factor for high-DPI / print quality ──────────────────────────────
-// All drawing coordinates are in "logical" units; we multiply by SCALE
-// when actually drawing, so the output PDF is 2× resolution internally.
-const SCALE = 2;          // 2× = ~144 DPI in a 72dpi PDF viewer → crisp
-
-// Logical dimensions (what the designer thinks in)
-const LW = 288;           // logical width  (pt)
-const LH = 430;           // logical height (pt)
-
-// Physical PDF page size
-const W = LW * SCALE;     // 576 pt
-const H = LH * SCALE;     // 860 pt
-
-// White zone boundaries derived from HTML ticket CSS:
-// pt-[38%] in CSS = 38% of element WIDTH (not height) → 38% × (LW/LH) of height
-// Inner div is aspect-square w-[62%], so zone height = 62% of width = 62% × (LW/LH) of height
-const ZONE_TOP    = Math.round(0.38 * LW / LH * H);          // ≈ 222
-const ZONE_BOTTOM = Math.round((0.38 + 0.62) * LW / LH * H); // ≈ 576
+// ── Page dimensions (2× for high-DPI) ───────────────────────────────────────
+const SCALE = 2;
+const LW    = 288;   // logical width  (pt)
+const LH    = 430;   // logical height (pt)
+const W     = LW * SCALE;   // 576 pt physical
+const H     = LH * SCALE;   // 860 pt physical
 
 const DARK_GREEN = '#0f2e14';
 const WHITE      = '#ffffff';
 
-// ── Main export ───────────────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function displayRegType(registrationType: string): string {
+  return registrationType === 'Non-Architect' || registrationType === 'Non - Architect'
+    ? 'Delegate'
+    : registrationType;
+}
+
+// ── Main export ──────────────────────────────────────────────────────────────
 export async function generateTicketPDF(ticket: TicketData): Promise<Buffer> {
-  // Load background at full physical resolution for maximum sharpness
-  let bgBuf: Buffer | null = null;
+
+  // 1. Load background & get base64 for Gemini
+  const bgPath = path.join(process.cwd(), 'public', 'Id-background.png');
+  let bgBase64 = '';
+  let bgResized: Buffer | null = null;
+
   try {
-    const raw = fs.readFileSync(path.join(process.cwd(), 'public', 'Id-background.png'));
-    bgBuf = await sharp(raw)
+    const raw = fs.readFileSync(bgPath);
+    bgResized = await sharp(raw)
       .resize(W, H, { fit: 'fill', kernel: 'lanczos3' })
-      .png({ compressionLevel: 0, quality: 100 })   // lossless PNG
+      .png({ compressionLevel: 0 })
       .toBuffer();
-  } catch { /* proceed without background */ }
+    bgBase64 = bgResized.toString('base64');
+  } catch {
+    /* proceed without background */
+  }
 
-  // QR code at physical size — sharp, scannable
-  const qrLogical = 110;    // logical pt
-  const qrPhysical = qrLogical * SCALE;   // 160 pt in the PDF
+  // 2. Get AI layout (Gemini analyses the background image)
+  const layout: TicketLayout = bgBase64
+    ? await analyzeBackgroundLayout(bgBase64)
+    : FALLBACK_LAYOUT;
 
+  // 3. Generate QR code as sharp-resized PNG
+  const qrSize = layout.qrCode.size;
   const qrPayload = JSON.stringify({
-    id: ticket.bookingId, name: ticket.name, type: ticket.registrationType,
-    amt: `Rs.${ticket.totalAmount}`, ph: ticket.phone, em: ticket.email,
-    ev: 'PRAKRITI2026', dt: '20-06-2026',
+    id:   ticket.bookingId,
+    name: ticket.name,
+    type: ticket.registrationType,
+    amt:  `Rs.${ticket.totalAmount}`,
+    ph:   ticket.phone,
+    em:   ticket.email,
+    ev:   'PRAKRITI2026',
+    dt:   '20-06-2026',
   });
-  const qrBuf = await QRCode.toBuffer(qrPayload, {
-    width: qrPhysical * 4,   // generate at 4× then downscale → anti-aliased
+
+  const qrRaw = await QRCode.toBuffer(qrPayload, {
+    width: qrSize * 4,
     margin: 1,
     errorCorrectionLevel: 'M',
     color: { dark: DARK_GREEN, light: WHITE },
   });
-  // Resize to exact physical size with lanczos for crisp edges
-  const qrSharp = await sharp(qrBuf)
-    .resize(qrPhysical, qrPhysical, { kernel: 'lanczos3' })
+  const qrBuf = await sharp(qrRaw)
+    .resize(qrSize, qrSize, { kernel: 'lanczos3' })
     .png({ compressionLevel: 0 })
     .toBuffer();
 
+  // 4. Composite: background + QR border box + QR code using sharp
+  let compositedBg: Buffer | null = bgResized;
+  if (bgResized) {
+    // Draw a white border around QR then overlay the QR image
+    const borderPad = Math.round(2 * SCALE);
+    const borderSize = qrSize + borderPad * 2;
+
+    // Create white border tile
+    const borderBox = await sharp({
+      create: { width: borderSize, height: borderSize, channels: 4, background: { r: 255, g: 255, b: 255, alpha: 1 } },
+    }).png().toBuffer();
+
+    compositedBg = await sharp(bgResized)
+      .composite([
+        // White border box
+        {
+          input:  borderBox,
+          left:   Math.round(layout.qrCode.x) - borderPad,
+          top:    Math.round(layout.qrCode.y) - borderPad,
+        },
+        // QR code on top of white box
+        {
+          input: qrBuf,
+          left:  Math.round(layout.qrCode.x),
+          top:   Math.round(layout.qrCode.y),
+        },
+      ])
+      .png({ compressionLevel: 0 })
+      .toBuffer();
+  }
+
+  // 5. Use PDFKit to draw text and capsule elements on top of the composited image
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: [W, H], margin: 0 });
     const chunks: Buffer[] = [];
-    doc.on('data', c => chunks.push(c));
-    doc.on('end',  () => resolve(Buffer.concat(chunks)));
+    doc.on('data',  c  => chunks.push(c));
+    doc.on('end',   () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
-    drawCard(doc, ticket, bgBuf, qrSharp, qrPhysical);
+
+    drawTextLayer(doc, ticket, compositedBg, layout);
     doc.end();
   });
 }
 
-// ── Card ──────────────────────────────────────────────────────────────────────
-function drawCard(
-  doc: InstanceType<typeof PDFDocument>,
-  ticket: TicketData,
-  bgBuf: Buffer | null,
-  qrBuf: Buffer,
-  qrPhysical: number,
+// ── Text & capsule layer (PDFKit) ────────────────────────────────────────────
+function drawTextLayer(
+  doc:     InstanceType<typeof PDFDocument>,
+  ticket:  TicketData,
+  bgBuf:   Buffer | null,
+  layout:  TicketLayout,
 ) {
-  const cx = W / 2;
+  const cx    = W / 2;
+  const ibW   = layout.name.maxWidth;
 
-  // ── Background (full bleed, lossless) ──────────────────────────────────────
+  // ── Background (composited: bg + QR already baked in) ──────────────────────
   if (bgBuf) doc.image(bgBuf, 0, 0, { width: W, height: H });
   else       doc.rect(0, 0, W, H).fill(WHITE);
 
-  // ── Layout ─────────────────────────────────────────────────────────────────
-  // Inner box width = 62% of page width (matches HTML w-[62%])
-  const ibW = Math.round(0.62 * W);
-
-  // Zone height and vertical centering with padding (matches HTML p-2 + justify-center)
-  const zoneH  = ZONE_BOTTOM - ZONE_TOP;
-  const padPt  = Math.round(0.04 * zoneH);   // ~4% padding each side
-  let currentY = ZONE_TOP + padPt + 14 * SCALE;
-
-  // 1. Name
-  doc.font('Times-Bold').fontSize(16 * SCALE).fillColor('#1a3d21');
+  // ── 1. Name ─────────────────────────────────────────────────────────────────
   const nameText = ticket.name.toUpperCase();
+  doc.font('Times-Bold')
+     .fontSize(layout.name.fontSize)
+     .fillColor(layout.name.color);
+
+  // Auto-shrink if too wide
   const nameWidth = doc.widthOfString(nameText);
   if (nameWidth > ibW) {
-    doc.fontSize(16 * SCALE * (ibW / nameWidth));
+    doc.fontSize(layout.name.fontSize * (ibW / nameWidth));
   }
-  doc.text(nameText, cx - ibW / 2, currentY, { width: ibW, align: 'center' });
-  currentY += doc.heightOfString(nameText, { width: ibW }) + 4 * SCALE;
+  doc.text(nameText, cx - ibW / 2, layout.name.y, { width: ibW, align: 'center' });
 
-  // 2. Divider
-  const divW = ibW * 0.82;
-  doc
-    .moveTo(cx - divW / 2, currentY)
-    .lineTo(cx + divW / 2, currentY)
-    .lineWidth(1.5 * SCALE)
-    .strokeColor('#a5d6a7')
-    .strokeOpacity(0.7)
-    .stroke();
-  doc.strokeOpacity(1);
-  currentY += 6 * SCALE;
+  // ── 2. Divider ──────────────────────────────────────────────────────────────
+  if (layout.divider) {
+    const { x1, y, x2 } = layout.divider;
+    doc.moveTo(x1, y).lineTo(x2, y)
+       .lineWidth(1.5 * SCALE)
+       .strokeColor('#a5d6a7')
+       .strokeOpacity(0.7)
+       .stroke();
+    doc.strokeOpacity(1);
+  }
 
-  // 3. Designation / Organisation
-  const desig =
-    ticket.designation && ticket.designation !== '—'
-      ? ticket.designation
-      : ticket.organization;
-  doc.font('Helvetica-Bold').fontSize(9 * SCALE).fillColor('#1a5c2a');
-  doc.text(desig, cx - ibW / 2, currentY, { width: ibW, align: 'center' });
-  currentY += doc.heightOfString(desig, { width: ibW }) + 6 * SCALE;
+  // ── 3. Designation / Organisation ──────────────────────────────────────────
+  const desig = ticket.designation && ticket.designation !== '—'
+    ? ticket.designation
+    : ticket.organization;
+  doc.font('Helvetica-Bold')
+     .fontSize(layout.designation.fontSize)
+     .fillColor(layout.designation.color);
+  doc.text(desig, cx - ibW / 2, layout.designation.y, { width: ibW, align: 'center' });
 
-  // 4. Badges
-  doc.fontSize(7 * SCALE).font('Helvetica-Bold');
-  const idText   = ticket.bookingId;
+  // ── 4. Booking ID badge (light-green pill) ──────────────────────────────────
+  doc.fontSize(layout.bookingId.fontSize).font('Helvetica-Bold');
+  const idText = ticket.bookingId;
+  const badgeW = doc.widthOfString(idText) + 12 * SCALE;
+  const badgeH = 12 * SCALE;
+  const badgeX = cx - badgeW / 2;
+  const badgeY = layout.bookingId.y;
 
-  const b2W = doc.widthOfString(idText)   + 12 * SCALE;
-  const bdH = 12 * SCALE;
-  const b2X = cx - b2W / 2;
-
-  // Badge — booking ID (light green outline)
-  doc.roundedRect(b2X, currentY, b2W, bdH, 3 * SCALE).fillOpacity(0.85).fill('#e8f5e9');
+  doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 3 * SCALE)
+     .fillOpacity(0.85).fill('#e8f5e9');
   doc.fillOpacity(1);
-  doc.roundedRect(b2X, currentY, b2W, bdH, 3 * SCALE)
+  doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 3 * SCALE)
      .lineWidth(0.5 * SCALE).strokeColor('#a5d6a7').stroke();
-  doc.fillColor('#1b5e20').text(idText, b2X + 6 * SCALE, currentY + 3.5 * SCALE);
+  doc.fillColor('#1b5e20')
+     .text(idText, badgeX + 6 * SCALE, badgeY + 3.5 * SCALE);
 
-  currentY += bdH + 10 * SCALE;
-
-  // 5. QR Code
-  const qrX = cx - qrPhysical / 2;
-
-  // Border around QR
-  doc.roundedRect(qrX - 2 * SCALE, currentY - 2 * SCALE, qrPhysical + 4 * SCALE, qrPhysical + 4 * SCALE, 4 * SCALE)
-     .lineWidth(1.5 * SCALE).strokeColor('#a5d6a7').strokeOpacity(0.8).stroke();
-  doc.strokeOpacity(1);
-
-  doc.image(qrBuf, qrX, currentY, { width: qrPhysical, height: qrPhysical });
-  currentY += qrPhysical + 6 * SCALE;
-
-  // 6. QR label
+  // ── 5. QR label (below QR) ──────────────────────────────────────────────────
+  const qrBottom = layout.qrCode.y + layout.qrCode.size + 6 * SCALE;
   doc.fontSize(7 * SCALE).font('Helvetica-Bold').fillColor('#2d5a35');
-  doc.text('Scan at Venue Entrance', cx - ibW / 2, currentY, { width: ibW, align: 'center' });
-  currentY += doc.heightOfString('Scan at Venue Entrance', { width: ibW }) + 6 * SCALE;
+  doc.text('Scan at Venue Entrance', cx - ibW / 2, qrBottom, { width: ibW, align: 'center' });
 
-  // 7. Registration Type Capsule
-  const regType = (ticket.registrationType === 'Non-Architect' || ticket.registrationType === 'Non - Architect') 
-      ? 'Delegate' 
-      : ticket.registrationType;
-  const typeText = regType.toUpperCase();
+  // ── 6. Registration type capsule (dark-green pill, below QR label) ──────────
+  const regLabel  = displayRegType(ticket.registrationType).toUpperCase();
+  const capsuleY  = qrBottom + doc.heightOfString('Scan at Venue Entrance', { width: ibW }) + 6 * SCALE;
 
   doc.fontSize(13 * SCALE).font('Helvetica-Bold');
-  const typeW = Math.min(doc.widthOfString(typeText) + 28 * SCALE, ibW);
-  const typeH = 18 * SCALE;
-  const typeX = cx - typeW / 2;
+  const capW = Math.min(doc.widthOfString(regLabel) + 28 * SCALE, ibW);
+  const capH = 18 * SCALE;
+  const capX = cx - capW / 2;
 
-  doc.roundedRect(typeX, currentY, typeW, typeH, typeH / 2).fill('#1a5c2a');
-  doc.fillColor('#ffffff').text(typeText, typeX + 14 * SCALE, currentY + 4 * SCALE, { width: typeW - 28 * SCALE, align: 'center' });
+  doc.roundedRect(capX, capsuleY, capW, capH, capH / 2).fill('#1a5c2a');
+  doc.fillColor('#ffffff')
+     .text(regLabel, capX + 14 * SCALE, capsuleY + 4 * SCALE, {
+       width: capW - 28 * SCALE,
+       align: 'center',
+     });
 }
