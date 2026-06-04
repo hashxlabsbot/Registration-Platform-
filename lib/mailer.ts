@@ -56,25 +56,16 @@ export async function sendTicketEmail(ticket: TicketData, confirmed = false): Pr
     ? `You're Confirmed! Welcome to Prakriti 2026 · ${ticket.bookingId}`
     : `Registration Received — Prakriti 2026 · ${ticket.bookingId}`;
 
-  function getBase64Image(filename: string): string {
-    const imagePath = path.join(process.cwd(), 'public/email', filename);
-    if (fs.existsSync(imagePath)) {
-      const base64 = fs.readFileSync(imagePath).toString('base64');
-      return `data:image/jpeg;base64,${base64}`;
-    }
-    return '';
-  }
-
-  const heroImageSrc = getBase64Image('hero.jpg');
-  const techImageSrc = getBase64Image('tech.jpg');
-  const panelImageSrc = getBase64Image('panel.jpg');
-  const exhibitionImageSrc = getBase64Image('exhibition.jpg');
-  const sustainabilityImageSrc = getBase64Image('sustainability.jpg');
-  const culturalImageSrc = getBase64Image('cultural.jpg');
-  const galaImageSrc = getBase64Image('gala.jpg');
-  const venueImageSrc = getBase64Image('venue.jpg');
-
-
+  const imageAttachments = [
+    { filename: 'hero.jpg', path: path.join(process.cwd(), 'public/email/hero.jpg'), cid: 'hero_image' },
+    { filename: 'tech.jpg', path: path.join(process.cwd(), 'public/email/tech.jpg'), cid: 'tech_image' },
+    { filename: 'panel.jpg', path: path.join(process.cwd(), 'public/email/panel.jpg'), cid: 'panel_image' },
+    { filename: 'exhibition.jpg', path: path.join(process.cwd(), 'public/email/exhibition.jpg'), cid: 'exhibition_image' },
+    { filename: 'sustainability.jpg', path: path.join(process.cwd(), 'public/email/sustainability.jpg'), cid: 'sustainability_image' },
+    { filename: 'cultural.jpg', path: path.join(process.cwd(), 'public/email/cultural.jpg'), cid: 'cultural_image' },
+    { filename: 'gala.jpg', path: path.join(process.cwd(), 'public/email/gala.jpg'), cid: 'gala_image' },
+    { filename: 'venue.jpg', path: path.join(process.cwd(), 'public/email/venue.jpg'), cid: 'venue_image' }
+  ];
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -97,10 +88,10 @@ export async function sendTicketEmail(ticket: TicketData, confirmed = false): Pr
 
   <!-- HEADER WITH BACKGROUND HERO IMAGE -->
   <tr>
-    <td background="${heroImageSrc}" bgcolor="#0b2310" style="background-image: url('${heroImageSrc}'); background-size: cover; background-position: center; padding: 0; text-align: center; vertical-align: middle;">
+    <td background="cid:hero_image" bgcolor="#0b2310" style="background-image: url('cid:hero_image'); background-size: cover; background-position: center; padding: 0; text-align: center; vertical-align: middle;">
       <!--[if gte mso 9]>
       <v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:600px;height:320px;">
-        <v:fill type="tile" src="${heroImageSrc}" color="#0b2310" />
+        <v:fill type="tile" src="cid:hero_image" color="#0b2310" />
         <v:textbox inset="0,0,0,0">
       <![endif]-->
       <div style="background-color: rgba(11, 35, 16, 0.80); padding: 64px 40px 56px; text-align: center;">
@@ -220,10 +211,10 @@ export async function sendTicketEmail(ticket: TicketData, confirmed = false): Pr
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
         <tr>
           <td style="width:48%;padding-right:2%;vertical-align:top;">
-            <img src="${techImageSrc}" alt="Technical Session" style="width:100%;max-width:250px;height:auto;border-radius:8px;display:block;" />
+            <img src="cid:tech_image" alt="Technical Session" style="width:100%;max-width:250px;height:auto;border-radius:8px;display:block;" />
           </td>
           <td style="width:48%;padding-left:2%;vertical-align:top;">
-            <img src="${panelImageSrc}" alt="Panel Discussion" style="width:100%;max-width:250px;height:auto;border-radius:8px;display:block;" />
+            <img src="cid:panel_image" alt="Panel Discussion" style="width:100%;max-width:250px;height:auto;border-radius:8px;display:block;" />
           </td>
         </tr>
         <tr>
@@ -238,10 +229,10 @@ export async function sendTicketEmail(ticket: TicketData, confirmed = false): Pr
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
         <tr>
           <td style="width:48%;padding-right:2%;vertical-align:top;">
-            <img src="${exhibitionImageSrc}" alt="Architecture Exhibition" style="width:100%;max-width:250px;height:auto;border-radius:8px;display:block;" />
+            <img src="cid:exhibition_image" alt="Architecture Exhibition" style="width:100%;max-width:250px;height:auto;border-radius:8px;display:block;" />
           </td>
           <td style="width:48%;padding-left:2%;vertical-align:top;">
-            <img src="${sustainabilityImageSrc}" alt="Sustainability Initiative" style="width:100%;max-width:250px;height:auto;border-radius:8px;display:block;" />
+            <img src="cid:sustainability_image" alt="Sustainability Initiative" style="width:100%;max-width:250px;height:auto;border-radius:8px;display:block;" />
           </td>
         </tr>
         <tr>
@@ -256,10 +247,10 @@ export async function sendTicketEmail(ticket: TicketData, confirmed = false): Pr
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0;">
         <tr>
           <td style="width:48%;padding-right:2%;vertical-align:top;">
-            <img src="${culturalImageSrc}" alt="Cultural Dance" style="width:100%;max-width:250px;height:auto;border-radius:8px;display:block;" />
+            <img src="cid:cultural_image" alt="Cultural Dance" style="width:100%;max-width:250px;height:auto;border-radius:8px;display:block;" />
           </td>
           <td style="width:48%;padding-left:2%;vertical-align:top;">
-            <img src="${galaImageSrc}" alt="Gala Night" style="width:100%;max-width:250px;height:auto;border-radius:8px;display:block;" />
+            <img src="cid:gala_image" alt="Gala Night" style="width:100%;max-width:250px;height:auto;border-radius:8px;display:block;" />
           </td>
         </tr>
         <tr>
@@ -279,7 +270,7 @@ export async function sendTicketEmail(ticket: TicketData, confirmed = false): Pr
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e1ebe2;border-radius:12px;overflow:hidden;background:#ffffff;box-shadow:0 4px 16px rgba(0,0,0,0.03);">
         <tr>
           <td style="padding:0;">
-            <img src="${venueImageSrc}" alt="Vardaan Grand Venue" width="520" style="width:100%;max-width:520px;height:auto;display:block;border:0;" />
+            <img src="cid:venue_image" alt="Vardaan Grand Venue" width="520" style="width:100%;max-width:520px;height:auto;display:block;border:0;" />
           </td>
         </tr>
         <tr>
@@ -324,7 +315,8 @@ export async function sendTicketEmail(ticket: TicketData, confirmed = false): Pr
         filename: `ticket-${ticket.bookingId}.pdf`,
         content: pdfBuffer,
         contentType: 'application/pdf',
-      }
+      },
+      ...imageAttachments
     ],
   });
 }
