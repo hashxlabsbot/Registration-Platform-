@@ -143,22 +143,13 @@ function drawCard(
 
   // 4. Badges
   doc.fontSize(7 * SCALE).font('Helvetica-Bold');
-  const typeText = ticket.registrationType.toUpperCase();
   const idText   = ticket.bookingId;
 
-  const b1W = doc.widthOfString(typeText) + 12 * SCALE;
   const b2W = doc.widthOfString(idText)   + 12 * SCALE;
-  const gap = 4 * SCALE;
-  const totalBdW = b1W + b2W + gap;
-  const bdStartX = cx - totalBdW / 2;
   const bdH = 12 * SCALE;
+  const b2X = cx - b2W / 2;
 
-  // Badge 1 — registration type (dark green)
-  doc.roundedRect(bdStartX, currentY, b1W, bdH, 3 * SCALE).fill('#1a5c2a');
-  doc.fillColor('#ffffff').text(typeText, bdStartX + 6 * SCALE, currentY + 3 * SCALE);
-
-  // Badge 2 — booking ID (light green outline)
-  const b2X = bdStartX + b1W + gap;
+  // Badge — booking ID (light green outline)
   doc.roundedRect(b2X, currentY, b2W, bdH, 3 * SCALE).fillOpacity(0.85).fill('#e8f5e9');
   doc.fillOpacity(1);
   doc.roundedRect(b2X, currentY, b2W, bdH, 3 * SCALE)
@@ -181,4 +172,19 @@ function drawCard(
   // 6. QR label
   doc.fontSize(7 * SCALE).font('Helvetica-Bold').fillColor('#2d5a35');
   doc.text('Scan at Venue Entrance', cx - ibW / 2, currentY, { width: ibW, align: 'center' });
+  currentY += doc.heightOfString('Scan at Venue Entrance', { width: ibW }) + 6 * SCALE;
+
+  // 7. Registration Type Capsule
+  const regType = (ticket.registrationType === 'Non-Architect' || ticket.registrationType === 'Non - Architect') 
+      ? 'Delegate' 
+      : ticket.registrationType;
+  const typeText = regType.toUpperCase();
+
+  doc.fontSize(9 * SCALE).font('Helvetica-Bold');
+  const typeW = doc.widthOfString(typeText) + 20 * SCALE;
+  const typeH = 14 * SCALE;
+  const typeX = cx - typeW / 2;
+
+  doc.roundedRect(typeX, currentY, typeW, typeH, typeH / 2).fill('#1a5c2a');
+  doc.fillColor('#ffffff').text(typeText, typeX + 10 * SCALE, currentY + 3.5 * SCALE);
 }

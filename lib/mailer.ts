@@ -34,6 +34,10 @@ export async function sendTicketEmail(ticket: TicketData, confirmed = false): Pr
     ? `&#8377;${ticket.totalAmount.toLocaleString('en-IN')}`
     : 'Complimentary';
 
+  const displayRegType = (ticket.registrationType === 'Non-Architect' || ticket.registrationType === 'Non - Architect') 
+    ? 'Delegate' 
+    : ticket.registrationType;
+
   const rows: [string, string][] = [
     ['Booking ID',        ticket.bookingId],
     ['Attendee Name',     ticket.name],
@@ -41,7 +45,7 @@ export async function sendTicketEmail(ticket: TicketData, confirmed = false): Pr
     ['Phone Number',      ticket.phone],
     ['Organization',      ticket.organization],
     ['Designation',       ticket.designation],
-    ['Registration Type', ticket.registrationType],
+    ['Registration Type', displayRegType],
     ['Amount',            amountDisplay],
   ];
 
@@ -137,7 +141,7 @@ export async function sendTicketEmail(ticket: TicketData, confirmed = false): Pr
                   <span style="font-size:15px;font-weight:800;color:#0b2310;font-family:monospace;letter-spacing:0.5px;">${ticket.bookingId}</span>
                 </td>
                 <td align="right">
-                  <span style="display:inline-block;background:#ffffff;border:1px solid #cddccf;border-radius:12px;padding:3px 10px;font-size:10px;font-weight:700;color:#1b4f26;text-transform:uppercase;letter-spacing:0.5px;">${ticket.registrationType}</span>
+                  <span style="display:inline-block;background:#ffffff;border:1px solid #cddccf;border-radius:12px;padding:3px 10px;font-size:10px;font-weight:700;color:#1b4f26;text-transform:uppercase;letter-spacing:0.5px;">${displayRegType}</span>
                 </td>
               </tr>
             </table>
