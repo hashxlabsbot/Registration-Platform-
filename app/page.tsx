@@ -15,7 +15,7 @@ const HIGHLIGHTS = [
 ];
 
 const PRICING = [
-  { type: 'Architect – IIA Member',     price: '₹1',      desc: 'Active IIA membership required' },
+  { type: 'Architect – IIA Member',     price: '₹500',    desc: 'Active IIA membership required' },
   { type: 'Architect – Non-IIA Member', price: '₹1,000',  desc: 'Open to all architecture professionals' },
   { type: 'Non-Architect Delegate',     price: '₹2,500',  desc: 'Industry professionals & guests' },
   { type: 'Additional Member',          price: '₹1,000',  desc: 'Per member (Spouse or Friend only) added by an architect registrant' },
@@ -112,7 +112,7 @@ export default function Home() {
               {[
                 { label: 'Date',  value: 'Saturday, 20 June 2026',                icon: <CalIcon /> },
                 { label: 'Time',  value: '3:00 PM Onwards',                        icon: <ClockIcon /> },
-                { label: 'Venue', value: 'Saffron Hall, Vardaan Grand, Faridabad', icon: <PinIcon /> },
+                { label: 'Venue', value: 'Saffron Hall, Vardaan Grand — Sector-21C, GymKhana Club, Surajkund Road, Faridabad', icon: <PinIcon /> },
               ].map((item) => (
                 <div key={item.label} className="flex items-start gap-3">
                   <span className="text-[#2e7d32] shrink-0 mt-0.5">{item.icon}</span>
@@ -254,7 +254,7 @@ export default function Home() {
                 <div>
                   <p className="text-sm font-extrabold text-[#1a4a1a]">The Indian Institute of Architects</p>
                   <p className="text-xs text-gray-500 mt-0.5">Faridabad Centre</p>
-                  <p className="text-xs text-[#2e7d32] mt-0.5">iafaridabadcentre@gmail.com</p>
+                  <p className="text-xs text-[#2e7d32] mt-0.5">iiafaridabadcentre@gmail.com</p>
                 </div>
               </div>
 
@@ -325,7 +325,7 @@ export default function Home() {
               Secure Your Spot at Prakriti 2026
             </h2>
             <p className="mt-2 text-green-300 text-xs sm:text-sm">
-              Saturday, 20 June 2026 &nbsp;·&nbsp; 3:00 PM &nbsp;·&nbsp; Saffron Hall, Vardaan Grand, Faridabad
+              Saturday, 20 June 2026 &nbsp;·&nbsp; 3:00 PM &nbsp;·&nbsp; Saffron Hall, Vardaan Grand — Sector-21C, GymKhana Club, Surajkund Road, Faridabad
             </p>
           </div>
 
@@ -409,7 +409,7 @@ export default function Home() {
 
             {/* Contact info */}
             <div className="text-center sm:text-right space-y-1">
-              <p className="text-[#c8a96e] text-sm font-semibold">iafaridabadcentre@gmail.com</p>
+              <p className="text-[#c8a96e] text-sm font-semibold">iiafaridabadcentre@gmail.com</p>
               <p className="text-green-400 text-xs">www.indianinstituteofarchitects.com</p>
             </div>
           </div>

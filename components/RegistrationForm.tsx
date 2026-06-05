@@ -5,7 +5,7 @@ import { BookingResult } from '@/lib/types';
 
 // ── Registration types ────────────────────────────────────────────────────────
 const REGISTRATION_TYPES = [
-  { label: 'Architect - IIA Member',     price: 1     },
+  { label: 'Architect - IIA Member',     price: 500   },
   { label: 'Architect - Non-IIA Member', price: 1000  },
   { label: 'Non-Architect',              price: 2500  },
   { label: 'Special Invitee',            price: 0     },
@@ -13,7 +13,7 @@ const REGISTRATION_TYPES = [
 
 type RegType = (typeof REGISTRATION_TYPES)[number]['label'];
 
-const MEMBER_FEE = 1; // TODO: restore to 1000 after testing
+const MEMBER_FEE = 1000;
 
 interface Member {
   name: string;
@@ -531,7 +531,7 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
               <div className="bg-[#f4f7f0] px-5 py-4 border-b border-gray-100">
                 <p className="text-[10px] font-bold text-[#2e7d32] uppercase tracking-widest mb-1">Order Summary</p>
                 <p className="text-sm font-bold text-[#1a4a1a]">Prakriti 2026 — Entry Ticket</p>
-                <p className="text-xs text-gray-500 mt-0.5">Saturday, 20 June 2026 · Saffron Hall, Faridabad</p>
+                <p className="text-xs text-gray-500 mt-0.5">Saturday, 20 June 2026 · Saffron Hall, Vardaan Grand — Sector-21C, GymKhana Club, Surajkund Road, Faridabad</p>
               </div>
 
               <div className="bg-white px-5 py-4 space-y-3">

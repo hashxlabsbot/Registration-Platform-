@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       eventName:     process.env.EVENT_NAME     || 'Prakriti 2026',
       eventSubtitle: process.env.EVENT_SUBTITLE || 'Architects for a Sustainable Tomorrow',
       eventDate:     process.env.EVENT_DATE     || 'Saturday, 20 June 2026 · 3:00 PM',
-      eventVenue:    process.env.EVENT_VENUE    || 'Saffron Hall, Faridabad',
+      eventVenue:    process.env.EVENT_VENUE    || 'Saffron Hall, Vardaan Grand — Sector-21C, GymKhana Club, Surajkund Road, Faridabad',
       organizer:     process.env.ORGANIZER      || 'The Indian Institute of Architects — Faridabad Centre',
     };
 
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       organization:     firm || '—',
       designation:      m.relation || 'Delegate',
       registrationType: 'Non-Architect',
-      totalAmount:      1, // TODO: restore to 1000 after testing
+      totalAmount:      1000,
       utrNumber:        razorpay_payment_id,
       ...eventFields,
     }));

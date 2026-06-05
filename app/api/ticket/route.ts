@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
         eventName:    'Prakriti 2026',
         eventSubtitle: 'Architects for a Sustainable Tomorrow',
         eventDate:    eventDate  || 'Saturday, 20 June 2026 · 3:00 PM',
-        eventVenue:   eventVenue || 'Saffron Hall, Vardaan Grand, Faridabad',
+        eventVenue:   eventVenue || 'Saffron Hall, Vardaan Grand — Sector-21C, GymKhana Club, Surajkund Road, Faridabad',
         organizer:    'The Indian Institute of Architects — Faridabad Centre',
       });
       // Cache it so the next download is instant

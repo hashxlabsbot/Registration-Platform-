@@ -379,6 +379,12 @@ function TableRow({ r, i }: { r: Registration; i: number }) {
   }
 
   async function viewTicket() {
+    // Open a blank tab synchronously so popup blockers don't interfere with the async fetch
+    const tab = window.open('', '_blank');
+    if (!tab) {
+      alert('Please allow popups for this site to view tickets.');
+      return;
+    }
     setViewing(true);
     try {
       const blob = await fetchTicketBlob({
@@ -387,9 +393,10 @@ function TableRow({ r, i }: { r: Registration; i: number }) {
         registrationType: r.registrationType, totalAmount: r.amount, utrNumber: r.utrNumber,
       });
       const url = URL.createObjectURL(blob);
-      window.open(url, '_blank');
+      tab.location.href = url;
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch {
+      tab.close();
       alert('Could not load ticket preview.');
     } finally {
       setViewing(false);
