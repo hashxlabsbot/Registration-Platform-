@@ -433,7 +433,7 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
 
                 {members.length === 0 && (
                   <p className="text-xs text-gray-400 text-center py-2">
-                    No additional members added. Click &ldquo;Add Member&rdquo; to include spouse or family.
+                    No additional members added. Click &ldquo;Add Member&rdquo; to include your Spouse or Friend.
                   </p>
                 )}
 
@@ -465,13 +465,15 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
                       </div>
                       <div>
                         <label className="label">Relation <Req /></label>
-                        <input
-                          type="text"
+                        <select
                           value={m.relation}
                           onChange={(e) => updateMember(i, 'relation', e.target.value)}
-                          placeholder="e.g. Spouse, Parent"
                           className={`input ${memberErrors[i]?.relation ? 'border-red-400' : ''}`}
-                        />
+                        >
+                          <option value="">Select relation</option>
+                          <option value="Spouse">Spouse</option>
+                          <option value="Friend">Friend</option>
+                        </select>
                         {memberErrors[i]?.relation && <p className="err">{memberErrors[i].relation}</p>}
                       </div>
                       <div>

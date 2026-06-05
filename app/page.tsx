@@ -18,7 +18,7 @@ const PRICING = [
   { type: 'Architect – IIA Member',     price: '₹1',      desc: 'Active IIA membership required' },
   { type: 'Architect – Non-IIA Member', price: '₹1,000',  desc: 'Open to all architecture professionals' },
   { type: 'Non-Architect Delegate',     price: '₹2,500',  desc: 'Industry professionals & guests' },
-  { type: 'Additional Member',          price: '₹1,000',  desc: 'Per member added by an architect registrant' },
+  { type: 'Additional Member',          price: '₹1,000',  desc: 'Per member (Spouse or Friend only) added by an architect registrant' },
 ];
 
 const SPONSORS = [
