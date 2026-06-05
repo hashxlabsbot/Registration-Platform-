@@ -197,14 +197,27 @@ function drawTextLayer(
   doc.fontSize(12).font('Helvetica-Bold').fillColor('#2d5a35');
   doc.text('SCAN AT VENUE ENTRANCE', cx - ibW / 2, qrBottom, { width: ibW, align: 'center' });
 
-  // ── 8. Footer bar ─────────────────────────────────────────────────────────────
-  const footerY = layout.regType.y;
-  const footerH = H - footerY;
-  const label   = footerLabel(ticket.registrationType);
+  // ── 8. Footer bar — booking ID (small) + ARCHITECT/DELEGATE (large) ──────────
+  const footerY  = layout.regType.y;
+  const footerH  = H - footerY;
+  const label    = footerLabel(ticket.registrationType);
+  const idFontSz = 9;
+  const regFontSz = 28;
+
   doc.rect(0, footerY, W, footerH).fill('#1a5c2a');
+
+  // Booking ID — small, light-green tint, top of footer
+  doc.font('Helvetica')
+     .fontSize(idFontSz)
+     .fillColor('#a5d6a7');
+  doc.text(ticket.bookingId, 0, footerY + 5, { width: W, align: 'center', characterSpacing: 1 });
+
+  // ARCHITECT / DELEGATE — bold white, vertically centred in remaining space
+  const regTop = footerY + idFontSz + 8;
+  const regAvail = H - regTop;
+  const regLabelY = regTop + (regAvail - regFontSz) / 2 - 2;
   doc.font('Helvetica-Bold')
-     .fontSize(layout.regType.fontSize)
+     .fontSize(regFontSz)
      .fillColor('#ffffff');
-  const labelY = footerY + (footerH - layout.regType.fontSize) / 2 - 2;
-  doc.text(label, 0, labelY, { width: W, align: 'center', characterSpacing: 2 });
+  doc.text(label, 0, regLabelY, { width: W, align: 'center', characterSpacing: 2 });
 }

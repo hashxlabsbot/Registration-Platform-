@@ -223,12 +223,17 @@ export default function SuccessScreen({ booking }: { booking: BookingResult }) {
             SCAN AT VENUE ENTRANCE
           </div>
 
-          {/* Footer bar — PDF: y=652/720=90.6% to bottom, fontSize=36pt scaled → ~23px */}
+          {/* Footer bar — booking ID (small) + ARCHITECT/DELEGATE (large) */}
           <div
-            className="absolute bottom-0 left-0 right-0 bg-[#1a5c2a] text-white text-center font-bold tracking-widest"
-            style={{ top: '90.6%', fontSize: '23px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            className="absolute bottom-0 left-0 right-0 bg-[#1a5c2a] text-white text-center"
+            style={{ top: '90.6%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1px', paddingTop: '2px' }}
           >
-            {footerLabel(booking.registrationType)}
+            <span style={{ fontSize: '5.5px', color: '#a5d6a7', fontWeight: 400, letterSpacing: '0.08em', lineHeight: 1.2 }}>
+              {booking.bookingId}
+            </span>
+            <span style={{ fontSize: '15px', fontWeight: 700, letterSpacing: '0.15em', lineHeight: 1.1 }}>
+              {footerLabel(booking.registrationType)}
+            </span>
           </div>
 
         </div>

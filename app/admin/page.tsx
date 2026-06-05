@@ -2,19 +2,27 @@
 
 import { useState, useEffect, useMemo } from 'react';
 
+interface Member {
+  name:     string;
+  relation: string;
+  email:    string;
+  phone:    string;
+}
+
 interface Registration {
-  bookingId: string;
-  name: string;
-  email: string;
-  phone: string;
-  organization: string;
-  designation: string;
+  bookingId:        string;
+  name:             string;
+  email:            string;
+  phone:            string;
+  organization:     string;
+  designation:      string;
   registrationType: string;
-  amount: number;
-  utrNumber: string;
-  registeredAt: string;
-  checkedIn: boolean;
-  checkinTime: string;
+  amount:           number;
+  utrNumber:        string;
+  registeredAt:     string;
+  checkedIn:        boolean;
+  checkinTime:      string;
+  members:          Member[];
 }
 
 export default function AdminPage() {
@@ -344,31 +352,27 @@ export default function AdminPage() {
 
 // ── Table row ────────────────────────────────────────────────────────────────
 function TableRow({ r, i }: { r: Registration; i: number }) {
-  const [hovered, setHovered] = useState(false);
+  const [hovered,    setHovered]    = useState(false);
   const [downloading, setDownloading] = useState(false);
-  const [viewing, setViewing] = useState(false);
+  const [viewing,    setViewing]    = useState(false);
+  const [expanded,   setExpanded]   = useState(false);
   const base = i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.012)';
+  const hasMembers = r.members && r.members.length > 0;
 
   const displayRegType =
     r.registrationType === 'Non-Architect' || r.registrationType === 'Non - Architect'
       ? 'Delegate'
       : r.registrationType;
 
-  async function fetchTicketBlob(): Promise<Blob> {
+  async function fetchTicketBlob(
+    data: { bookingId: string; name: string; email: string; phone: string;
+            organization: string; designation: string; registrationType: string;
+            totalAmount: number; utrNumber: string }
+  ): Promise<Blob> {
     const res = await fetch('/api/ticket', {
-      method: 'POST',
+      method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        bookingId: r.bookingId,
-        name: r.name,
-        email: r.email,
-        phone: r.phone,
-        organization: r.organization,
-        designation: r.designation,
-        registrationType: r.registrationType,
-        totalAmount: r.amount,
-        utrNumber: r.utrNumber,
-      }),
+      body:    JSON.stringify(data),
     });
     if (!res.ok) throw new Error('Failed');
     return res.blob();
@@ -377,7 +381,11 @@ function TableRow({ r, i }: { r: Registration; i: number }) {
   async function viewTicket() {
     setViewing(true);
     try {
-      const blob = await fetchTicketBlob();
+      const blob = await fetchTicketBlob({
+        bookingId: r.bookingId, name: r.name, email: r.email, phone: r.phone,
+        organization: r.organization, designation: r.designation,
+        registrationType: r.registrationType, totalAmount: r.amount, utrNumber: r.utrNumber,
+      });
       const url = URL.createObjectURL(blob);
       window.open(url, '_blank');
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
@@ -388,149 +396,222 @@ function TableRow({ r, i }: { r: Registration; i: number }) {
     }
   }
 
-  async function downloadTicket() {
-    setDownloading(true);
+  async function downloadTicket(
+    data: { bookingId: string; name: string; email: string; phone: string;
+            organization: string; designation: string; registrationType: string;
+            totalAmount: number; utrNumber: string },
+    setLoading?: (v: boolean) => void,
+  ) {
+    setLoading ? setLoading(true) : setDownloading(true);
     try {
-      const blob = await fetchTicketBlob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `prakriti2026-ticket-${r.bookingId}.pdf`;
+      const blob = await fetchTicketBlob(data);
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = `prakriti2026-ticket-${data.bookingId}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch {
       alert('Could not download ticket.');
     } finally {
-      setDownloading(false);
+      setLoading ? setLoading(false) : setDownloading(false);
     }
   }
 
   return (
-    <tr
-      style={{
-        borderBottom: '1px solid rgba(255,255,255,0.04)',
-        background: hovered ? 'rgba(46,125,50,0.07)' : base,
-        transition: 'background 0.15s',
-      }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <td className="px-5 py-4 font-mono text-xs font-bold" style={{ color: '#c8a96e' }}>
-        {r.bookingId}
-      </td>
-      <td className="px-5 py-4">
-        <p className="font-semibold text-white text-sm leading-snug">{r.name}</p>
-        <p className="text-xs text-white/30 mt-0.5">{r.email}</p>
-      </td>
-      <td className="px-5 py-4 hidden sm:table-cell">
-        <span
-          className="inline-block text-[10px] font-black uppercase tracking-wide px-2.5 py-1 rounded-full"
-          style={{
-            background: 'rgba(46,125,50,0.18)',
-            color: '#4ade80',
-            border: '1px solid rgba(74,222,128,0.2)',
-          }}
-        >
-          {displayRegType}
-        </span>
-      </td>
-      <td className="px-5 py-4 hidden md:table-cell">
-        <span className="text-sm font-bold text-white/75">₹{r.amount.toLocaleString('en-IN')}</span>
-      </td>
-      <td className="px-5 py-4 hidden lg:table-cell text-xs text-white/35">{r.phone}</td>
-      <td className="px-5 py-4 hidden lg:table-cell text-xs text-white/25">{r.registeredAt}</td>
-      <td className="px-5 py-4">
-        {r.checkedIn ? (
-          <div>
-            <span
-              className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wide px-2.5 py-1 rounded-full"
-              style={{
-                background: 'rgba(74,222,128,0.12)',
-                color: '#4ade80',
-                border: '1px solid rgba(74,222,128,0.22)',
-              }}
-            >
-              <span
-                className="w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0"
-                style={{ boxShadow: '0 0 6px #4ade80' }}
-              />
-              Checked In
-            </span>
-            {r.checkinTime && (
-              <p className="text-[10px] text-white/20 mt-1">{r.checkinTime}</p>
+    <>
+      <tr
+        style={{
+          borderBottom: expanded ? 'none' : '1px solid rgba(255,255,255,0.04)',
+          background: hovered ? 'rgba(46,125,50,0.07)' : base,
+          transition: 'background 0.15s',
+        }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        <td className="px-5 py-4 font-mono text-xs font-bold" style={{ color: '#c8a96e' }}>
+          {r.bookingId}
+        </td>
+
+        <td className="px-5 py-4">
+          <div className="flex items-start gap-2">
+            <div>
+              <p className="font-semibold text-white text-sm leading-snug">{r.name}</p>
+              <p className="text-xs text-white/30 mt-0.5">{r.email}</p>
+            </div>
+            {hasMembers && (
+              <button
+                onClick={() => setExpanded((v) => !v)}
+                title={expanded ? 'Hide members' : 'Show additional members'}
+                className="shrink-0 mt-0.5 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-full transition-all"
+                style={{
+                  background: expanded ? 'rgba(200,169,110,0.2)' : 'rgba(200,169,110,0.1)',
+                  color: '#c8a96e',
+                  border: '1px solid rgba(200,169,110,0.25)',
+                }}
+              >
+                +{r.members.length}
+                <svg
+                  className="w-2.5 h-2.5 transition-transform"
+                  style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
             )}
           </div>
-        ) : (
-          <span
-            className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wide px-2.5 py-1 rounded-full"
-            style={{
-              background: 'rgba(255,255,255,0.04)',
-              color: 'rgba(255,255,255,0.28)',
-              border: '1px solid rgba(255,255,255,0.07)',
-            }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-white/20 flex-shrink-0" />
-            Pending
-          </span>
-        )}
-      </td>
-      <td className="px-5 py-4 hidden md:table-cell">
-        <div className="flex items-center gap-1.5">
-          {/* View button */}
-          <button
-            onClick={viewTicket}
-            disabled={viewing || downloading}
-            title="View ticket in new tab"
-            className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wide px-2.5 py-1.5 rounded-lg transition-all disabled:opacity-40"
-            style={{
-              background: viewing ? 'rgba(99,179,237,0.08)' : 'rgba(99,179,237,0.12)',
-              color: '#63b3ed',
-              border: '1px solid rgba(99,179,237,0.2)',
-            }}
-          >
-            {viewing ? (
-              <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-              </svg>
-            ) : (
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.964-7.178z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            )}
-            {viewing ? '…' : 'View'}
-          </button>
+        </td>
 
-          {/* Download button */}
-          <button
-            onClick={downloadTicket}
-            disabled={downloading || viewing}
-            title="Download ticket PDF"
-            className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wide px-2.5 py-1.5 rounded-lg transition-all disabled:opacity-40"
-            style={{
-              background: downloading ? 'rgba(200,169,110,0.08)' : 'rgba(200,169,110,0.12)',
-              color: '#c8a96e',
-              border: '1px solid rgba(200,169,110,0.2)',
-            }}
+        <td className="px-5 py-4 hidden sm:table-cell">
+          <span
+            className="inline-block text-[10px] font-black uppercase tracking-wide px-2.5 py-1 rounded-full"
+            style={{ background: 'rgba(46,125,50,0.18)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.2)' }}
           >
-            {downloading ? (
-              <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-              </svg>
-            ) : (
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v13m0 0l-4-4m4 4l4-4M3 21h18" />
-              </svg>
-            )}
-            {downloading ? '…' : 'PDF'}
-          </button>
-        </div>
-      </td>
-    </tr>
+            {displayRegType}
+          </span>
+        </td>
+
+        <td className="px-5 py-4 hidden md:table-cell">
+          <span className="text-sm font-bold text-white/75">₹{r.amount.toLocaleString('en-IN')}</span>
+        </td>
+
+        <td className="px-5 py-4 hidden lg:table-cell text-xs text-white/35">{r.phone}</td>
+        <td className="px-5 py-4 hidden lg:table-cell text-xs text-white/25">{r.registeredAt}</td>
+
+        <td className="px-5 py-4">
+          {r.checkedIn ? (
+            <div>
+              <span
+                className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wide px-2.5 py-1 rounded-full"
+                style={{ background: 'rgba(74,222,128,0.12)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.22)' }}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0" style={{ boxShadow: '0 0 6px #4ade80' }} />
+                Checked In
+              </span>
+              {r.checkinTime && <p className="text-[10px] text-white/20 mt-1">{r.checkinTime}</p>}
+            </div>
+          ) : (
+            <span
+              className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wide px-2.5 py-1 rounded-full"
+              style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.28)', border: '1px solid rgba(255,255,255,0.07)' }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-white/20 flex-shrink-0" />
+              Pending
+            </span>
+          )}
+        </td>
+
+        <td className="px-5 py-4 hidden md:table-cell">
+          <div className="flex items-center gap-1.5">
+            <TicketButton label="View" loading={viewing} loadingLabel="…" color="#63b3ed" colorAlpha="rgba(99,179,237" onClick={viewTicket} disabled={viewing || downloading} />
+            <TicketButton
+              label="PDF" loading={downloading} loadingLabel="…" color="#c8a96e" colorAlpha="rgba(200,169,110"
+              onClick={() => downloadTicket({ bookingId: r.bookingId, name: r.name, email: r.email, phone: r.phone,
+                organization: r.organization, designation: r.designation, registrationType: r.registrationType,
+                totalAmount: r.amount, utrNumber: r.utrNumber })}
+              disabled={downloading || viewing}
+              icon={<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v13m0 0l-4-4m4 4l4-4M3 21h18" /></svg>}
+            />
+          </div>
+        </td>
+      </tr>
+
+      {/* ── Expanded member rows ──────────────────────────────────────────────── */}
+      {hasMembers && expanded && (
+        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: 'rgba(200,169,110,0.03)' }}>
+          <td colSpan={8} className="px-5 pb-4 pt-2">
+            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#c8a96e] mb-3">
+              Additional Members ({r.members.length})
+            </p>
+            <div className="grid gap-2">
+              {r.members.map((m, idx) => (
+                <MemberRow
+                  key={idx}
+                  m={m}
+                  bookingId={`${r.bookingId}-M${idx + 1}`}
+                  organization={r.organization}
+                  utrNumber={r.utrNumber}
+                  onDownload={downloadTicket}
+                />
+              ))}
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
+
+// ── Member row inside expanded section ───────────────────────────────────────
+function MemberRow({
+  m, bookingId, organization, utrNumber, onDownload,
+}: {
+  m: Member;
+  bookingId: string;
+  organization: string;
+  utrNumber: string;
+  onDownload: (data: { bookingId: string; name: string; email: string; phone: string;
+    organization: string; designation: string; registrationType: string;
+    totalAmount: number; utrNumber: string }, setLoading?: (v: boolean) => void) => Promise<void>;
+}) {
+  const [loading, setLoading] = useState(false);
+
+  return (
+    <div
+      className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-lg px-3 py-2"
+      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+    >
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
+        <span className="font-bold text-white">{m.name}</span>
+        <span
+          className="text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-full"
+          style={{ background: 'rgba(200,169,110,0.12)', color: '#c8a96e', border: '1px solid rgba(200,169,110,0.2)' }}
+        >
+          {m.relation}
+        </span>
+        <span className="text-white/35">{m.email}</span>
+        <span className="text-white/25">{m.phone}</span>
+      </div>
+      <button
+        onClick={() => onDownload({
+          bookingId, name: m.name, email: m.email, phone: m.phone,
+          organization, designation: m.relation, registrationType: 'Non-Architect',
+          totalAmount: 0, utrNumber,
+        }, setLoading)}
+        disabled={loading}
+        className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wide px-2 py-1 rounded-md transition-all disabled:opacity-40"
+        style={{ background: 'rgba(200,169,110,0.1)', color: '#c8a96e', border: '1px solid rgba(200,169,110,0.18)' }}
+      >
+        {loading
+          ? <><svg className="w-2.5 h-2.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg> …</>
+          : <><svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v13m0 0l-4-4m4 4l4-4M3 21h18"/></svg> PDF</>
+        }
+      </button>
+    </div>
+  );
+}
+
+// ── Reusable ticket action button ─────────────────────────────────────────────
+function TicketButton({ label, loading, loadingLabel, color, colorAlpha, onClick, disabled, icon }: {
+  label: string; loading: boolean; loadingLabel: string;
+  color: string; colorAlpha: string; onClick: () => void; disabled: boolean;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wide px-2.5 py-1.5 rounded-lg transition-all disabled:opacity-40"
+      style={{ background: loading ? `${colorAlpha},0.08)` : `${colorAlpha},0.12)`, color, border: `1px solid ${colorAlpha},0.2)` }}
+    >
+      {loading
+        ? <><svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>{loadingLabel}</>
+        : <>{icon ?? <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.964-7.178z"/><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>}{label}</>
+      }
+    </button>
   );
 }
 

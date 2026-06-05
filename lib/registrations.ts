@@ -1,5 +1,12 @@
 import { getDb, initSchema } from './db';
 
+export interface Member {
+  name:     string;
+  relation: string;
+  email:    string;
+  phone:    string;
+}
+
 export interface RegistrationInput {
   bookingId: string;
   name: string;
@@ -45,6 +52,7 @@ export interface Registration {
   checkedIn: boolean;
   checkinTime: string;
   membersJson: string;
+  members: Member[];
 }
 
 function toIST(date: Date | null | undefined): string {
@@ -77,6 +85,7 @@ function rowToRegistration(row: any): Registration {
     checkedIn:           row.checked_in           ?? false,
     checkinTime:         toIST(row.checkin_time),
     membersJson:         row.members_json         ?? '[]',
+    members:             (() => { try { return JSON.parse(row.members_json ?? '[]'); } catch { return []; } })(),
   };
 }
 
