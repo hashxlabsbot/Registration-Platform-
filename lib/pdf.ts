@@ -33,6 +33,20 @@ const H     = LH * SCALE;   // 720 pt physical
 const DARK_GREEN = '#0f2e14';
 const WHITE      = '#ffffff';
 
+// ── Background image cache (loaded once per server instance) ────────────────
+// undefined = not yet attempted, null = file not found, Buffer = loaded
+let _bgCache: Buffer | null | undefined = undefined;
+
+function getBgBuffer(): Buffer | null {
+  if (_bgCache !== undefined) return _bgCache;
+  try {
+    _bgCache = fs.readFileSync(path.join(process.cwd(), 'public', 'Id-background.png'));
+  } catch {
+    _bgCache = null;
+  }
+  return _bgCache;
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function footerLabel(registrationType: string): string {
   if (registrationType === 'Architect - IIA Member' || registrationType === 'Architect - Non-IIA Member') return 'ARCHITECT';
@@ -47,14 +61,8 @@ function isArchitect(registrationType: string): boolean {
 // ── Main export ──────────────────────────────────────────────────────────────
 export async function generateTicketPDF(ticket: TicketData): Promise<Buffer> {
 
-  // 1. Load background image (no sharp — pdfkit scales it natively)
-  const bgPath = path.join(process.cwd(), 'public', 'Id-background.png');
-  let bgBuffer: Buffer | null = null;
-  try {
-    bgBuffer = fs.readFileSync(bgPath);
-  } catch {
-    /* proceed without background */
-  }
+  // 1. Background image — served from in-memory cache after first request
+  const bgBuffer = getBgBuffer();
 
   // 2. Layout
   const layout: TicketLayout = FALLBACK_LAYOUT;

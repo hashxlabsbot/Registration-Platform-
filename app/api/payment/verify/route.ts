@@ -5,6 +5,7 @@ import { nanoid } from 'nanoid';
 import { appendRegistration } from '@/lib/registrations';
 import { sendTicketEmail, sendAdminNotification } from '@/lib/mailer';
 import { generateTicketPDF, TicketData } from '@/lib/pdf';
+import { storePdf } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
@@ -106,8 +107,20 @@ export async function POST(request: NextRequest) {
       ...eventFields,
     }));
 
-    // Generate member PDFs to attach to the primary registrant's email
-    const memberPdfs = await Promise.all(memberTickets.map(mt => generateTicketPDF(mt)));
+    // Generate all PDFs once — primary + each member
+    const primaryPdf  = await generateTicketPDF(ticketData);
+    const memberPdfs  = await Promise.all(memberTickets.map(mt => generateTicketPDF(mt)));
+
+    // Persist to DB (fire-and-forget errors — don't fail the registration)
+    await Promise.all([
+      storePdf(bookingId, primaryPdf).catch(err => console.error('[pdf:store:primary]', err)),
+      ...memberPdfs.map((pdf, i) =>
+        storePdf(memberTickets[i].bookingId, pdf).catch(err =>
+          console.error(`[pdf:store:${memberTickets[i].bookingId}]`, err)
+        )
+      ),
+    ]);
+
     const memberAttachments = memberPdfs.map((pdf, i) => ({
       name:    `ticket-${memberTickets[i].bookingId}.pdf`,
       content: pdf.toString('base64'),
@@ -115,14 +128,14 @@ export async function POST(request: NextRequest) {
 
     let emailSent = true;
     await Promise.all([
-      // Primary gets their ticket + all member tickets attached
-      sendTicketEmail(ticketData, true, memberAttachments).catch(err => {
+      // Pass pre-generated PDFs — no second generation needed
+      sendTicketEmail(ticketData, true, memberAttachments, primaryPdf).catch(err => {
         console.error('[email:ticket]', err);
         emailSent = false;
       }),
-      // Each member gets their own individual ticket email
-      ...memberTickets.map(mt =>
-        sendTicketEmail(mt, true).catch(err => console.error(`[email:member:${mt.bookingId}]`, err))
+      // Each member gets their own individual ticket email with their pre-generated PDF
+      ...memberTickets.map((mt, i) =>
+        sendTicketEmail(mt, true, [], memberPdfs[i]).catch(err => console.error(`[email:member:${mt.bookingId}]`, err))
       ),
       sendAdminNotification({
         ...ticketData,

@@ -45,4 +45,32 @@ export async function initSchema(): Promise<void> {
   await sql`
     ALTER TABLE registrations ADD COLUMN IF NOT EXISTS members_json TEXT NOT NULL DEFAULT '[]'
   `;
+  await sql`
+    CREATE TABLE IF NOT EXISTS ticket_pdfs (
+      booking_id TEXT PRIMARY KEY,
+      pdf_b64    TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+}
+
+// Store a generated PDF (base64) keyed by booking ID.
+// Uses upsert so re-running registration never breaks.
+export async function storePdf(bookingId: string, pdfBuffer: Buffer): Promise<void> {
+  const sql = getDb();
+  await sql`
+    INSERT INTO ticket_pdfs (booking_id, pdf_b64)
+    VALUES (${bookingId}, ${pdfBuffer.toString('base64')})
+    ON CONFLICT (booking_id) DO UPDATE SET pdf_b64 = EXCLUDED.pdf_b64
+  `;
+}
+
+// Returns the stored PDF buffer, or null if not found.
+export async function getPdf(bookingId: string): Promise<Buffer | null> {
+  const sql = getDb();
+  const rows = await sql`
+    SELECT pdf_b64 FROM ticket_pdfs WHERE booking_id = ${bookingId}
+  `;
+  if (rows.length === 0) return null;
+  return Buffer.from(rows[0].pdf_b64 as string, 'base64');
 }

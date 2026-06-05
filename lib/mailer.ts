@@ -55,8 +55,9 @@ export async function sendTicketEmail(
   ticket: TicketData,
   confirmed = false,
   extraAttachments: { name: string; content: string }[] = [],
+  preGeneratedPdf?: Buffer,
 ): Promise<void> {
-  const pdfBuffer = await generateTicketPDF(ticket);
+  const pdfBuffer = preGeneratedPdf ?? await generateTicketPDF(ticket);
 
   const badgeHtml = confirmed
     ? `<span style="display:inline-block;background:#c8a96e;border-radius:20px;padding:8px 24px;font-size:11px;font-weight:800;color:#0b2310;letter-spacing:1.5px;text-transform:uppercase;box-shadow:0 2px 8px rgba(200,169,110,0.3);">&#10003;&nbsp; Spot Confirmed</span>`
