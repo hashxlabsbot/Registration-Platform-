@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
       organization:     firm || '—',
       designation:      m.relation || 'Delegate',
       registrationType: 'Non-Architect',
-      totalAmount:      1000,
+      totalAmount:      1, // TODO: restore to 1000 after testing
       utrNumber:        razorpay_payment_id,
       ...eventFields,
     }));

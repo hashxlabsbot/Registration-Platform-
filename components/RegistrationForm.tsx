@@ -13,7 +13,7 @@ const REGISTRATION_TYPES = [
 
 type RegType = (typeof REGISTRATION_TYPES)[number]['label'];
 
-const MEMBER_FEE = 1000;
+const MEMBER_FEE = 1; // TODO: restore to 1000 after testing
 
 interface Member {
   name: string;
@@ -417,7 +417,7 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-bold text-[#1a4a1a]">Additional Members</p>
-                    <p className="text-xs text-gray-500 mt-0.5">Each member adds ₹1,000 to your total</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Each member adds ₹{MEMBER_FEE.toLocaleString('en-IN')} to your total</p>
                   </div>
                   <button
                     type="button"
@@ -441,7 +441,7 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
                   <div key={i} className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <p className="text-xs font-bold text-[#1a4a1a] uppercase tracking-wide">Member {i + 1}
-                        <span className="ml-2 text-[#2e7d32] font-black">+₹1,000</span>
+                        <span className="ml-2 text-[#2e7d32] font-black">+₹{MEMBER_FEE.toLocaleString('en-IN')}</span>
                       </p>
                       <button
                         type="button"
@@ -563,7 +563,7 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
                             </p>
                             <p className="text-xs text-gray-400">{m.relation || 'relation'}</p>
                           </div>
-                          <p className="shrink-0 text-sm font-bold text-[#1a4a1a]">₹1,000</p>
+                          <p className="shrink-0 text-sm font-bold text-[#1a4a1a]">₹{MEMBER_FEE.toLocaleString('en-IN')}</p>
                         </div>
                       ))}
                     </div>
