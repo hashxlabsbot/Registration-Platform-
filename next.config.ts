@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['pdfkit', 'sharp', 'nodemailer', 'canvas'],
+  serverExternalPackages: ['pdfkit', 'nodemailer', 'canvas'],
 };
 
 export default nextConfig;

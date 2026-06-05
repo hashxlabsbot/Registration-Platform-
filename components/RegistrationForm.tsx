@@ -243,6 +243,7 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
                 registrationType: data.registrationType,
                 amount:           data.totalAmount,
                 utrNumber:        data.utrNumber,
+                emailSent:        data.emailSent ?? true,
               });
               resolve();
             } catch (err) { reject(err); }

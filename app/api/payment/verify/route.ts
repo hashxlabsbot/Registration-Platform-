@@ -113,9 +113,13 @@ export async function POST(request: NextRequest) {
       content: pdf.toString('base64'),
     }));
 
+    let emailSent = true;
     await Promise.all([
       // Primary gets their ticket + all member tickets attached
-      sendTicketEmail(ticketData, true, memberAttachments).catch(err => console.error('[email:ticket]', err)),
+      sendTicketEmail(ticketData, true, memberAttachments).catch(err => {
+        console.error('[email:ticket]', err);
+        emailSent = false;
+      }),
       // Each member gets their own individual ticket email
       ...memberTickets.map(mt =>
         sendTicketEmail(mt, true).catch(err => console.error(`[email:member:${mt.bookingId}]`, err))
@@ -146,6 +150,7 @@ export async function POST(request: NextRequest) {
       registrationType,
       totalAmount:      verifiedAmount,
       utrNumber:        razorpay_payment_id,
+      emailSent,
     });
   } catch (error) {
     console.error('[verify]', error);

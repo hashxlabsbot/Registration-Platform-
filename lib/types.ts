@@ -8,4 +8,5 @@ export interface BookingResult {
   registrationType: string;
   amount: number;
   utrNumber: string;
+  emailSent?: boolean;
 }

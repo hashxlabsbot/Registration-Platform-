@@ -1,6 +1,5 @@
 import PDFDocument from 'pdfkit';
 import QRCode      from 'qrcode';
-import sharp       from 'sharp';
 import path        from 'path';
 import fs          from 'fs';
 import { FALLBACK_LAYOUT, TicketLayout } from './gemini-layout';
@@ -26,8 +25,8 @@ export interface TicketData {
 // ── Page dimensions (2× for high-DPI) ───────────────────────────────────────
 // 3.5" × 5" at 72pt/in = 252 × 360 logical; ×2 for high-DPI
 const SCALE = 2;
-const LW    = 252;   // logical width  (pt)  — 3.5 in
-const LH    = 360;   // logical height (pt)  — 5 in
+const LW    = 252;
+const LH    = 360;
 const W     = LW * SCALE;   // 504 pt physical
 const H     = LH * SCALE;   // 720 pt physical
 
@@ -38,7 +37,7 @@ const WHITE      = '#ffffff';
 function footerLabel(registrationType: string): string {
   if (registrationType === 'Architect - IIA Member' || registrationType === 'Architect - Non-IIA Member') return 'ARCHITECT';
   if (registrationType === 'Non-Architect' || registrationType === 'Non - Architect') return 'DELEGATE';
-  return registrationType.toUpperCase(); // "Special Invitee" → "SPECIAL INVITEE"
+  return registrationType.toUpperCase();
 }
 
 function isArchitect(registrationType: string): boolean {
@@ -48,28 +47,19 @@ function isArchitect(registrationType: string): boolean {
 // ── Main export ──────────────────────────────────────────────────────────────
 export async function generateTicketPDF(ticket: TicketData): Promise<Buffer> {
 
-  // 1. Load and resize background image
+  // 1. Load background image (no sharp — pdfkit scales it natively)
   const bgPath = path.join(process.cwd(), 'public', 'Id-background.png');
-  let bgResized: Buffer | null = null;
-
+  let bgBuffer: Buffer | null = null;
   try {
-    const raw = fs.readFileSync(bgPath);
-    bgResized = await sharp(raw)
-      .resize(W, H, { fit: 'fill', kernel: 'lanczos3' })
-      .png({ compressionLevel: 0 })
-      .toBuffer();
+    bgBuffer = fs.readFileSync(bgPath);
   } catch {
     /* proceed without background */
   }
 
-  // 2. Get AI layout (Bypassed AI analysis for now, using fallback layout)
-  // const layout: TicketLayout = bgBase64
-  //   ? await analyzeBackgroundLayout(bgBase64)
-  //   : FALLBACK_LAYOUT;
+  // 2. Layout
   const layout: TicketLayout = FALLBACK_LAYOUT;
 
-  // 3. Generate QR code as sharp-resized PNG
-  const qrSize = layout.qrCode.size;
+  // 3. Generate QR code as PNG buffer (pdfkit will scale it to qrCode.size)
   const qrPayload = JSON.stringify({
     id:   ticket.bookingId,
     name: ticket.name,
@@ -81,49 +71,14 @@ export async function generateTicketPDF(ticket: TicketData): Promise<Buffer> {
     dt:   '20-06-2026',
   });
 
-  const qrRaw = await QRCode.toBuffer(qrPayload, {
-    width: qrSize * 4,
-    margin: 1,
+  const qrBuf = await QRCode.toBuffer(qrPayload, {
+    width:                layout.qrCode.size * 2,   // 2× for crispness; pdfkit scales it down
+    margin:               1,
     errorCorrectionLevel: 'M',
     color: { dark: DARK_GREEN, light: WHITE },
   });
-  const qrBuf = await sharp(qrRaw)
-    .resize(qrSize, qrSize, { kernel: 'lanczos3' })
-    .png({ compressionLevel: 0 })
-    .toBuffer();
 
-  // 4. Composite: background + QR border box + QR code using sharp
-  let compositedBg: Buffer | null = bgResized;
-  if (bgResized) {
-    // Draw a white border around QR then overlay the QR image
-    const borderPad = Math.round(2 * SCALE);
-    const borderSize = qrSize + borderPad * 2;
-
-    // Create white border tile
-    const borderBox = await sharp({
-      create: { width: borderSize, height: borderSize, channels: 4, background: { r: 255, g: 255, b: 255, alpha: 1 } },
-    }).png().toBuffer();
-
-    compositedBg = await sharp(bgResized)
-      .composite([
-        // White border box
-        {
-          input:  borderBox,
-          left:   Math.round(layout.qrCode.x) - borderPad,
-          top:    Math.round(layout.qrCode.y) - borderPad,
-        },
-        // QR code on top of white box
-        {
-          input: qrBuf,
-          left:  Math.round(layout.qrCode.x),
-          top:   Math.round(layout.qrCode.y),
-        },
-      ])
-      .png({ compressionLevel: 0 })
-      .toBuffer();
-  }
-
-  // 5. Use PDFKit to draw text and capsule elements on top of the composited image
+  // 4. Build PDF
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: [W, H], margin: 0 });
     const chunks: Buffer[] = [];
@@ -131,37 +86,37 @@ export async function generateTicketPDF(ticket: TicketData): Promise<Buffer> {
     doc.on('end',   () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
 
-    drawTextLayer(doc, ticket, compositedBg, layout);
+    drawTextLayer(doc, ticket, bgBuffer, qrBuf, layout);
     doc.end();
   });
 }
 
-// ── Text layer (PDFKit) ──────────────────────────────────────────────────────
+// ── Text layer (PDFKit only — no sharp) ──────────────────────────────────────
 function drawTextLayer(
   doc:     InstanceType<typeof PDFDocument>,
   ticket:  TicketData,
   bgBuf:   Buffer | null,
+  qrBuf:   Buffer,
   layout:  TicketLayout,
 ) {
   const cx  = W / 2;
   const ibW = layout.name.maxWidth;
 
-  // ── Background (composited: bg + QR already baked in) ──────────────────────
+  // ── Background ───────────────────────────────────────────────────────────────
   if (bgBuf) doc.image(bgBuf, 0, 0, { width: W, height: H });
   else       doc.rect(0, 0, W, H).fill(WHITE);
 
-  // ── 1. Date + Venue bar (full-width green strip, single line) ────────────────
+  // ── 1. Date + Venue bar ──────────────────────────────────────────────────────
   const mainSz = 14;
   const supSz  = 8;
   const venue  = 'FARIDABAD';
   const barH   = 34;
-  const barY   = Math.round(H / 2 - barH / 2);  // centred at ticket midpoint
+  const barY   = Math.round(H / 2 - barH / 2);
 
   doc.rect(0, barY, W, barH).fill('#1a5c2a');
   doc.font('Helvetica-Bold');
 
-  // Measure all fragments
-  const gap = 20; // fixed px gap between date and venue
+  const gap = 20;
   doc.font('Helvetica-Bold').fontSize(mainSz);
   const w20    = doc.widthOfString('20');
   const wJune  = doc.widthOfString(' JUNE, 2026');
@@ -183,7 +138,7 @@ function drawTextLayer(
     doc.text(venue, bx + w20 + wTH + wJune + gap, mainY, { lineBreak: false });
   }
 
-  // ── 2. Name (AR. prefix for architects) ─────────────────────────────────────
+  // ── 2. Name ──────────────────────────────────────────────────────────────────
   const namePrefix = isArchitect(ticket.registrationType) ? 'AR. ' : '';
   const nameText   = (namePrefix + ticket.name).toUpperCase();
   doc.font('Times-Bold')
@@ -226,15 +181,26 @@ function drawTextLayer(
     doc.text(org.toUpperCase(), cx - ibW / 2, firmY, { width: ibW, align: 'center' });
   }
 
-  // ── 6. QR label (below QR) ───────────────────────────────────────────────────
-  const qrBottom = layout.qrCode.y + layout.qrCode.size + 5;
+  // ── 6. QR white border box + QR image (pdfkit rects — no sharp needed) ───────
+  const qrX      = Math.round(layout.qrCode.x);
+  const qrY      = Math.round(layout.qrCode.y);
+  const qrSize   = layout.qrCode.size;
+  const borderPad = Math.round(2 * SCALE);
+
+  doc.rect(qrX - borderPad, qrY - borderPad, qrSize + borderPad * 2, qrSize + borderPad * 2)
+     .fill(WHITE);
+
+  doc.image(qrBuf, qrX, qrY, { width: qrSize, height: qrSize });
+
+  // ── 7. QR label ──────────────────────────────────────────────────────────────
+  const qrBottom = qrY + qrSize + 5;
   doc.fontSize(12).font('Helvetica-Bold').fillColor('#2d5a35');
   doc.text('SCAN AT VENUE ENTRANCE', cx - ibW / 2, qrBottom, { width: ibW, align: 'center' });
 
-  // ── 7. Footer bar — full-width dark-green strip ───────────────────────────────
-  const footerY  = layout.regType.y;
-  const footerH  = H - footerY;
-  const label    = footerLabel(ticket.registrationType);
+  // ── 8. Footer bar ─────────────────────────────────────────────────────────────
+  const footerY = layout.regType.y;
+  const footerH = H - footerY;
+  const label   = footerLabel(ticket.registrationType);
   doc.rect(0, footerY, W, footerH).fill('#1a5c2a');
   doc.font('Helvetica-Bold')
      .fontSize(layout.regType.fontSize)
