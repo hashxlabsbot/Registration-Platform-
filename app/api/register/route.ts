@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       name, email, phone, whatsapp, gender, nationality,
       firm, designation, address, district, state, pincode,
       registrationType, coaNumber, iiaMembershipNumber, totalAmount,
-      utrNumber, inviteCode,
+      utrNumber, inviteCode, members,
     } = body;
 
     if (!name || !email || !phone || !registrationType) {
@@ -64,6 +64,7 @@ export async function POST(request: NextRequest) {
       district:            district || '',
       state:               state    || '',
       pincode:             pincode  || '',
+      membersJson:         JSON.stringify(Array.isArray(members) ? members : []),
     });
 
     // Consume invite code after successful save
@@ -101,6 +102,7 @@ export async function POST(request: NextRequest) {
         pincode:             pincode             || '',
         coaNumber:           coaNumber           || '',
         iiaMembershipNumber: iiaMembershipNumber || '',
+        members:             Array.isArray(members) ? members : [],
       }).catch(err => console.error('[email:admin]', err)),
     ]);
 

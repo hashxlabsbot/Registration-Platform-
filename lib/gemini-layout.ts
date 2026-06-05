@@ -24,21 +24,25 @@ export interface DividerLayout {
 export interface TicketLayout {
   name:        ElementLayout;
   designation: ElementLayout;
+  firm?:       ElementLayout;
   bookingId:   ElementLayout;
   qrCode:      QRLayout;
   regType:     Omit<ElementLayout, 'color'>;
   divider?:    DividerLayout;
 }
 
-// ── Fallback layout (matches original PDFKit design, in 576×860pt space) ────
+// ── Fallback layout (new design — blank area starts ~65% down, 576×860pt space) ────
 // Used when GEMINI_API_KEY is not set or Gemini call fails.
+// Canvas: 504×720 pt (3.5"×5" @2× high-DPI scale)
+// Bar divider centred at y=360 (barY=343, barBottom=377) — content fills bottom half (377–652)
 export const FALLBACK_LAYOUT: TicketLayout = {
-  name:        { x: 288, y: 260, maxWidth: 356, fontSize: 32, color: '#1a3d21' },
-  designation: { x: 288, y: 312, maxWidth: 356, fontSize: 18, color: '#1a5c2a' },
-  bookingId:   { x: 288, y: 340, maxWidth: 356, fontSize: 14, color: '#1b5e20' },
-  qrCode:      { x: 208, y: 374, size: 160 },
-  regType:     { x: 288, y: 574, maxWidth: 356, fontSize: 26 },
-  divider:     { x1: 110, y: 298, x2: 466 },
+  name:        { x: 252, y: 390, maxWidth: 332, fontSize: 30, color: '#1a3d21' },
+  designation: { x: 252, y: 432, maxWidth: 332, fontSize: 22, color: '#2d6a3f' },
+  firm:        { x: 252, y: 460, maxWidth: 332, fontSize: 19, color: '#2d6a3f' },
+  bookingId:   { x: 252, y: 615, maxWidth: 310, fontSize: 10, color: '#1b5e20' },
+  qrCode:      { x: 182, y: 486, size: 140 },   // centred: 182 + 70 = 252
+  regType:     { x: 252, y: 652, maxWidth: 504, fontSize: 36 },
+  divider:     { x1: 70,  y: 426, x2: 434 },
 };
 
 // ── In-memory cache — Gemini is only called once per server cold start ───────
@@ -101,7 +105,7 @@ Placement rules:
     const layout = JSON.parse(raw) as TicketLayout;
 
     // Sanity-clamp values to keep them within page bounds
-    layout.qrCode.size = Math.max(120, Math.min(180, layout.qrCode.size));
+    layout.qrCode.size = Math.max(160, Math.min(220, layout.qrCode.size));
     layout.qrCode.x    = Math.max(0, Math.min(576 - layout.qrCode.size, layout.qrCode.x));
     layout.qrCode.y    = Math.max(0, Math.min(860 - layout.qrCode.size, layout.qrCode.y));
 

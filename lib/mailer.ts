@@ -1,22 +1,62 @@
-import nodemailer from 'nodemailer';
-import path from 'path';
 import { generateTicketPDF, TicketData } from './pdf';
 
-function createTransporter() {
-  const user = process.env.GMAIL_USER;
-  const pass = process.env.GMAIL_APP_PASSWORD;
-  if (!user || !pass) {
-    throw new Error('GMAIL_USER or GMAIL_APP_PASSWORD environment variable is not set');
-  }
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user, pass },
-  });
+const BREVO_API = 'https://api.brevo.com/v3/smtp/email';
+
+function apiKey(): string {
+  const key = process.env.BREVO_API_KEY;
+  if (!key) throw new Error('BREVO_API_KEY environment variable is not set');
+  return key;
 }
 
-export async function sendTicketEmail(ticket: TicketData, confirmed = false): Promise<void> {
+function sender() {
+  return {
+    email: process.env.SENDER_EMAIL || 'prakriti2026.iiafaridabad@gmail.com',
+    name:  process.env.SENDER_NAME  || 'Prakriti 2026 · IIA Faridabad',
+  };
+}
+
+// Calls Brevo API with up to 3 retries on transient failures (5xx / 429)
+async function sendEmail(payload: object): Promise<void> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const res = await fetch(BREVO_API, {
+      method: 'POST',
+      headers: {
+        'accept':       'application/json',
+        'content-type': 'application/json',
+        'api-key':      apiKey(),
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (res.ok) return;
+
+    const body = await res.text();
+
+    // 4xx (except 429) = config/auth error — no point retrying
+    if (res.status < 500 && res.status !== 429) {
+      throw new Error(`Brevo API ${res.status}: ${body}`);
+    }
+
+    lastError = new Error(`Brevo API ${res.status} (attempt ${attempt}/3): ${body}`);
+    console.error('[mailer] transient error, will retry:', lastError.message);
+
+    // Respect Retry-After header if present (429), otherwise exponential backoff
+    const retryAfter = res.headers.get('Retry-After');
+    const waitMs = retryAfter ? parseInt(retryAfter) * 1000 : attempt * 1500;
+    await new Promise(r => setTimeout(r, waitMs));
+  }
+
+  throw lastError!;
+}
+
+export async function sendTicketEmail(
+  ticket: TicketData,
+  confirmed = false,
+  extraAttachments: { name: string; content: string }[] = [],
+): Promise<void> {
   const pdfBuffer = await generateTicketPDF(ticket);
-  const transporter = createTransporter();
 
   const badgeHtml = confirmed
     ? `<span style="display:inline-block;background:#c8a96e;border-radius:20px;padding:8px 24px;font-size:11px;font-weight:800;color:#0b2310;letter-spacing:1.5px;text-transform:uppercase;box-shadow:0 2px 8px rgba(200,169,110,0.3);">&#10003;&nbsp; Spot Confirmed</span>`
@@ -34,8 +74,8 @@ export async function sendTicketEmail(ticket: TicketData, confirmed = false): Pr
     ? `&#8377;${ticket.totalAmount.toLocaleString('en-IN')}`
     : 'Complimentary';
 
-  const displayRegType = (ticket.registrationType === 'Non-Architect' || ticket.registrationType === 'Non - Architect') 
-    ? 'Delegate' 
+  const displayRegType = (ticket.registrationType === 'Non-Architect' || ticket.registrationType === 'Non - Architect')
+    ? 'Delegate'
     : ticket.registrationType;
 
   const rows: [string, string][] = [
@@ -59,7 +99,9 @@ export async function sendTicketEmail(ticket: TicketData, confirmed = false): Pr
     ? `You're Confirmed! Welcome to Prakriti 2026 · ${ticket.bookingId}`
     : `Registration Received — Prakriti 2026 · ${ticket.bookingId}`;
 
-  const html = `<!DOCTYPE html>
+  const contactEmail = process.env.ADMIN_EMAIL || sender().email;
+
+  const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -182,9 +224,11 @@ export async function sendTicketEmail(ticket: TicketData, confirmed = false): Pr
               <tr>
                 <td style="width:24px;vertical-align:top;font-size:16px;line-height:1;">📎</td>
                 <td style="padding-left:12px;font-size:13px;color:#1b4f26;line-height:1.6;">
-                  <strong>Provisional Entry Ticket PDF Attached:</strong>
+                  <strong>${extraAttachments.length > 0 ? `${1 + extraAttachments.length} Entry Ticket PDFs Attached (yours + ${extraAttachments.length} member ticket${extraAttachments.length > 1 ? 's' : ''}):` : 'Provisional Entry Ticket PDF Attached:'}</strong>
+                  <br/>
                   <code style="background:#d9ebdcd7;padding:2px 6px;border-radius:4px;font-size:12px;color:#0b2310;font-family:monospace;font-weight:bold;">ticket-${ticket.bookingId}.pdf</code>
-                  <br/>Please download and present this PDF (on your smartphone or printed) at the reception desk.
+                  ${extraAttachments.map(a => `<br/><code style="background:#d9ebdcd7;padding:2px 6px;border-radius:4px;font-size:12px;color:#0b2310;font-family:monospace;font-weight:bold;">${a.name}</code>`).join('')}
+                  <br/>Please download and present each ticket (on your smartphone or printed) at the reception desk.
                 </td>
               </tr>
             </table>
@@ -223,7 +267,7 @@ export async function sendTicketEmail(ticket: TicketData, confirmed = false): Pr
       <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:#c8a96e;letter-spacing:0.5px;">${ticket.organizer}</p>
       <p style="margin:0 0 24px;font-size:12px;color:#a5d6a7;line-height:1.5;">
         For registration queries or support, reach us at<br/>
-        <a href="mailto:${process.env.GMAIL_USER}" style="color:#ffffff;text-decoration:underline;font-weight:600;">${process.env.GMAIL_USER}</a>
+        <a href="mailto:${contactEmail}" style="color:#ffffff;text-decoration:underline;font-weight:600;">${contactEmail}</a>
       </p>
       <div style="border-top:1px solid #1c5228;padding-top:24px;">
         <p style="margin:0;font-size:11px;color:#81c784;">This is an automated confirmation email regarding your registration.</p>
@@ -238,17 +282,22 @@ export async function sendTicketEmail(ticket: TicketData, confirmed = false): Pr
 </body>
 </html>`;
 
-  await transporter.sendMail({
-    from: `"Prakriti 2026 · IIA Faridabad" <${process.env.GMAIL_USER}>`,
-    to: ticket.email,
+  await sendEmail({
+    sender:    sender(),
+    to:        [{ email: ticket.email }],
+    replyTo:   { email: contactEmail },
     subject,
-    html,
-    attachments: [
+    htmlContent,
+    headers: {
+      'List-Unsubscribe': `<mailto:${contactEmail}?subject=unsubscribe>`,
+      'X-Mailer': 'Prakriti2026-Mailer/1.0',
+    },
+    attachment: [
       {
-        filename: `ticket-${ticket.bookingId}.pdf`,
-        content: pdfBuffer,
-        contentType: 'application/pdf',
-      }
+        name:    `ticket-${ticket.bookingId}.pdf`,
+        content: pdfBuffer.toString('base64'),
+      },
+      ...extraAttachments,
     ],
   });
 }
@@ -264,11 +313,11 @@ export interface AdminNotificationData extends TicketData {
   coaNumber: string;
   iiaMembershipNumber: string;
   utrNumber?: string;
+  members?: { name: string; relation: string; email: string; phone: string }[];
 }
 
 export async function sendAdminNotification(data: AdminNotificationData): Promise<void> {
-  const transporter = createTransporter();
-  const adminEmail = process.env.ADMIN_EMAIL || process.env.GMAIL_USER!;
+  const adminEmail = process.env.ADMIN_EMAIL || sender().email;
 
   const rows: [string, string][] = [
     ['Booking ID',            data.bookingId],
@@ -298,7 +347,25 @@ export async function sendAdminNotification(data: AdminNotificationData): Promis
       <td style="padding:9px 16px;font-size:12px;color:#1a1a1a;font-weight:600;">${value}</td>
     </tr>`).join('');
 
-  const html = `<!DOCTYPE html>
+  const membersHtml = (data.members && data.members.length > 0) ? `
+    <p style="margin:14px 0 6px;font-size:11px;font-weight:700;color:#0b2310;letter-spacing:1.5px;text-transform:uppercase;">Additional Members (${data.members.length})</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e8efe8;border-radius:6px;overflow:hidden;margin-bottom:8px;">
+      <tr style="background:#eef5ef;">
+        <td style="padding:8px 12px;font-size:11px;font-weight:700;color:#0b2310;width:25%;">Name</td>
+        <td style="padding:8px 12px;font-size:11px;font-weight:700;color:#0b2310;width:20%;">Relation</td>
+        <td style="padding:8px 12px;font-size:11px;font-weight:700;color:#0b2310;width:30%;">Email</td>
+        <td style="padding:8px 12px;font-size:11px;font-weight:700;color:#0b2310;width:25%;">Phone</td>
+      </tr>
+      ${data.members.map((m, i) => `
+      <tr style="${i > 0 ? 'border-top:1px solid #f0f4f0;' : ''}${i % 2 === 1 ? 'background:#fafafa;' : ''}">
+        <td style="padding:8px 12px;font-size:12px;color:#1a1a1a;font-weight:600;">${m.name}</td>
+        <td style="padding:8px 12px;font-size:12px;color:#555;">${m.relation}</td>
+        <td style="padding:8px 12px;font-size:12px;color:#555;">${m.email}</td>
+        <td style="padding:8px 12px;font-size:12px;color:#555;">+91 ${m.phone}</td>
+      </tr>`).join('')}
+    </table>` : '';
+
+  const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#f4f4f0;font-family:Arial,Helvetica,sans-serif;">
@@ -319,6 +386,7 @@ export async function sendAdminNotification(data: AdminNotificationData): Promis
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e8efe8;border-radius:6px;overflow:hidden;">
         ${rowsHtml}
       </table>
+      ${membersHtml}
       <p style="margin:14px 0 0;font-size:12px;color:#999;">Verify the UTR/payment ID above before confirming entry.</p>
     </td>
   </tr>
@@ -329,10 +397,11 @@ export async function sendAdminNotification(data: AdminNotificationData): Promis
 </body>
 </html>`;
 
-  await transporter.sendMail({
-    from: `"Prakriti 2026 Registrations" <${process.env.GMAIL_USER}>`,
-    to: adminEmail,
-    subject: `[New Registration] ${data.name} — ${data.registrationType} · ${data.bookingId}`,
-    html,
+  await sendEmail({
+    sender:      sender(),
+    to:          [{ email: adminEmail }],
+    replyTo:     { email: data.email },
+    subject:     `[New Registration] ${data.name} — ${data.registrationType} · ${data.bookingId}`,
+    htmlContent,
   });
 }

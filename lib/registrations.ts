@@ -19,6 +19,7 @@ export interface RegistrationInput {
   district: string;
   state: string;
   pincode: string;
+  membersJson?: string;
 }
 
 export interface Registration {
@@ -43,6 +44,7 @@ export interface Registration {
   registeredAt: string;
   checkedIn: boolean;
   checkinTime: string;
+  membersJson: string;
 }
 
 function toIST(date: Date | null | undefined): string {
@@ -74,6 +76,7 @@ function rowToRegistration(row: any): Registration {
     registeredAt:        toIST(row.registered_at),
     checkedIn:           row.checked_in           ?? false,
     checkinTime:         toIST(row.checkin_time),
+    membersJson:         row.members_json         ?? '[]',
   };
 }
 
@@ -85,14 +88,15 @@ export async function appendRegistration(data: RegistrationInput): Promise<void>
       booking_id, name, email, phone, whatsapp, gender, nationality,
       organization, designation, coa_number, iia_membership_number,
       registration_type, amount, utr_number,
-      address, district, state, pincode
+      address, district, state, pincode, members_json
     ) VALUES (
       ${data.bookingId}, ${data.name}, ${data.email}, ${data.phone},
       ${data.whatsapp}, ${data.gender}, ${data.nationality},
       ${data.organization}, ${data.designation}, ${data.coaNumber},
       ${data.iiaMembershipNumber}, ${data.registrationType},
       ${data.totalAmount}, ${data.utrNumber},
-      ${data.address}, ${data.district}, ${data.state}, ${data.pincode}
+      ${data.address}, ${data.district}, ${data.state}, ${data.pincode},
+      ${data.membersJson ?? '[]'}
     )
     ON CONFLICT (booking_id) DO NOTHING
   `;

@@ -17,8 +17,8 @@ const HIGHLIGHTS = [
 const PRICING = [
   { type: 'Architect – IIA Member',     price: '₹1',      desc: 'Active IIA membership required' },
   { type: 'Architect – Non-IIA Member', price: '₹1,000',  desc: 'Open to all architecture professionals' },
-  { type: "Member's Spouse",            price: '₹1,000',  desc: 'Spouse of an IIA member' },
   { type: 'Non-Architect',              price: '₹2,500',  desc: 'Industry professionals & guests' },
+  { type: 'Additional Member',          price: '₹1,000',  desc: 'Per member added by an architect registrant' },
 ];
 
 const SPONSORS = [
@@ -101,7 +101,7 @@ export default function Home() {
             />
 
             <p className="mt-3 text-[#2e7d32] text-base sm:text-lg lg:text-xl font-semibold leading-snug">
-              An Architects&apos; Meet-Up &ldquo;For a Sustainable Tomorrow&rdquo;
+              An Architects&apos; Meet &ldquo;For a Sustainable Tomorrow&rdquo;
             </p>
             <p className="mt-1.5 text-[#1a4a1a]/45 text-[10px] sm:text-[11px] uppercase tracking-[0.25em]">
               Design&nbsp;·&nbsp;Conserve&nbsp;·&nbsp;Restore

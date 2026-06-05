@@ -6,10 +6,20 @@ import { BookingResult } from '@/lib/types';
 
 function nameSize(name: string): string {
   const l = name.length;
-  if (l <= 14) return '17px';
-  if (l <= 18) return '14px';
-  if (l <= 24) return '12px';
-  return '10px';
+  if (l <= 14) return '15px';
+  if (l <= 20) return '13px';
+  if (l <= 28) return '11px';
+  return '9px';
+}
+
+function isArchitect(regType: string): boolean {
+  return regType === 'Architect - IIA Member' || regType === 'Architect - Non-IIA Member';
+}
+
+function footerLabel(regType: string): string {
+  if (isArchitect(regType)) return 'ARCHITECT';
+  if (regType === 'Non-Architect' || regType === 'Non - Architect') return 'DELEGATE';
+  return regType.toUpperCase(); // "Special Invitee" → "SPECIAL INVITEE"
 }
 
 export default function SuccessScreen({ booking }: { booking: BookingResult }) {
@@ -100,59 +110,68 @@ export default function SuccessScreen({ booking }: { booking: BookingResult }) {
       {/* ── THE TICKET ── */}
       <div
         id="ticket-card"
-        className="w-full max-w-[320px] mx-auto rounded-2xl overflow-hidden shadow-2xl relative border border-green-200"
+        className="w-full max-w-[320px] mx-auto overflow-hidden shadow-2xl relative border border-green-200"
+        style={{ borderRadius: '18px' }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/Id-background.png" alt="Prakriti 2026 Ticket" className="w-full block" />
-        <div className="absolute inset-0 flex items-start justify-center pt-[38%] pb-[25%]">
-          <div className="rounded-[14px] flex flex-col items-center justify-center aspect-square w-[62%] gap-1.5 p-2 bg-transparent">
 
-            {/* Name — font scales with length so it never truncates */}
-            <div
-              className="font-serif font-bold text-[#1a3d21] text-center leading-tight w-full break-words"
-              style={{ fontSize: nameSize(booking.name), textShadow: '0 1px 8px rgba(255,255,255,0.8)' }}
-            >
-              {booking.name.toUpperCase()}
-            </div>
+        {/* Content overlay — positioned in the blank lower ~35% of the card */}
+        <div className="absolute inset-0">
 
-            <div className="w-[82%] h-[1.5px] bg-[#a5d6a7]/70 shrink-0" />
-
-            <div
-              className="text-[#1a5c2a] font-semibold text-center leading-snug text-[11px]"
-              style={{ textShadow: '0 1px 6px rgba(255,255,255,0.8)' }}
-            >
-              {booking.designation && booking.designation !== '—' ? booking.designation : booking.organization}
-            </div>
-
-            <div className="flex gap-1.5 flex-wrap justify-center mt-1">
-              <div className="bg-[#e8f5e9]/85 text-[#1b5e20] border border-[#a5d6a7] rounded px-2 py-0.5 font-bold text-[9px]">
-                {booking.bookingId}
-              </div>
-            </div>
-
-            <div className="flex flex-col items-center gap-1 mt-1">
-              <div className="p-0.5 border-[1.5px] border-[#a5d6a7]/80 rounded bg-white">
-                <QRCodeCanvas
-                  value={qrValue}
-                  size={76}
-                  fgColor="#1a4a1a"
-                  bgColor="#ffffff"
-                  level="M"
-                  style={{ display: 'block' }}
-                />
-              </div>
-              <div
-                className="font-semibold text-[#2d5a35] text-[9px]"
-                style={{ textShadow: '0 1px 3px rgba(255,255,255,0.6)' }}
-              >
-                Scan at Venue Entrance
-              </div>
-              <div className="bg-[#1a5c2a] text-white rounded-full px-3 py-1.5 mt-2 font-bold text-[11px] shadow-md tracking-normal leading-none whitespace-nowrap w-fit max-w-full">
-                {(booking.registrationType === 'Non-Architect' || booking.registrationType === 'Non - Architect') ? 'DELEGATE' : booking.registrationType.toUpperCase()}
-              </div>
-            </div>
-
+          {/* Date */}
+          <div className="absolute left-0 right-0 text-center font-bold text-[#1a3d21] tracking-widest"
+            style={{ top: '64%', fontSize: '8px' }}>
+            20TH JUNE, 2026
           </div>
+
+          {/* Name */}
+          <div
+            className="absolute left-0 right-0 px-4 text-center font-serif font-bold text-[#1a3d21] leading-tight"
+            style={{ top: '67%', fontSize: nameSize((isArchitect(booking.registrationType) ? 'AR. ' : '') + booking.name) }}
+          >
+            {(isArchitect(booking.registrationType) ? 'AR. ' : '') + booking.name.toUpperCase()}
+          </div>
+
+          {/* Divider */}
+          <div className="absolute left-[14%] right-[14%] h-[1px] bg-[#a5d6a7]/70" style={{ top: '73%' }} />
+
+          {/* Designation */}
+          {booking.designation && booking.designation !== '—' && (
+            <div className="absolute left-0 right-0 px-4 text-center text-[#2d6a3f] font-semibold"
+              style={{ top: '74%', fontSize: '8px' }}>
+              {booking.designation}
+            </div>
+          )}
+
+          {/* Firm */}
+          {booking.organization && booking.organization !== '—' && (
+            <div className="absolute left-0 right-0 px-4 text-center text-[#2d6a3f]"
+              style={{ top: '78%', fontSize: '7px' }}>
+              {booking.organization}
+            </div>
+          )}
+
+          {/* QR Code */}
+          <div className="absolute left-1/2 -translate-x-1/2" style={{ top: '81%' }}>
+            <div className="p-0.5 border border-[#a5d6a7]/80 rounded bg-white">
+              <QRCodeCanvas
+                value={qrValue}
+                size={56}
+                fgColor="#1a4a1a"
+                bgColor="#ffffff"
+                level="M"
+                style={{ display: 'block' }}
+              />
+            </div>
+          </div>
+
+          {/* Footer bar */}
+          <div className="absolute bottom-0 left-0 right-0 bg-[#1a5c2a] text-white text-center font-bold tracking-widest py-1.5"
+            style={{ fontSize: '8px' }}>
+            {footerLabel(booking.registrationType)}
+          </div>
+
         </div>
       </div>
 

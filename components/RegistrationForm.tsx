@@ -5,21 +5,30 @@ import { BookingResult } from '@/lib/types';
 
 // ── Registration types ────────────────────────────────────────────────────────
 const REGISTRATION_TYPES = [
-  { label: 'Architect - IIA Member',     price: 1  },
-  { label: 'Architect - Non-IIA Member', price: 1000 },
-  { label: "Member's Spouse",            price: 1000 },
-  { label: 'Non-Architect',              price: 2500 },
-  { label: 'Special Invitee',            price: 0    },
+  { label: 'Architect - IIA Member',     price: 1     },
+  { label: 'Architect - Non-IIA Member', price: 1000  },
+  { label: 'Non-Architect',              price: 2500  },
+  { label: 'Special Invitee',            price: 0     },
 ] as const;
 
 type RegType = (typeof REGISTRATION_TYPES)[number]['label'];
+
+const MEMBER_FEE = 1000;
+
+interface Member {
+  name: string;
+  relation: string;
+  email: string;
+  phone: string;
+}
+type MemberErrors = Partial<Record<keyof Member, string>>;
 
 const RAZORPAY_KEY = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? '';
 
 interface Step1 {
   name: string; gender: string; nationality: string; firm: string;
   designation: string; email: string; phone: string; whatsapp: string;
-  address: string; district: string; state: string; pincode: string;
+  district: string; state: string; pincode: string;
 }
 type Step1Errors = Partial<Record<keyof Step1, string>>;
 
@@ -39,19 +48,24 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
   const [step, setStep] = useState<1 | 2>(1);
   const [s1, setS1] = useState<Step1>({
     name: '', gender: '', nationality: '', firm: '', designation: '',
-    email: '', phone: '', whatsapp: '', address: '', district: '', state: '', pincode: '',
+    email: '', phone: '', whatsapp: '', district: '', state: '', pincode: '',
   });
   const [s1Errors, setS1Errors] = useState<Step1Errors>({});
   const [s2, setS2] = useState<Step2>({
     registrationType: 'Architect - IIA Member', coaNumber: '', iiaMembershipNumber: '', inviteCode: '',
   });
+  const [members,      setMembers]      = useState<Member[]>([]);
+  const [memberErrors, setMemberErrors] = useState<MemberErrors[]>([]);
   const [paying,   setPaying]   = useState(false);
   const [apiError, setApiError] = useState('');
 
-  const regType = s2.registrationType;
-  const isIIAMember      = regType === 'Architect - IIA Member';
-  const isSpecialInvitee = regType === 'Special Invitee';
-  const amount = REGISTRATION_TYPES.find((t) => t.label === regType)!.price;
+  const regType           = s2.registrationType;
+  const isIIAMember       = regType === 'Architect - IIA Member';
+  const isNonIIAMember    = regType === 'Architect - Non-IIA Member';
+  const isArchitectType   = isIIAMember || isNonIIAMember;
+  const isSpecialInvitee  = regType === 'Special Invitee';
+  const baseAmount        = REGISTRATION_TYPES.find((t) => t.label === regType)!.price;
+  const totalAmount       = isSpecialInvitee ? 0 : baseAmount + members.length * MEMBER_FEE;
 
   // Load Razorpay script
   useEffect(() => {
@@ -89,6 +103,35 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
     if (validateStep1()) setStep(2);
   }
 
+  // ── Members ─────────────────────────────────────────────────────────────────
+  function addMember() {
+    setMembers((p) => [...p, { name: '', relation: '', email: '', phone: '' }]);
+    setMemberErrors((p) => [...p, {}]);
+  }
+
+  function removeMember(i: number) {
+    setMembers((p) => p.filter((_, idx) => idx !== i));
+    setMemberErrors((p) => p.filter((_, idx) => idx !== i));
+  }
+
+  function updateMember(i: number, field: keyof Member, value: string) {
+    setMembers((p) => p.map((m, idx) => idx === i ? { ...m, [field]: value } : m));
+    setMemberErrors((p) => p.map((e, idx) => idx === i ? { ...e, [field]: undefined } : e));
+  }
+
+  function validateMembers(): boolean {
+    const errors: MemberErrors[] = members.map((m) => {
+      const e: MemberErrors = {};
+      if (!m.name.trim()) e.name = 'Name is required.';
+      if (!m.relation.trim()) e.relation = 'Relation is required.';
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m.email)) e.email = 'Enter a valid email.';
+      if (!/^[6-9]\d{9}$/.test(m.phone)) e.phone = 'Enter a valid 10-digit phone.';
+      return e;
+    });
+    setMemberErrors(errors);
+    return errors.every((e) => Object.keys(e).length === 0);
+  }
+
   // ── Step 2 — free registration (Special Invitee) ────────────────────────────
   async function handleFreeRegister(e: React.SyntheticEvent) {
     e.preventDefault();
@@ -97,7 +140,6 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
 
     setPaying(true);
     try {
-      // Pre-validate invite code for instant feedback
       const checkRes = await fetch('/api/validate-invite', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -106,11 +148,10 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
       const checkData = await checkRes.json();
       if (!checkRes.ok) throw new Error(checkData.error ?? 'Invalid invite code.');
 
-      // Register directly (no payment)
       const regRes = await fetch('/api/register', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ ...s1, ...s2, totalAmount: 0, utrNumber: 'INVITE' }),
+        body:    JSON.stringify({ ...s1, ...s2, totalAmount: 0, utrNumber: 'INVITE', members: [] }),
       });
       const regData = await regRes.json();
       if (!regRes.ok) throw new Error(regData.error ?? 'Registration failed.');
@@ -142,6 +183,10 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
       setApiError('IIA Membership Number is required for IIA Members.');
       return;
     }
+    if (!validateMembers()) {
+      setApiError('Please fill in all member details correctly.');
+      return;
+    }
     if (!window.Razorpay) {
       setApiError('Payment is loading — please wait a moment and try again.');
       return;
@@ -152,19 +197,22 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
       const orderRes = await fetch('/api/payment/create-order', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ amount, registrationType: regType, name: s1.name, email: s1.email }),
+        body:    JSON.stringify({ amount: totalAmount, registrationType: regType, name: s1.name, email: s1.email }),
       });
       const { orderId, error: orderErr } = await orderRes.json();
       if (!orderRes.ok || !orderId) throw new Error(orderErr ?? 'Could not initiate payment.');
 
       await new Promise<void>((resolve, reject) => {
+        const memberDesc = members.length > 0
+          ? ` + ${members.length} Member${members.length > 1 ? 's' : ''}`
+          : '';
         const rzp = new window.Razorpay({
           key:         RAZORPAY_KEY,
-          amount:      amount * 100,
+          amount:      totalAmount * 100,
           currency:    'INR',
           order_id:    orderId,
           name:        'IIA Faridabad Centre',
-          description: `Prakriti 2026 — ${regType}`,
+          description: `Prakriti 2026 — ${regType}${memberDesc}`,
           prefill: { name: s1.name, email: s1.email, contact: `+91${s1.phone}` },
           theme:  { color: '#1a4a1a' },
           modal: {
@@ -181,7 +229,7 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
               const verifyRes = await fetch('/api/payment/verify', {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ ...response, ...s1, ...s2, totalAmount: amount }),
+                body:    JSON.stringify({ ...response, ...s1, ...s2, totalAmount, members }),
               });
               const data = await verifyRes.json();
               if (!verifyRes.ok) throw new Error(data.error ?? 'Payment verification failed.');
@@ -282,11 +330,7 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
                 <label className="label" htmlFor="phone">Phone Number <Req /></label>
                 <PhoneInput id="phone" name="phone" value={s1.phone} onChange={handleS1Change} error={s1Errors.phone} />
               </div>
-              <div className="sm:col-span-2">
-                <label className="label" htmlFor="address">Full Address</label>
-                <textarea id="address" name="address" value={s1.address} onChange={handleS1Change}
-                  placeholder="House No., Street, Locality" rows={2} className="input resize-none" />
-              </div>
+
               <Field label="District" id="district" name="district" value={s1.district}
                 onChange={handleS1Change} placeholder="Faridabad" error={s1Errors.district} required />
               <Field label="State" id="state" name="state" value={s1.state}
@@ -320,13 +364,20 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
                     <div className="flex items-center gap-2.5">
                       <input type="radio" name="registrationType" value={t.label}
                         checked={s2.registrationType === t.label}
-                        onChange={(e) => setS2((p) => ({
-                          ...p,
-                          registrationType: e.target.value as RegType,
-                          coaNumber: '',
-                          iiaMembershipNumber: '',
-                          inviteCode: '',
-                        }))}
+                        onChange={(e) => {
+                          const newType = e.target.value as RegType;
+                          setS2((p) => ({
+                            ...p,
+                            registrationType: newType,
+                            coaNumber: '',
+                            iiaMembershipNumber: '',
+                            inviteCode: '',
+                          }));
+                          if (newType !== 'Architect - IIA Member' && newType !== 'Architect - Non-IIA Member') {
+                            setMembers([]);
+                            setMemberErrors([]);
+                          }
+                        }}
                         className="accent-[#2e7d32] h-4 w-4" />
                       <span className={`text-sm font-semibold ${s2.registrationType === t.label ? 'text-[#1a4a1a]' : 'text-gray-600'}`}>
                         {t.label}
@@ -345,12 +396,11 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
             </div>
 
             {/* COA — for both IIA and Non-IIA architects */}
-            {(isIIAMember || regType === 'Architect - Non-IIA Member') && (
+            {(isIIAMember || isNonIIAMember) && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="COA Number" id="coaNumber" name="coaNumber" value={s2.coaNumber}
                   onChange={(e) => setS2((p) => ({ ...p, coaNumber: e.target.value }))}
                   placeholder="CA/XXXX/XXXX" />
-                {/* IIA Membership No. — only for IIA Member */}
                 {isIIAMember && (
                   <Field label="IIA Membership No." id="iiaMembershipNumber" name="iiaMembershipNumber"
                     value={s2.iiaMembershipNumber}
@@ -358,6 +408,101 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
                     placeholder="IIA/XXXX/XXXX"
                     required />
                 )}
+              </div>
+            )}
+
+            {/* Add Members — only for architect types */}
+            {isArchitectType && (
+              <div className="rounded-xl border border-[#d4e8d4] bg-[#f4faf5] p-4 space-y-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-bold text-[#1a4a1a]">Additional Members</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Each member adds ₹1,000 to your total</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addMember}
+                    className="shrink-0 flex items-center gap-1.5 rounded-lg border border-[#2e7d32] bg-white px-3 py-1.5 text-xs font-bold text-[#2e7d32] hover:bg-green-50 transition"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add Member
+                  </button>
+                </div>
+
+                {members.length === 0 && (
+                  <p className="text-xs text-gray-400 text-center py-2">
+                    No additional members added. Click &ldquo;Add Member&rdquo; to include spouse or family.
+                  </p>
+                )}
+
+                {members.map((m, i) => (
+                  <div key={i} className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-bold text-[#1a4a1a] uppercase tracking-wide">Member {i + 1}
+                        <span className="ml-2 text-[#2e7d32] font-black">+₹1,000</span>
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => removeMember(i)}
+                        className="text-xs font-semibold text-red-500 hover:text-red-700 transition"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="label">Full Name <Req /></label>
+                        <input
+                          type="text"
+                          value={m.name}
+                          onChange={(e) => updateMember(i, 'name', e.target.value)}
+                          placeholder="Member's full name"
+                          className={`input ${memberErrors[i]?.name ? 'border-red-400' : ''}`}
+                        />
+                        {memberErrors[i]?.name && <p className="err">{memberErrors[i].name}</p>}
+                      </div>
+                      <div>
+                        <label className="label">Relation <Req /></label>
+                        <input
+                          type="text"
+                          value={m.relation}
+                          onChange={(e) => updateMember(i, 'relation', e.target.value)}
+                          placeholder="e.g. Spouse, Parent"
+                          className={`input ${memberErrors[i]?.relation ? 'border-red-400' : ''}`}
+                        />
+                        {memberErrors[i]?.relation && <p className="err">{memberErrors[i].relation}</p>}
+                      </div>
+                      <div>
+                        <label className="label">Email <Req /></label>
+                        <input
+                          type="email"
+                          value={m.email}
+                          onChange={(e) => updateMember(i, 'email', e.target.value)}
+                          placeholder="member@example.com"
+                          className={`input ${memberErrors[i]?.email ? 'border-red-400' : ''}`}
+                        />
+                        {memberErrors[i]?.email && <p className="err">{memberErrors[i].email}</p>}
+                      </div>
+                      <div>
+                        <label className="label">Mobile No. <Req /></label>
+                        <div className="flex">
+                          <span className="inline-flex items-center rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-500">+91</span>
+                          <input
+                            type="tel"
+                            maxLength={10}
+                            value={m.phone}
+                            onChange={(e) => updateMember(i, 'phone', e.target.value)}
+                            placeholder="9876543210"
+                            className={`input rounded-l-none ${memberErrors[i]?.phone ? 'border-red-400' : ''}`}
+                          />
+                        </div>
+                        {memberErrors[i]?.phone && <p className="err">{memberErrors[i].phone}</p>}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
 
@@ -385,23 +530,53 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
                 <p className="text-sm font-bold text-[#1a4a1a]">Prakriti 2026 — Entry Ticket</p>
                 <p className="text-xs text-gray-500 mt-0.5">Saturday, 20 June 2026 · Saffron Hall, Faridabad</p>
               </div>
-              <div className="bg-white px-5 py-4 flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-xs text-gray-400 mb-0.5">Attendee</p>
-                  <p className="text-sm font-bold text-[#1a4a1a] truncate">{s1.name}</p>
-                  <p className="text-xs text-gray-400 truncate">{s1.email}</p>
+
+              <div className="bg-white px-5 py-4 space-y-3">
+                {/* Primary attendee row */}
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-xs text-gray-400 mb-0.5">Attendee</p>
+                    <p className="text-sm font-bold text-[#1a4a1a] truncate">{s1.name}</p>
+                    <p className="text-xs text-gray-400 truncate">{s1.email}</p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className="text-xs text-gray-400 mb-0.5">{regType}</p>
+                    {isSpecialInvitee ? (
+                      <p className="text-2xl font-black text-purple-600">Free</p>
+                    ) : (
+                      <p className={`font-black text-[#1a4a1a] leading-none ${members.length > 0 ? 'text-xl' : 'text-3xl'}`}>
+                        ₹{baseAmount.toLocaleString('en-IN')}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <div className="shrink-0 text-right">
-                  <p className="text-xs text-gray-400 mb-0.5">{regType}</p>
-                  {isSpecialInvitee ? (
-                    <p className="text-2xl font-black text-purple-600">Free</p>
-                  ) : (
-                    <p className="text-3xl font-black text-[#1a4a1a] leading-none">
-                      ₹{amount.toLocaleString('en-IN')}
-                    </p>
-                  )}
-                </div>
+
+                {/* Member rows */}
+                {members.length > 0 && (
+                  <>
+                    <div className="border-t border-gray-100 pt-3 space-y-2">
+                      {members.map((m, i) => (
+                        <div key={i} className="flex items-center justify-between">
+                          <div className="min-w-0">
+                            <p className="text-sm text-[#1a4a1a] font-medium truncate">
+                              {m.name || <span className="text-gray-400 italic">Member {i + 1}</span>}
+                            </p>
+                            <p className="text-xs text-gray-400">{m.relation || 'relation'}</p>
+                          </div>
+                          <p className="shrink-0 text-sm font-bold text-[#1a4a1a]">₹1,000</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="border-t-2 border-[#1a4a1a]/10 pt-3 flex items-center justify-between">
+                      <p className="text-sm font-bold text-[#1a4a1a]">Total</p>
+                      <p className="text-3xl font-black text-[#1a4a1a] leading-none">
+                        ₹{totalAmount.toLocaleString('en-IN')}
+                      </p>
+                    </div>
+                  </>
+                )}
               </div>
+
               {!isSpecialInvitee && (
                 <div className="bg-gray-50 px-5 py-3 flex items-center gap-2 border-t border-gray-100">
                   <svg className="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -447,7 +622,7 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
-                    Pay ₹{amount.toLocaleString('en-IN')} Securely
+                    Pay ₹{totalAmount.toLocaleString('en-IN')} Securely
                   </>
                 )}
               </button>

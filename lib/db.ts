@@ -42,4 +42,7 @@ export async function initSchema(): Promise<void> {
       checkin_time          TIMESTAMPTZ
     )
   `;
+  await sql`
+    ALTER TABLE registrations ADD COLUMN IF NOT EXISTS members_json TEXT NOT NULL DEFAULT '[]'
+  `;
 }
