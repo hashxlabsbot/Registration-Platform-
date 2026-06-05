@@ -88,7 +88,7 @@ export default function Home() {
             <div className="inline-flex items-center gap-2 border border-[#2e7d32]/40 rounded-full px-3 py-1.5 mb-5">
               <span className="h-2 w-2 rounded-full bg-[#2e7d32] animate-pulse shrink-0" />
               <span className="text-[#1a4a1a] text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.12em]">
-                Entry Ticket — Limited Registration
+                Registration
               </span>
             </div>
 
