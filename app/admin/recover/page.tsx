@@ -9,14 +9,22 @@ const REGISTRATION_TYPES = [
 ] as const;
 
 interface LookupResult {
-  paymentId:        string;
-  status:           string;
-  amount:           number;
-  email:            string;
-  phone:            string;
-  name:             string;
-  registrationType: string;
-  orderId:          string;
+  paymentId:           string;
+  status:              string;
+  amount:              number;
+  orderId:             string;
+  name:                string;
+  email:               string;
+  phone:               string;
+  organization:        string;
+  designation:         string;
+  district:            string;
+  state:               string;
+  pincode:             string;
+  coaNumber:           string;
+  iiaMembershipNumber: string;
+  registrationType:    string;
+  membersCount:        number;
 }
 
 interface Member {
@@ -80,10 +88,17 @@ export default function RecoverPage() {
       setLookup(data);
       setForm(prev => ({
         ...prev,
-        name:             data.name             || '',
-        email:            data.email            || '',
-        phone:            data.phone            || '',
-        registrationType: REGISTRATION_TYPES.includes(data.registrationType as typeof REGISTRATION_TYPES[number])
+        name:                data.name                || '',
+        email:               data.email               || '',
+        phone:               data.phone               || '',
+        organization:        data.organization        || '',
+        designation:         data.designation         || '',
+        district:            data.district            || '',
+        state:               data.state               || '',
+        pincode:             data.pincode             || '',
+        coaNumber:           data.coaNumber           || '',
+        iiaMembershipNumber: data.iiaMembershipNumber || '',
+        registrationType:    REGISTRATION_TYPES.includes(data.registrationType as typeof REGISTRATION_TYPES[number])
           ? data.registrationType
           : 'Architect - IIA Member',
       }));
@@ -243,9 +258,20 @@ export default function RecoverPage() {
                   <InfoBox label="Payment ID" value={lookup.paymentId} mono />
                   <InfoBox label="Status" value={lookup.status.toUpperCase()} valueColor="#4ade80" />
                   <InfoBox label="Amount" value={`₹${lookup.amount.toLocaleString('en-IN')}`} />
-                  {lookup.name  && <InfoBox label="Name (from order)" value={lookup.name} />}
-                  {lookup.email && <InfoBox label="Email (from payment)" value={lookup.email} />}
-                  {lookup.phone && <InfoBox label="Phone (from payment)" value={lookup.phone} />}
+                  {lookup.name             && <InfoBox label="Name"                value={lookup.name} />}
+                  {lookup.email            && <InfoBox label="Email"               value={lookup.email} />}
+                  {lookup.phone            && <InfoBox label="Phone"               value={lookup.phone} />}
+                  {lookup.registrationType && <InfoBox label="Reg. Type"    value={lookup.registrationType} />}
+                  {lookup.organization     && <InfoBox label="Organization" value={lookup.organization} />}
+                  {lookup.designation      && <InfoBox label="Designation"  value={lookup.designation} />}
+                  {lookup.district         && <InfoBox label="District"     value={lookup.district} />}
+                  {lookup.state            && <InfoBox label="State"               value={lookup.state} />}
+                  {lookup.pincode          && <InfoBox label="Pincode"             value={lookup.pincode} />}
+                  {lookup.coaNumber        && <InfoBox label="COA No."             value={lookup.coaNumber} />}
+                  {lookup.iiaMembershipNumber && <InfoBox label="IIA Membership"  value={lookup.iiaMembershipNumber} />}
+                  {lookup.membersCount > 0 && (
+                    <InfoBox label="Members" value={`${lookup.membersCount} additional`} />
+                  )}
                 </div>
               )}
             </div>

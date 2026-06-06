@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
 import { isValidSession, SESSION_COOKIE } from '@/lib/auth';
-import { getRegistrationById } from '@/lib/registrations';
+
 
 export const runtime = 'nodejs';
 
@@ -48,18 +48,28 @@ export async function POST(request: NextRequest) {
 
   const amount = Number(payment.amount) / 100;
 
-  // Parse phone: Razorpay stores as "+91XXXXXXXXXX"
-  const contact = String(payment.contact ?? '');
-  const phone   = contact.startsWith('+91') ? contact.slice(3) : contact;
+  // Phone: prefer order notes (user-entered), fall back to Razorpay contact field
+  const contactRaw = String(payment.contact ?? '');
+  const contactPhone = contactRaw.startsWith('+91') ? contactRaw.slice(3) : contactRaw;
+  const phone = orderNotes.phone || contactPhone;
 
   return NextResponse.json({
     paymentId,
-    status:           payment.status,
+    status:              payment.status,
     amount,
-    email:            payment.email            ?? '',
+    orderId:             payment.order_id          ?? '',
+    // from order notes (rich data stored at create-order time)
+    name:                orderNotes.attendee           ?? '',
+    email:               orderNotes.email              || (payment.email ?? ''),
     phone,
-    name:             orderNotes.attendee      ?? '',
-    registrationType: orderNotes.registrationType ?? '',
-    orderId:          payment.order_id         ?? '',
+    organization:        orderNotes.organization       ?? '',
+    designation:         orderNotes.designation     ?? '',
+    district:            orderNotes.district        ?? '',
+    state:               orderNotes.state           ?? '',
+    pincode:             orderNotes.pincode         ?? '',
+    coaNumber:           orderNotes.coaNumber       ?? '',
+    iiaMembershipNumber: orderNotes.iiaMembershipNumber ?? '',
+    registrationType:    orderNotes.registrationType   ?? '',
+    membersCount:        Number(orderNotes.membersCount ?? '0'),
   });
 }

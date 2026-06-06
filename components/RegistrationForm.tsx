@@ -197,7 +197,20 @@ export default function RegistrationForm({ onSuccess }: { onSuccess: (b: Booking
       const orderRes = await fetch('/api/payment/create-order', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ amount: totalAmount, registrationType: regType, name: s1.name, email: s1.email }),
+        body:    JSON.stringify({
+          amount: totalAmount, registrationType: regType,
+          name:                s1.name,
+          email:               s1.email,
+          phone:               s1.phone,
+          organization:        s1.firm,
+          designation:         s1.designation,
+          district:            s1.district,
+          state:               s1.state,
+          pincode:             s1.pincode,
+          coaNumber:           s2.coaNumber,
+          iiaMembershipNumber: s2.iiaMembershipNumber,
+          membersCount:        String(members.length),
+        }),
       });
       const { orderId, error: orderErr } = await orderRes.json();
       if (!orderRes.ok || !orderId) throw new Error(orderErr ?? 'Could not initiate payment.');
