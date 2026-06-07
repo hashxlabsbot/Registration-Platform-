@@ -5,3 +5,5 @@ export function isValidSession(cookieValue: string | undefined): boolean {
   if (!cookieValue || !secret) return false;
   return cookieValue.trim() === secret;
 }
+
+export { STAFF_COOKIE, verifyStaffToken } from './staff-auth';

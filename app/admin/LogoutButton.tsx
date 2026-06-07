@@ -2,11 +2,12 @@
 
 import { useRouter } from 'next/navigation';
 
-export default function LogoutButton() {
+export default function LogoutButton({ role }: { role?: 'admin' | 'volunteer' }) {
   const router = useRouter();
 
   async function handleLogout() {
-    await fetch('/api/admin/auth', { method: 'DELETE' });
+    const endpoint = role === 'volunteer' ? '/api/admin/staff-auth' : '/api/admin/auth';
+    await fetch(endpoint, { method: 'DELETE' });
     router.replace('/admin/login');
   }
 
