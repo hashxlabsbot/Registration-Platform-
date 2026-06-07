@@ -126,7 +126,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             {/* Left: brand + nav */}
             <div className="flex items-center gap-6 min-w-0">
               {/* Mobile: hamburger (rendered inside MobileNav) + logo */}
-              <MobileNav items={items} role={role} />
+              <MobileNav role={role} />
 
               {/* Logo */}
               <div className="flex items-center gap-2.5 flex-shrink-0">
