@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { headers, cookies } from 'next/headers';
 import LogoutButton from './LogoutButton';
+import MobileNav from './MobileNav';
 import { isValidSession, SESSION_COOKIE } from '@/lib/auth';
 import { verifyStaffToken, STAFF_COOKIE } from '@/lib/staff-auth';
 
@@ -124,10 +125,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <div className="max-w-7xl mx-auto px-5 h-14 flex items-center justify-between">
             {/* Left: brand + nav */}
             <div className="flex items-center gap-6 min-w-0">
+              {/* Mobile: hamburger (rendered inside MobileNav) + logo */}
+              <MobileNav items={items} role={role} />
+
               {/* Logo */}
               <div className="flex items-center gap-2.5 flex-shrink-0">
                 <div
-                  className="w-7 h-7 rounded-lg flex items-center justify-center"
+                  className="w-7 h-7 rounded-lg hidden sm:flex items-center justify-center"
                   style={{ background: 'linear-gradient(135deg, #1a4a1a, #2e7d32)', boxShadow: '0 0 12px rgba(46,125,50,0.4)' }}
                 >
                   <svg className="w-4 h-4 text-[#c8a96e]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -139,7 +143,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
               <div className="h-4 w-px bg-white/10 hidden sm:block flex-shrink-0" />
 
-              {/* Links — horizontally scrollable on small screens */}
+              {/* Desktop links */}
               <div className="hidden sm:flex items-center gap-1 overflow-x-auto no-scrollbar">
                 {items.map((item) => (
                   <Link
@@ -154,7 +158,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               </div>
             </div>
 
-            {/* Right: role badge + live + logout */}
+            {/* Right: role badge + live + logout (desktop only) */}
             <div className="flex items-center gap-3 flex-shrink-0">
               {role === 'volunteer' && (
                 <span className="hidden sm:inline-block text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full"
