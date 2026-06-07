@@ -86,7 +86,7 @@ export default function MobileNav({ role }: { role: 'admin' | 'volunteer' }) {
 
   const items =
     role === 'volunteer'
-      ? ALL_NAV_ITEMS.filter((n) => n.href === '/admin/scan')
+      ? ALL_NAV_ITEMS.filter((n) => n.href === '/admin' || n.href === '/admin/scan')
       : ALL_NAV_ITEMS;
 
   // Close on route change

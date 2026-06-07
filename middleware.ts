@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { SESSION_COOKIE } from '@/lib/auth';
 import { STAFF_COOKIE, verifyStaffToken } from '@/lib/staff-auth';
 
-// Pages/API routes a volunteer (staff) may access
-const VOLUNTEER_ALLOWED = ['/admin/scan', '/api/admin/checkin'];
+// Routes a volunteer may access — prefix entries allow sub-paths, exact entries do not
+const VOLUNTEER_ALLOWED_PREFIXES = ['/admin/scan', '/api/admin/checkin', '/api/admin/registrations'];
+const VOLUNTEER_ALLOWED_EXACT    = ['/admin'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -24,7 +25,9 @@ export function middleware(request: NextRequest) {
   const staffInfo = verifyStaffToken(staffToken);
   if (staffInfo) {
     if (staffInfo.role === 'volunteer') {
-      const allowed = VOLUNTEER_ALLOWED.some((p) => pathname === p || pathname.startsWith(p + '/'));
+      const allowed =
+        VOLUNTEER_ALLOWED_EXACT.includes(pathname) ||
+        VOLUNTEER_ALLOWED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'));
       if (!allowed) {
         const url = request.nextUrl.clone();
         url.pathname = '/admin/scan';

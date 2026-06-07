@@ -89,7 +89,7 @@ function navItems(role: 'admin' | 'volunteer'): NavItem[] {
     },
   ];
 
-  if (role === 'volunteer') return all.filter((n) => n.href === '/admin/scan');
+  if (role === 'volunteer') return all.filter((n) => n.href === '/admin' || n.href === '/admin/scan');
   return all;
 }
 
