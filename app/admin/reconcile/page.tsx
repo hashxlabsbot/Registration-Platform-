@@ -18,6 +18,7 @@ interface UnmatchedPayment {
   iiaMembershipNumber: string;
   membersCount: number;
   createdAt: string;
+  alreadyRegistered: boolean;
 }
 
 interface AuditResult {
@@ -95,15 +96,26 @@ export default function ReconcilePage() {
     setRowMessage((s) => ({ ...s, [paymentId]: 'Marked as test / skipped' }));
   }
 
-  // Build a set of emails that appear more than once in the unmatched list
+  // Emails that are flagged as duplicate:
+  // 1. Already registered in DB under a different payment (alreadyRegistered flag from API)
+  // 2. OR appear more than once within the unmatched list itself
   const duplicateEmails = useMemo(() => {
     if (!audit) return new Set<string>();
+    const dupes = new Set<string>();
+    // Case 1: email already in DB
+    for (const p of audit.unmatched) {
+      if (p.alreadyRegistered) dupes.add(p.email.toLowerCase());
+    }
+    // Case 2: same email appears twice in unmatched list
     const counts: Record<string, number> = {};
     for (const p of audit.unmatched) {
       const key = p.email.toLowerCase();
       counts[key] = (counts[key] ?? 0) + 1;
     }
-    return new Set(Object.entries(counts).filter(([, c]) => c > 1).map(([e]) => e));
+    for (const [email, count] of Object.entries(counts)) {
+      if (count > 1) dupes.add(email);
+    }
+    return dupes;
   }, [audit]);
 
   const formatDate = (iso: string) =>
@@ -190,8 +202,9 @@ export default function ReconcilePage() {
                 <div>
                   <p className="text-yellow-300 font-bold">Duplicate payments detected</p>
                   <p className="text-yellow-400/70 text-xs mt-0.5">
-                    {[...duplicateEmails].join(', ')} — appear more than once. One is likely a test payment.
-                    Use <strong>Skip</strong> on the test transaction before sending the ticket.
+                    {[...duplicateEmails].join(', ')} —{' '}
+                    already have a registration in the database (likely paid twice or did a test payment).
+                    Use <strong>Skip</strong> on this entry — <strong>do not register again</strong>.
                   </p>
                 </div>
               </div>
@@ -258,11 +271,11 @@ export default function ReconcilePage() {
                               <div className="flex items-center gap-1.5">
                                 {isDupe && (
                                   <span
-                                    title="Duplicate email — verify before sending ticket"
+                                    title={p.alreadyRegistered ? 'This email already has a registration in the DB — likely a test payment' : 'Same email appears multiple times in this list'}
                                     className="text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-full"
                                     style={{ background: 'rgba(251,191,36,0.15)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.25)' }}
                                   >
-                                    DUP
+                                    {p.alreadyRegistered ? 'ALREADY REG' : 'DUP'}
                                   </span>
                                 )}
                                 <span className="font-mono text-xs font-bold text-[#c8a96e]">{p.paymentId}</span>

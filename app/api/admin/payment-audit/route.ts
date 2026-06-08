@@ -37,11 +37,12 @@ export async function GET(request: NextRequest) {
     return amountRupees % 500 === 0;
   });
 
-  // All Razorpay payment IDs already registered in DB
+  // Pull all existing registrations: UTR numbers and emails
   await initSchema();
   const sql = getDb();
-  const dbRows = await sql`SELECT utr_number FROM registrations WHERE utr_number LIKE 'pay_%'`;
-  const dbUtrSet = new Set(dbRows.map((r) => r.utr_number as string));
+  const dbRows = await sql`SELECT utr_number, email FROM registrations`;
+  const dbUtrSet   = new Set(dbRows.map((r) => r.utr_number as string));
+  const dbEmailSet = new Set(dbRows.map((r) => (r.email as string).toLowerCase()));
 
   const unmatched = capturedPayments.filter((p) => !dbUtrSet.has(p.id as string));
 
@@ -60,11 +61,13 @@ export async function GET(request: NextRequest) {
       const contactRaw = String(payment.contact ?? '');
       const phone = orderNotes.phone || (contactRaw.startsWith('+91') ? contactRaw.slice(3) : contactRaw);
 
+      const email = orderNotes.email || (payment.email as string ?? '');
+
       return {
         paymentId:        payment.id as string,
         orderId:          (payment.order_id ?? '') as string,
         amount:           Number(payment.amount) / 100,
-        email:            orderNotes.email            || (payment.email as string ?? ''),
+        email,
         name:             orderNotes.attendee         ?? '',
         phone,
         organization:     orderNotes.organization     ?? '',
@@ -76,6 +79,8 @@ export async function GET(request: NextRequest) {
         iiaMembershipNumber: orderNotes.iiaMembershipNumber ?? '',
         membersCount:     Number(orderNotes.membersCount ?? '0'),
         createdAt:        new Date((payment.created_at as number) * 1000).toISOString(),
+        // true when this email already has a registration in DB under a different payment
+        alreadyRegistered: dbEmailSet.has(email.toLowerCase()),
       };
     }),
   );
