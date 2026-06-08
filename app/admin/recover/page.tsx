@@ -232,6 +232,190 @@ function ArFixSection() {
   );
 }
 
+interface RegenResult {
+  bookingId: string;
+  status: 'ok' | 'error';
+  message: string;
+}
+
+function RegenerateAllSection() {
+  const [total, setTotal]         = useState<number | null>(null);
+  const [running, setRunning]     = useState(false);
+  const [sendEmail, setSendEmail] = useState(false);
+  const [summary, setSummary]     = useState<{ fixed: number; failed: number; results: RegenResult[] } | null>(null);
+  const [showAll, setShowAll]     = useState(false);
+
+  useEffect(() => {
+    fetch('/api/admin/regenerate-tickets')
+      .then(r => r.json())
+      .then(d => setTotal(d.total ?? 0))
+      .catch(() => setTotal(null));
+  }, []);
+
+  async function runRegen() {
+    setRunning(true);
+    setSummary(null);
+    try {
+      const res = await fetch('/api/admin/regenerate-tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sendEmail }),
+      });
+      const data = await res.json();
+      setSummary({ fixed: data.fixed, failed: data.failed, results: data.results ?? [] });
+    } catch (err) {
+      setSummary({ fixed: 0, failed: 1, results: [{ bookingId: '—', status: 'error', message: (err as Error).message }] });
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  const errors = summary?.results.filter(r => r.status === 'error') ?? [];
+
+  return (
+    <div
+      className="rounded-2xl p-6 mb-8"
+      style={{ background: 'rgba(99,179,237,0.04)', border: '1px solid rgba(99,179,237,0.18)' }}
+    >
+      <div className="flex items-start gap-3 mb-4">
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(99,179,237,0.12)' }}>
+          <svg className="w-5 h-5 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+          </svg>
+        </div>
+        <div>
+          <p className="font-black text-blue-300 text-sm">Regenerate All Tickets</p>
+          <p className="text-xs text-blue-400/60 mt-0.5">
+            Rebuilds every stored ticket PDF using the fixed layout — corrects name/designation overlap and the double &ldquo;AR.&rdquo; prefix.
+            {total !== null && (
+              <span className="text-blue-300/70 font-semibold"> {total} registration{total !== 1 ? 's' : ''} in database.</span>
+            )}
+          </p>
+        </div>
+      </div>
+
+      {!summary && (
+        <>
+          <div
+            className="rounded-xl p-3 mb-4 text-xs"
+            style={{ background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.15)' }}
+          >
+            <p className="text-red-300 font-bold mb-1">Before you run this:</p>
+            <ul className="text-red-400/70 space-y-0.5 list-disc list-inside">
+              <li>This overwrites every stored PDF — it cannot be undone.</li>
+              <li>Only tick &ldquo;Resend email&rdquo; if you want to re-email <strong>every single attendee</strong>.</li>
+              <li>Leave email unchecked to just fix the stored PDFs silently — attendees can re-download from their booking.</li>
+            </ul>
+          </div>
+
+          <div className="flex items-center gap-4 flex-wrap">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={sendEmail}
+                onChange={e => setSendEmail(e.target.checked)}
+                className="w-4 h-4 accent-green-500 rounded"
+              />
+              <span className="text-sm text-white/60">Resend corrected ticket email to every attendee</span>
+            </label>
+
+            <button
+              onClick={runRegen}
+              disabled={running || total === null}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-50"
+              style={{ background: 'linear-gradient(135deg, #1e3a5f, #2563eb)', color: '#fff', boxShadow: '0 2px 12px rgba(37,99,235,0.3)' }}
+            >
+              {running ? (
+                <>
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+                  </svg>
+                  Regenerating… (may take a minute)
+                </>
+              ) : (
+                <>Regenerate {total !== null ? total : '…'} ticket{total !== 1 ? 's' : ''}</>
+              )}
+            </button>
+          </div>
+        </>
+      )}
+
+      {summary && (
+        <div>
+          {/* Summary bar */}
+          <div className="flex items-center gap-4 mb-4 flex-wrap">
+            <span
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold"
+              style={{ background: 'rgba(74,222,128,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.2)' }}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+              {summary.fixed} fixed
+            </span>
+            {summary.failed > 0 && (
+              <span
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold"
+                style={{ background: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)' }}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                {summary.failed} failed
+              </span>
+            )}
+            <button
+              onClick={() => { setSummary(null); setShowAll(false); }}
+              className="text-xs text-white/30 hover:text-white/60 transition ml-auto"
+            >
+              Run again
+            </button>
+          </div>
+
+          {/* Errors only */}
+          {errors.length > 0 && (
+            <div className="space-y-1.5 mb-3">
+              <p className="text-xs font-bold text-red-400 mb-2">Failed tickets:</p>
+              {errors.map(r => (
+                <div key={r.bookingId} className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs"
+                  style={{ background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.15)' }}>
+                  <span className="font-mono font-bold text-red-400">{r.bookingId}</span>
+                  <span className="text-white/40">{r.message}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* All results (collapsible) */}
+          {summary.fixed > 0 && (
+            <button
+              onClick={() => setShowAll(v => !v)}
+              className="text-xs text-blue-400/60 hover:text-blue-300 transition"
+            >
+              {showAll ? 'Hide' : 'Show'} all {summary.results.length} results
+            </button>
+          )}
+          {showAll && (
+            <div className="mt-3 max-h-64 overflow-y-auto space-y-1 pr-1">
+              {summary.results.map(r => (
+                <div key={r.bookingId} className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs"
+                  style={{
+                    background: r.status === 'ok' ? 'rgba(74,222,128,0.05)' : 'rgba(239,68,68,0.07)',
+                    border: r.status === 'ok' ? '1px solid rgba(74,222,128,0.12)' : '1px solid rgba(239,68,68,0.15)',
+                  }}>
+                  <span className="font-mono font-bold" style={{ color: r.status === 'ok' ? '#4ade80' : '#f87171' }}>{r.bookingId}</span>
+                  <span className="text-white/40">{r.message}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function RecoverPage() {
   const [paymentId,   setPaymentId]   = useState('');
   const [looking,     setLooking]     = useState(false);
@@ -367,6 +551,9 @@ export default function RecoverPage() {
 
         {/* ── Bulk AR. prefix fix ─────────────────────────────────────────── */}
         <ArFixSection />
+
+        {/* ── Regenerate all stored PDFs ──────────────────────────────────── */}
+        <RegenerateAllSection />
 
         {/* Success screen */}
         {success && (
