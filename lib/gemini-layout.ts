@@ -37,8 +37,8 @@ export interface TicketLayout {
 // Bar divider centred at y=360 (barY=343, barBottom=377) — content fills bottom half (377–652)
 export const FALLBACK_LAYOUT: TicketLayout = {
   name:        { x: 252, y: 390, maxWidth: 332, fontSize: 30, color: '#1a3d21' },
-  designation: { x: 252, y: 432, maxWidth: 332, fontSize: 22, color: '#2d6a3f' },
-  firm:        { x: 252, y: 460, maxWidth: 332, fontSize: 19, color: '#2d6a3f' },
+  designation: { x: 252, y: 432, maxWidth: 332, fontSize: 20, color: '#2d6a3f' },
+  firm:        { x: 252, y: 460, maxWidth: 332, fontSize: 17, color: '#2d6a3f' },
   bookingId:   { x: 252, y: 615, maxWidth: 310, fontSize: 10, color: '#1b5e20' },
   qrCode:      { x: 182, y: 486, size: 140 },   // centred: 182 + 70 = 252
   regType:     { x: 252, y: 652, maxWidth: 504, fontSize: 36 },

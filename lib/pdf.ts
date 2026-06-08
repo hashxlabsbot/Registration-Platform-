@@ -164,7 +164,7 @@ function drawTextLayer(
   const nameBottom = layout.name.y + nameFontSize * 1.25;
 
   // ── 3. Divider — positioned relative to actual name bottom ──────────────────
-  const dividerY = nameBottom + 8;
+  const dividerY = nameBottom + 5;
   if (layout.divider) {
     const { x1, x2 } = layout.divider;
     doc.moveTo(x1, dividerY).lineTo(x2, dividerY)
@@ -176,7 +176,7 @@ function drawTextLayer(
   }
 
   // ── 4. Designation — positioned below divider, also single-line scaled ───────
-  const desigStartY = dividerY + 7;
+  const desigStartY = dividerY + 5;
   const desig = ticket.designation && ticket.designation !== '—' ? ticket.designation : '';
   let desigFontSize = layout.designation.fontSize;
   if (desig) {
