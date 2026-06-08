@@ -146,21 +146,28 @@ function drawTextLayer(
     doc.text(venue, bx + w20 + wTH + wJune + gap, mainY, { lineBreak: false });
   }
 
-  // ── 2. Name ──────────────────────────────────────────────────────────────────
-  const namePrefix = isArchitect(ticket.registrationType) ? 'AR. ' : '';
+  // ── 2. Name — scale down until it fits on ONE line, then draw ───────────────
+  const alreadyPrefixed = /^ar\.?\s+/i.test(ticket.name.trim());
+  const namePrefix = isArchitect(ticket.registrationType) && !alreadyPrefixed ? 'AR. ' : '';
   const nameText   = (namePrefix + ticket.name).toUpperCase();
-  doc.font('Times-Bold')
-     .fontSize(layout.name.fontSize)
-     .fillColor(layout.name.color);
 
-  const nameWidth = doc.widthOfString(nameText);
-  if (nameWidth > ibW) doc.fontSize(layout.name.fontSize * (ibW / nameWidth));
-  doc.text(nameText, cx - ibW / 2, layout.name.y, { width: ibW, align: 'center' });
+  let nameFontSize = layout.name.fontSize;
+  doc.font('Times-Bold').fontSize(nameFontSize).fillColor(layout.name.color);
+  // Shrink by 0.5pt steps until the string fits within 97% of available width
+  while (doc.widthOfString(nameText) > ibW * 0.97 && nameFontSize > 12) {
+    nameFontSize -= 0.5;
+    doc.fontSize(nameFontSize);
+  }
+  doc.text(nameText, cx - ibW / 2, layout.name.y, { width: ibW, align: 'center', lineBreak: false });
 
-  // ── 3. Divider ───────────────────────────────────────────────────────────────
+  // Actual bottom of the name text block (single line)
+  const nameBottom = layout.name.y + nameFontSize * 1.25;
+
+  // ── 3. Divider — positioned relative to actual name bottom ──────────────────
+  const dividerY = nameBottom + 8;
   if (layout.divider) {
-    const { x1, y, x2 } = layout.divider;
-    doc.moveTo(x1, y).lineTo(x2, y)
+    const { x1, x2 } = layout.divider;
+    doc.moveTo(x1, dividerY).lineTo(x2, dividerY)
        .lineWidth(1)
        .strokeColor('#a5d6a7')
        .strokeOpacity(0.7)
@@ -168,25 +175,32 @@ function drawTextLayer(
     doc.strokeOpacity(1);
   }
 
-  // ── 4. Designation ───────────────────────────────────────────────────────────
+  // ── 4. Designation — positioned below divider, also single-line scaled ───────
+  const desigStartY = dividerY + 7;
   const desig = ticket.designation && ticket.designation !== '—' ? ticket.designation : '';
+  let desigFontSize = layout.designation.fontSize;
   if (desig) {
-    doc.font('Helvetica-Bold')
-       .fontSize(layout.designation.fontSize)
-       .fillColor(layout.designation.color);
-    doc.text(desig.toUpperCase(), cx - ibW / 2, layout.designation.y, { width: ibW, align: 'center' });
+    doc.font('Helvetica-Bold').fontSize(desigFontSize).fillColor(layout.designation.color);
+    while (doc.widthOfString(desig.toUpperCase()) > ibW * 0.97 && desigFontSize > 10) {
+      desigFontSize -= 0.5;
+      doc.fontSize(desigFontSize);
+    }
+    doc.text(desig.toUpperCase(), cx - ibW / 2, desigStartY, { width: ibW, align: 'center', lineBreak: false });
   }
 
-  // ── 5. Firm name ─────────────────────────────────────────────────────────────
+  // ── 5. Firm name — positioned below designation ───────────────────────────────
   const org = ticket.organization && ticket.organization !== '—' ? ticket.organization : '';
   if (org) {
-    const firmY   = layout.firm?.y        ?? layout.designation.y + 22;
-    const firmSz  = layout.firm?.fontSize ?? 12;
-    const firmCol = layout.firm?.color    ?? '#2d6a3f';
-    doc.font('Helvetica')
-       .fontSize(firmSz)
-       .fillColor(firmCol);
-    doc.text(org.toUpperCase(), cx - ibW / 2, firmY, { width: ibW, align: 'center' });
+    const firmStartY = desigStartY + (desig ? desigFontSize * 1.25 + 4 : 0);
+    const firmSz     = layout.firm?.fontSize ?? 12;
+    const firmCol    = layout.firm?.color    ?? '#2d6a3f';
+    let   firmFontSz = firmSz;
+    doc.font('Helvetica').fontSize(firmFontSz).fillColor(firmCol);
+    while (doc.widthOfString(org.toUpperCase()) > ibW * 0.97 && firmFontSz > 9) {
+      firmFontSz -= 0.5;
+      doc.fontSize(firmFontSz);
+    }
+    doc.text(org.toUpperCase(), cx - ibW / 2, firmStartY, { width: ibW, align: 'center', lineBreak: false });
   }
 
   // ── 6. QR white border box + QR image (pdfkit rects — no sharp needed) ───────
