@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const REGISTRATION_TYPES = [
   'Architect - IIA Member',
@@ -50,6 +50,186 @@ interface RecoveryForm {
   district:            string;
   state:               string;
   pincode:             string;
+}
+
+interface AffectedRow {
+  booking_id: string;
+  name: string;
+  email: string;
+  phone: string;
+  organization: string;
+  designation: string;
+  registration_type: string;
+  amount: string;
+}
+
+function ArFixSection() {
+  const [affected, setAffected]   = useState<AffectedRow[] | null>(null);
+  const [loading, setLoading]     = useState(false);
+  const [sending, setSending]     = useState(false);
+  const [results, setResults]     = useState<{ bookingId: string; status: string; message: string }[]>([]);
+  const [sendEmail, setSendEmail] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch('/api/admin/fix-ar-prefix')
+      .then(r => r.json())
+      .then(d => setAffected(d.affected ?? []))
+      .catch(() => setAffected([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function fixAll() {
+    if (!affected || affected.length === 0) return;
+    setSending(true);
+    setResults([]);
+    const res = await fetch('/api/admin/fix-ar-prefix', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        bookingIds: affected.map(r => r.booking_id),
+        sendEmail,
+      }),
+    });
+    const data = await res.json();
+    setResults(data.results ?? []);
+    setSending(false);
+  }
+
+  const done = results.length > 0;
+
+  return (
+    <div
+      className="rounded-2xl p-6 mb-8"
+      style={{ background: 'rgba(251,191,36,0.05)', border: '1px solid rgba(251,191,36,0.2)' }}
+    >
+      <div className="flex items-start gap-3 mb-4">
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(251,191,36,0.15)' }}>
+          <svg className="w-5 h-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+          </svg>
+        </div>
+        <div>
+          <p className="font-black text-yellow-300 text-sm">Fix Duplicate &ldquo;AR.&rdquo; Prefix on Tickets</p>
+          <p className="text-xs text-yellow-400/60 mt-0.5">
+            These architect registrants already typed &ldquo;AR.&rdquo; in their name — so their tickets were generated with &ldquo;AR. AR. NAME&rdquo;.
+            This tool regenerates their PDFs with the correct name and optionally resends the ticket email.
+          </p>
+        </div>
+      </div>
+
+      {loading && (
+        <p className="text-sm text-white/30 flex items-center gap-2">
+          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+          </svg>
+          Checking for affected tickets…
+        </p>
+      )}
+
+      {!loading && affected !== null && affected.length === 0 && results.length === 0 && (
+        <p className="text-sm text-green-400/70 flex items-center gap-2">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+          No affected tickets found — all AR. prefixes look correct.
+        </p>
+      )}
+
+      {!loading && affected && affected.length > 0 && !done && (
+        <>
+          <div
+            className="rounded-xl overflow-hidden mb-4"
+            style={{ border: '1px solid rgba(255,255,255,0.07)' }}
+          >
+            <table className="w-full text-xs">
+              <thead>
+                <tr style={{ background: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                  {['Booking ID', 'Name (as stored)', 'Email', 'Type'].map(h => (
+                    <th key={h} className="px-4 py-2.5 text-left font-black uppercase tracking-widest text-white/25">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {affected.map((r, i) => (
+                  <tr
+                    key={r.booking_id}
+                    style={{
+                      borderBottom: '1px solid rgba(255,255,255,0.04)',
+                      background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.012)',
+                    }}
+                  >
+                    <td className="px-4 py-3 font-mono font-bold text-[#c8a96e]">{r.booking_id}</td>
+                    <td className="px-4 py-3 text-white/80">{r.name}</td>
+                    <td className="px-4 py-3 text-white/40">{r.email}</td>
+                    <td className="px-4 py-3 text-white/40">{r.registration_type}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex items-center gap-4 flex-wrap">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={sendEmail}
+                onChange={e => setSendEmail(e.target.checked)}
+                className="w-4 h-4 accent-green-500 rounded"
+              />
+              <span className="text-sm text-white/60">Resend corrected ticket email to each attendee</span>
+            </label>
+            <button
+              onClick={fixAll}
+              disabled={sending}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-50"
+              style={{ background: 'linear-gradient(135deg, #9a7640, #c8a96e)', color: '#1a4a1a', boxShadow: '0 2px 12px rgba(200,169,110,0.3)' }}
+            >
+              {sending ? (
+                <>
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+                  </svg>
+                  Fixing {affected.length} ticket{affected.length !== 1 ? 's' : ''}…
+                </>
+              ) : (
+                <>Fix {affected.length} ticket{affected.length !== 1 ? 's' : ''}{sendEmail ? ' & Resend' : ''}</>
+              )}
+            </button>
+          </div>
+        </>
+      )}
+
+      {done && (
+        <div className="space-y-2">
+          {results.map(r => (
+            <div
+              key={r.bookingId}
+              className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs"
+              style={{
+                background: r.status === 'ok' ? 'rgba(74,222,128,0.07)' : 'rgba(239,68,68,0.07)',
+                border: r.status === 'ok' ? '1px solid rgba(74,222,128,0.2)' : '1px solid rgba(239,68,68,0.2)',
+              }}
+            >
+              {r.status === 'ok' ? (
+                <svg className="w-4 h-4 text-green-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4 text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              )}
+              <span className="font-mono font-bold" style={{ color: r.status === 'ok' ? '#4ade80' : '#f87171' }}>{r.bookingId}</span>
+              <span className="text-white/50">{r.message}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function RecoverPage() {
@@ -184,6 +364,9 @@ export default function RecoverPage() {
             Enter their Razorpay payment ID to look up payment details, fill in any missing info, then create the registration and send the ticket.
           </p>
         </div>
+
+        {/* ── Bulk AR. prefix fix ─────────────────────────────────────────── */}
+        <ArFixSection />
 
         {/* Success screen */}
         {success && (
