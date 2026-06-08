@@ -110,6 +110,7 @@ export default function SuccessScreen({ booking }: { booking: BookingResult }) {
               <span className="font-semibold">{booking.email}</span>
             </p>
             <p className="text-xs text-blue-400 mt-1">Check your spam/junk folder if you don&apos;t see it.</p>
+            <p className="text-xs text-blue-400 mt-1">Didn&apos;t receive it? Call/WhatsApp: <a href="tel:+918810235570" className="font-semibold underline">+91-8810235570</a></p>
           </div>
         </div>
       ) : (
@@ -125,6 +126,7 @@ export default function SuccessScreen({ booking }: { booking: BookingResult }) {
               Your registration is confirmed (Booking ID: <span className="font-semibold font-mono">{booking.bookingId}</span>).
               Please use the Download button below to save your ticket.
             </p>
+            <p className="text-xs text-amber-600 mt-1.5">For help, call/WhatsApp: <a href="tel:+918810235570" className="font-semibold underline">+91-8810235570</a></p>
           </div>
         </div>
       )}

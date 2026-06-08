@@ -359,6 +359,12 @@ export default function Home() {
               </svg>
             </Link>
             <p className="mt-3 text-xs text-green-500">Pay via UPI · Confirmation email sent instantly</p>
+            <p className="mt-1.5 text-xs text-green-600">
+              Didn&apos;t receive your ticket? Call / WhatsApp:{' '}
+              <a href="tel:+918810235570" className="text-green-400 font-semibold underline hover:text-white transition-colors">
+                +91-8810235570
+              </a>
+            </p>
           </div>
         </div>
       </section>
@@ -411,6 +417,12 @@ export default function Home() {
             <div className="text-center sm:text-right space-y-1">
               <p className="text-[#c8a96e] text-sm font-semibold">iiafaridabadcentre@gmail.com</p>
               <p className="text-green-400 text-xs">www.indianinstituteofarchitects.com</p>
+              <p className="text-green-300 text-xs">
+                Ticket queries:{' '}
+                <a href="tel:+918810235570" className="font-semibold underline hover:text-white transition-colors">
+                  +91-8810235570
+                </a>
+              </p>
             </div>
           </div>
 

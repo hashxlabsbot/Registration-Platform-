@@ -268,7 +268,9 @@ export async function sendTicketEmail(
       <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:#c8a96e;letter-spacing:0.5px;">${ticket.organizer}</p>
       <p style="margin:0 0 24px;font-size:12px;color:#a5d6a7;line-height:1.5;">
         For registration queries or support, reach us at<br/>
-        <a href="mailto:${contactEmail}" style="color:#ffffff;text-decoration:underline;font-weight:600;">${contactEmail}</a>
+        <a href="mailto:${contactEmail}" style="color:#ffffff;text-decoration:underline;font-weight:600;">${contactEmail}</a><br/>
+        <span style="color:#a5d6a7;">Didn&rsquo;t receive your ticket? Call / WhatsApp: </span>
+        <a href="tel:+918810235570" style="color:#ffffff;text-decoration:underline;font-weight:600;">+91-8810235570</a>
       </p>
       <div style="border-top:1px solid #1c5228;padding-top:24px;">
         <p style="margin:0;font-size:11px;color:#81c784;">This is an automated confirmation email regarding your registration.</p>
