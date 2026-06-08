@@ -16,13 +16,16 @@ export async function GET(request: NextRequest) {
     key_secret: process.env.RAZORPAY_KEY_SECRET!,
   });
 
+  // Only fetch payments from 5th June 2026 00:00:00 IST onwards
+  const FROM_TIMESTAMP = Math.floor(new Date('2026-06-05T00:00:00+05:30').getTime() / 1000);
+
   // Fetch all payments from Razorpay (paginated, max 100 per call)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const allPayments: any[] = [];
   let skip = 0;
   while (true) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result: any = await razorpay.payments.all({ count: 100, skip });
+    const result: any = await razorpay.payments.all({ count: 100, skip, from: FROM_TIMESTAMP });
     const items = result.items ?? [];
     allPayments.push(...items);
     if (items.length < 100) break;

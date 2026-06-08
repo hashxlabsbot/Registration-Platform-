@@ -141,7 +141,7 @@ export default function ReconcilePage() {
           <p className="text-[10px] font-black tracking-[0.3em] uppercase text-[#c8a96e] mb-1">Payment Reconciliation</p>
           <h1 className="text-3xl font-black text-white tracking-tight">Payment Audit</h1>
           <p className="text-sm text-white/30 mt-1">
-            Fetch all captured Razorpay payments (₹500 intervals) and find who paid but has no registration in the database.
+            Fetches all captured Razorpay payments from <strong className="text-white/60">5th June 2026</strong> onwards (₹500 intervals) and finds who paid but has no registration in the database.
           </p>
         </div>
 
