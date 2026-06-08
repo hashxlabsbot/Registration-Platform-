@@ -158,7 +158,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-white/50 hover:text-white hover:bg-white/5 whitespace-nowrap"
+                    className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-semibold transition-all text-white/50 hover:text-white hover:bg-white/5 whitespace-nowrap"
                   >
                     {item.icon}
                     {item.label}

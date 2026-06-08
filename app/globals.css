@@ -55,3 +55,12 @@ img {
   max-width: 100%;
   height: auto;
 }
+
+/* ── Hide scrollbar but keep scroll functionality ───────────────── */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

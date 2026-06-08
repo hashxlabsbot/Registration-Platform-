@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 interface UnmatchedPayment {
   paymentId: string;
@@ -27,14 +27,14 @@ interface AuditResult {
   unmatched: UnmatchedPayment[];
 }
 
-type RowStatus = 'idle' | 'loading' | 'done' | 'error';
+type RowStatus = 'idle' | 'loading' | 'done' | 'error' | 'skipped';
 
 export default function ReconcilePage() {
-  const [audit, setAudit]   = useState<AuditResult | null>(null);
+  const [audit, setAudit]     = useState<AuditResult | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError]   = useState('');
+  const [error, setError]     = useState('');
 
-  const [rowStatus, setRowStatus]   = useState<Record<string, RowStatus>>({});
+  const [rowStatus,  setRowStatus]  = useState<Record<string, RowStatus>>({});
   const [rowMessage, setRowMessage] = useState<Record<string, string>>({});
 
   async function runAudit() {
@@ -83,15 +83,42 @@ export default function ReconcilePage() {
       const d = await res.json();
       if (!res.ok) throw new Error(d.error ?? 'Recovery failed');
       setRowStatus((s)  => ({ ...s, [p.paymentId]: 'done' }));
-      setRowMessage((s) => ({ ...s, [p.paymentId]: `Ticket sent · Booking ID: ${d.bookingId}` }));
+      setRowMessage((s) => ({ ...s, [p.paymentId]: `Booking ID: ${d.bookingId}` }));
     } catch (e: unknown) {
       setRowStatus((s)  => ({ ...s, [p.paymentId]: 'error' }));
       setRowMessage((s) => ({ ...s, [p.paymentId]: e instanceof Error ? e.message : 'Failed' }));
     }
   }
 
+  function skip(paymentId: string) {
+    setRowStatus((s)  => ({ ...s, [paymentId]: 'skipped' }));
+    setRowMessage((s) => ({ ...s, [paymentId]: 'Marked as test / skipped' }));
+  }
+
+  // Build a set of emails that appear more than once in the unmatched list
+  const duplicateEmails = useMemo(() => {
+    if (!audit) return new Set<string>();
+    const counts: Record<string, number> = {};
+    for (const p of audit.unmatched) {
+      const key = p.email.toLowerCase();
+      counts[key] = (counts[key] ?? 0) + 1;
+    }
+    return new Set(Object.entries(counts).filter(([, c]) => c > 1).map(([e]) => e));
+  }, [audit]);
+
   const formatDate = (iso: string) =>
-    new Date(iso).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    new Date(iso).toLocaleString('en-IN', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+
+  const visibleRows = audit?.unmatched.filter(
+    (p) => rowStatus[p.paymentId] !== 'skipped',
+  ) ?? [];
+
+  const activeCount = visibleRows.filter(
+    (p) => rowStatus[p.paymentId] !== 'done',
+  ).length;
 
   return (
     <div className="min-h-screen" style={{ background: 'radial-gradient(ellipse at 25% 15%, #0d1f0e 0%, #050d07 55%, #020507 100%)' }}>
@@ -102,7 +129,7 @@ export default function ReconcilePage() {
           <p className="text-[10px] font-black tracking-[0.3em] uppercase text-[#c8a96e] mb-1">Payment Reconciliation</p>
           <h1 className="text-3xl font-black text-white tracking-tight">Payment Audit</h1>
           <p className="text-sm text-white/30 mt-1">
-            Fetch all captured Razorpay payments and identify who paid but is missing from the registration database.
+            Fetch all captured Razorpay payments (₹500 intervals) and find who paid but has no registration in the database.
           </p>
         </div>
 
@@ -141,14 +168,34 @@ export default function ReconcilePage() {
           </div>
         )}
 
-        {/* Summary cards */}
         {audit && (
           <>
-            <div className="mt-8 grid grid-cols-3 gap-4 mb-8">
-              <SummaryCard label="Total Captured" value={audit.totalCaptured} color="#63b3ed" />
-              <SummaryCard label="In Database"    value={audit.inDb}          color="#4ade80" />
-              <SummaryCard label="Missing"        value={audit.unmatchedCount} color={audit.unmatchedCount > 0 ? '#f87171' : '#4ade80'} />
+            {/* Summary cards */}
+            <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+              <SummaryCard label="Total Captured"  value={audit.totalCaptured}  color="#63b3ed" />
+              <SummaryCard label="In Database"     value={audit.inDb}           color="#4ade80" />
+              <SummaryCard label="Missing"         value={audit.unmatchedCount} color={audit.unmatchedCount > 0 ? '#f87171' : '#4ade80'} />
+              <SummaryCard label="Still Pending"   value={activeCount}          color={activeCount > 0 ? '#fbbf24' : '#4ade80'} />
             </div>
+
+            {/* Duplicate email warning */}
+            {duplicateEmails.size > 0 && (
+              <div
+                className="mb-5 px-4 py-3 rounded-xl text-sm flex items-start gap-3"
+                style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)' }}
+              >
+                <svg className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                </svg>
+                <div>
+                  <p className="text-yellow-300 font-bold">Duplicate payments detected</p>
+                  <p className="text-yellow-400/70 text-xs mt-0.5">
+                    {[...duplicateEmails].join(', ')} — appear more than once. One is likely a test payment.
+                    Use <strong>Skip</strong> on the test transaction before sending the ticket.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {audit.unmatchedCount === 0 ? (
               <div
@@ -168,20 +215,20 @@ export default function ReconcilePage() {
               >
                 {/* Table header */}
                 <div
-                  className="px-5 py-3 flex items-center justify-between"
+                  className="px-5 py-3 flex flex-wrap items-center justify-between gap-2"
                   style={{ background: 'rgba(239,68,68,0.06)', borderBottom: '1px solid rgba(239,68,68,0.12)' }}
                 >
                   <p className="text-xs font-black uppercase tracking-widest text-red-400">
                     {audit.unmatchedCount} payment{audit.unmatchedCount !== 1 ? 's' : ''} missing from database
                   </p>
-                  <p className="text-xs text-white/30">Ticket has NOT been sent to these registrants</p>
+                  <p className="text-xs text-white/30">Skip test payments · then Register &amp; Send Ticket for real ones</p>
                 </div>
 
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                        {['Payment ID','Paid At','Name / Email','Phone','Type','Amount','Action'].map((h) => (
+                        {['Payment ID', 'Paid At', 'Name / Email', 'Phone', 'Type', 'Amount', 'Actions'].map((h) => (
                           <th key={h} className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-white/25">{h}</th>
                         ))}
                       </tr>
@@ -190,7 +237,11 @@ export default function ReconcilePage() {
                       {audit.unmatched.map((p, i) => {
                         const status = rowStatus[p.paymentId] ?? 'idle';
                         const msg    = rowMessage[p.paymentId] ?? '';
+                        if (status === 'skipped') return null;
+
                         const isDone = status === 'done';
+                        const isDupe = duplicateEmails.has(p.email.toLowerCase());
+
                         return (
                           <tr
                             key={p.paymentId}
@@ -198,11 +249,24 @@ export default function ReconcilePage() {
                               borderBottom: '1px solid rgba(255,255,255,0.04)',
                               background: isDone
                                 ? 'rgba(74,222,128,0.04)'
-                                : i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.012)',
+                                : isDupe
+                                  ? 'rgba(251,191,36,0.04)'
+                                  : i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.012)',
                             }}
                           >
                             <td className="px-4 py-4">
-                              <span className="font-mono text-xs font-bold text-[#c8a96e]">{p.paymentId}</span>
+                              <div className="flex items-center gap-1.5">
+                                {isDupe && (
+                                  <span
+                                    title="Duplicate email — verify before sending ticket"
+                                    className="text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-full"
+                                    style={{ background: 'rgba(251,191,36,0.15)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.25)' }}
+                                  >
+                                    DUP
+                                  </span>
+                                )}
+                                <span className="font-mono text-xs font-bold text-[#c8a96e]">{p.paymentId}</span>
+                              </div>
                             </td>
 
                             <td className="px-4 py-4 text-xs text-white/35 whitespace-nowrap">
@@ -225,8 +289,7 @@ export default function ReconcilePage() {
                                   style={{ background: 'rgba(46,125,50,0.18)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.2)' }}
                                 >
                                   {p.registrationType === 'Non-Architect' || p.registrationType === 'Non - Architect'
-                                    ? 'Delegate'
-                                    : p.registrationType}
+                                    ? 'Delegate' : p.registrationType}
                                 </span>
                               ) : (
                                 <span className="text-white/25 text-xs italic">unknown</span>
@@ -247,45 +310,56 @@ export default function ReconcilePage() {
                                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                       <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                                     </svg>
-                                    Done
+                                    Sent
                                   </span>
                                   {msg && <p className="text-[10px] text-green-400/70 mt-1 font-mono">{msg}</p>}
                                 </div>
-                              ) : status === 'error' ? (
-                                <div>
+                              ) : (
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  {/* Register & Send */}
                                   <button
                                     onClick={() => recover(p)}
-                                    className="text-[10px] font-black uppercase tracking-wide px-2.5 py-1.5 rounded-lg transition-all"
-                                    style={{ background: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)' }}
+                                    disabled={status === 'loading'}
+                                    className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wide px-2.5 py-1.5 rounded-lg transition-all disabled:opacity-50"
+                                    style={{ background: 'rgba(200,169,110,0.12)', color: '#c8a96e', border: '1px solid rgba(200,169,110,0.2)' }}
                                   >
-                                    Retry
+                                    {status === 'loading' ? (
+                                      <>
+                                        <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+                                        </svg>
+                                        Sending…
+                                      </>
+                                    ) : (
+                                      <>
+                                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                                        </svg>
+                                        {status === 'error' ? 'Retry' : 'Register & Send'}
+                                      </>
+                                    )}
                                   </button>
-                                  {msg && <p className="text-[10px] text-red-400/70 mt-1 max-w-[160px] break-words">{msg}</p>}
-                                </div>
-                              ) : (
-                                <button
-                                  onClick={() => recover(p)}
-                                  disabled={status === 'loading'}
-                                  className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wide px-2.5 py-1.5 rounded-lg transition-all disabled:opacity-50"
-                                  style={{ background: 'rgba(200,169,110,0.12)', color: '#c8a96e', border: '1px solid rgba(200,169,110,0.2)' }}
-                                >
-                                  {status === 'loading' ? (
-                                    <>
-                                      <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
-                                      </svg>
-                                      Sending…
-                                    </>
-                                  ) : (
-                                    <>
-                                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
-                                      </svg>
-                                      Register &amp; Send Ticket
-                                    </>
+
+                                  {/* Skip */}
+                                  <button
+                                    onClick={() => skip(p.paymentId)}
+                                    disabled={status === 'loading'}
+                                    title="Mark as test / skip — won't register this payment"
+                                    className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wide px-2 py-1.5 rounded-lg transition-all disabled:opacity-50"
+                                    style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.08)' }}
+                                  >
+                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    Skip
+                                  </button>
+
+                                  {/* Error message */}
+                                  {status === 'error' && msg && (
+                                    <p className="w-full text-[10px] text-red-400/70 mt-0.5 break-words">{msg}</p>
                                   )}
-                                </button>
+                                </div>
                               )}
                             </td>
                           </tr>
