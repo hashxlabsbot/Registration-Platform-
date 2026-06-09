@@ -4,6 +4,7 @@ import {
   AmphitheaterIcon, CompassIcon, ArchIcon,
   ElevationIcon, ColumnsIcon, SkylineNightIcon,
 } from '@/components/arch-elements';
+import CountdownTimer from '@/components/CountdownTimer';
 
 const HIGHLIGHTS = [
   { num: '01', label: 'Panel Discussion',  desc: 'Expert-led dialogue on the future of sustainable architecture and the built environment.', icon: <AmphitheaterIcon />, img: '/panel_discussion.png' },
@@ -137,6 +138,19 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
               </Link>
+            </div>
+
+            {/* Registration deadline + countdown */}
+            <div className="mt-6 pt-5 border-t border-[#2e7d32]/20">
+              <div className="flex items-center gap-2 mb-3">
+                <svg className="w-3.5 h-3.5 text-[#c8a96e] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                </svg>
+                <p className="text-[10px] font-bold text-[#1a4a1a]/50 uppercase tracking-widest">
+                  Registration closes &middot; 12 June 2026
+                </p>
+              </div>
+              <CountdownTimer variant="light" />
             </div>
           </div>
         </div>
@@ -327,6 +341,15 @@ export default function Home() {
             <p className="mt-2 text-green-300 text-xs sm:text-sm">
               Saturday, 20 June 2026 &nbsp;·&nbsp; 3:00 PM &nbsp;·&nbsp; Saffron Hall, Vardaan Grand — Sector-21C, GymKhana Club, Surajkund Road, Faridabad
             </p>
+            <div className="mt-4 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full"
+              style={{ background: 'rgba(200,169,110,0.12)', border: '1px solid rgba(200,169,110,0.25)' }}>
+              <svg className="w-3 h-3 text-[#c8a96e]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+              </svg>
+              <span className="text-[10px] font-bold text-[#c8a96e] uppercase tracking-widest">
+                Registration closes: 12 June 2026
+              </span>
+            </div>
           </div>
 
           {/* Pricing grid — 1 col mobile, 2 col sm, 4 col lg */}
@@ -344,6 +367,11 @@ export default function Home() {
                 <p className="mt-1 text-[10px] text-green-500 leading-tight">{p.desc}</p>
               </div>
             ))}
+          </div>
+
+          {/* Countdown in pricing section */}
+          <div className="flex justify-center mb-8 sm:mb-10">
+            <CountdownTimer variant="dark" />
           </div>
 
           <div className="text-center">
