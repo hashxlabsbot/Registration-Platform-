@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
   if (!adminOnly(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { username, password, role } = await request.json();
   if (!username || !password) return NextResponse.json({ error: 'username and password required' }, { status: 400 });
-  const validRoles = ['volunteer'];
+  const validRoles = ['volunteer', 'viewer'];
   if (role && !validRoles.includes(role)) return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
 
   await initSchema();

@@ -13,7 +13,7 @@ interface NavItem {
   icon: React.ReactNode;
 }
 
-function navItems(role: 'admin' | 'volunteer'): NavItem[] {
+function navItems(role: 'admin' | 'volunteer' | 'viewer'): NavItem[] {
   const all: NavItem[] = [
     {
       href: '/admin',
@@ -98,6 +98,7 @@ function navItems(role: 'admin' | 'volunteer'): NavItem[] {
     },
   ];
 
+  if (role === 'viewer') return all.filter((n) => n.href === '/admin');
   if (role === 'volunteer') return all.filter((n) => n.href === '/admin' || n.href === '/admin/scan');
   return all;
 }
@@ -111,10 +112,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const cookieStore = await cookies();
   const adminCookie = cookieStore.get(SESSION_COOKIE)?.value;
   const staffCookie = cookieStore.get(STAFF_COOKIE)?.value;
-  let role: 'admin' | 'volunteer' = 'admin';
+  let role: 'admin' | 'volunteer' | 'viewer' = 'admin';
   if (!isValidSession(adminCookie)) {
     const staffInfo = verifyStaffToken(staffCookie);
     if (staffInfo?.role === 'volunteer') role = 'volunteer';
+    else if (staffInfo?.role === 'viewer') role = 'viewer';
   }
 
   const items = navItems(role);
@@ -169,10 +171,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
             {/* Right: role badge + live + logout (desktop only) */}
             <div className="flex items-center gap-3 flex-shrink-0">
-              {role === 'volunteer' && (
+              {(role === 'volunteer' || role === 'viewer') && (
                 <span className="hidden sm:inline-block text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full"
                   style={{ background: 'rgba(99,179,237,0.1)', border: '1px solid rgba(99,179,237,0.2)', color: '#63b3ed' }}>
-                  Volunteer
+                  {role === 'viewer' ? 'Viewer' : 'Volunteer'}
                 </span>
               )}
               {role === 'admin' && (

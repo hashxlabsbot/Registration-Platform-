@@ -42,7 +42,8 @@ export default function AdminLoginPage() {
       body: JSON.stringify({ username, password: staffPassword }),
     });
     if (res.ok) {
-      router.replace('/admin/scan');
+      const data = await res.json();
+      router.replace(data.role === 'viewer' ? '/admin' : '/admin/scan');
     } else {
       const data = await res.json();
       setError(data.error ?? 'Login failed.');

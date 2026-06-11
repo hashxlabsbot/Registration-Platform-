@@ -14,7 +14,7 @@ export default function TeamPage() {
   const [loading, setLoading] = useState(true);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('volunteer');
+  const [role, setRole] = useState('viewer');
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<number | null>(null);
   const [error, setError] = useState('');
@@ -138,9 +138,12 @@ export default function TeamPage() {
                     className="w-full px-4 py-3 rounded-xl text-sm text-white outline-none transition-all"
                     style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
                   >
-                    <option value="volunteer" style={{ background: '#0d1f0e' }}>Volunteer — QR Scan only</option>
+                    <option value="viewer" style={{ background: '#0d1f0e' }}>Viewer — Registration list only</option>
+                    <option value="volunteer" style={{ background: '#0d1f0e' }}>Volunteer — QR Scan + list</option>
                   </select>
-                  <p className="text-[10px] text-white/25 mt-1.5">Volunteers can only access the QR scanner.</p>
+                  <p className="text-[10px] text-white/25 mt-1.5">
+                    {role === 'viewer' ? 'Viewers can only see the registration list.' : 'Volunteers can access QR scanner and registration list.'}
+                  </p>
                 </div>
 
                 {error && (
@@ -184,7 +187,8 @@ export default function TeamPage() {
               <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#63b3ed] mb-2">Role Access</p>
               <div className="space-y-1.5 text-xs text-white/45">
                 <p><span className="text-white/60 font-semibold">Admin</span> — Full access (set via ADMIN_SECRET)</p>
-                <p><span className="text-[#63b3ed] font-semibold">Volunteer</span> — QR scanner only, no data access</p>
+                <p><span className="text-[#63b3ed] font-semibold">Viewer</span> — Registration list only, read-only</p>
+                <p><span className="text-[#63b3ed] font-semibold">Volunteer</span> — QR scanner + registration list</p>
               </div>
             </div>
           </div>

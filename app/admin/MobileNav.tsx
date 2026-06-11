@@ -88,13 +88,15 @@ const ALL_NAV_ITEMS = [
   },
 ];
 
-export default function MobileNav({ role }: { role: 'admin' | 'volunteer' }) {
+export default function MobileNav({ role }: { role: 'admin' | 'volunteer' | 'viewer' }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
   const items =
-    role === 'volunteer'
+    role === 'viewer'
+      ? ALL_NAV_ITEMS.filter((n) => n.href === '/admin')
+      : role === 'volunteer'
       ? ALL_NAV_ITEMS.filter((n) => n.href === '/admin' || n.href === '/admin/scan')
       : ALL_NAV_ITEMS;
 
@@ -116,7 +118,7 @@ export default function MobileNav({ role }: { role: 'admin' | 'volunteer' }) {
   }, [open]);
 
   async function handleLogout() {
-    const endpoint = role === 'volunteer' ? '/api/admin/staff-auth' : '/api/admin/auth';
+    const endpoint = role === 'admin' ? '/api/admin/auth' : '/api/admin/staff-auth';
     await fetch(endpoint, { method: 'DELETE' });
     router.replace('/admin/login');
   }
@@ -233,7 +235,7 @@ export default function MobileNav({ role }: { role: 'admin' | 'volunteer' }) {
                     textTransform: 'uppercase',
                   }}
                 >
-                  Volunteer
+                  {role === 'viewer' ? 'Viewer' : 'Volunteer'}
                 </div>
               )}
             </div>
