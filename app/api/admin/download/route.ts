@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
 import { getRegistrations } from '@/lib/registrations';
 import { isValidSession, SESSION_COOKIE } from '@/lib/auth';
+import { verifyStaffToken, STAFF_COOKIE } from '@/lib/staff-auth';
 
 export const runtime = 'nodejs';
 
@@ -21,20 +22,28 @@ const HEADERS = [
 export async function GET(request: NextRequest) {
   const secret = request.nextUrl.searchParams.get('secret');
   const cookie = request.cookies.get(SESSION_COOKIE)?.value;
+  const staffCookie = request.cookies.get(STAFF_COOKIE)?.value;
 
-  const authorized =
+  const isAdmin =
     (secret && process.env.ADMIN_SECRET && secret.trim() === process.env.ADMIN_SECRET.trim()) ||
     isValidSession(cookie);
+  const staffInfo = verifyStaffToken(staffCookie);
 
-  if (!authorized) {
+  if (!isAdmin && !staffInfo) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const isViewer = !isAdmin && staffInfo?.role === 'viewer';
 
   const registrations = await getRegistrations();
 
   if (registrations.length === 0) {
     return NextResponse.json({ error: 'No registrations yet.' }, { status: 404 });
   }
+
+  const headers = isViewer
+    ? HEADERS.filter((h) => h !== 'Amount (₹)' && h !== 'UPI Transaction ID / UTR')
+    : HEADERS;
 
   const rows = registrations.map((r) => {
     const ms = r.members ?? [];
@@ -43,7 +52,7 @@ export async function GET(request: NextRequest) {
       const m = ms[i];
       memberCols.push(m?.name ?? '', m?.relation ?? '', m?.email ?? '', m?.phone ?? '');
     }
-    return [
+    const full = [
       r.bookingId, r.name, r.email, r.phone, r.whatsapp,
       r.gender, r.nationality, r.organization, r.designation,
       r.coaNumber, r.iiaMembershipNumber, r.registrationType,
@@ -53,9 +62,15 @@ export async function GET(request: NextRequest) {
       ms.length,
       ...memberCols,
     ];
+    if (isViewer) {
+      // Remove Amount (₹) at index 12 and UPI Transaction ID / UTR at index 13
+      full.splice(13, 1);
+      full.splice(12, 1);
+    }
+    return full;
   });
 
-  const ws = XLSX.utils.aoa_to_sheet([HEADERS, ...rows]);
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
   ws['!cols'] = HEADERS.map((h) => ({ wch: Math.max(h.length + 4, 20) }));
 
   const wb = XLSX.utils.book_new();
