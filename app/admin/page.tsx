@@ -30,6 +30,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'checked' | 'pending'>('all');
+  const [role, setRole] = useState<string>('admin');
 
   async function load() {
     setLoading(true);
@@ -38,6 +39,7 @@ export default function AdminPage() {
       if (res.ok) {
         const data = await res.json();
         setRegs(data.registrations);
+        if (data.role) setRole(data.role);
       }
     } finally {
       setLoading(false);
@@ -63,8 +65,10 @@ export default function AdminPage() {
     return list;
   }, [regs, search, filter]);
 
+  const isAdmin = role === 'admin';
   const checkedInCount = regs.filter((r) => r.checkedIn).length;
   const totalRevenue = regs.reduce((s, r) => s + r.amount, 0);
+  const totalAttendees = regs.reduce((s, r) => s + 1 + (r.members?.length ?? 0), 0);
   const checkinRate = regs.length > 0 ? Math.round((checkedInCount / regs.length) * 100) : 0;
 
   return (
@@ -98,7 +102,7 @@ export default function AdminPage() {
         </div>
 
         {/* Stat cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className={`grid grid-cols-2 gap-4 mb-6 ${isAdmin ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`}>
           <StatCard
             label="Total Registered"
             value={loading ? '—' : regs.length}
@@ -108,6 +112,18 @@ export default function AdminPage() {
             borderColor="rgba(59,130,246,0.2)"
             glowColor="rgba(59,130,246,0.15)"
             valueColor="#93c5fd"
+          />
+          <StatCard
+            label="Total Attendees"
+            value={loading ? '—' : totalAttendees}
+            icon={<AttendeesIcon />}
+            gradFrom="#2a1e5f"
+            gradTo="#180f40"
+            borderColor="rgba(167,139,250,0.2)"
+            glowColor="rgba(167,139,250,0.12)"
+            valueColor="#a78bfa"
+            sub={loading || totalAttendees === regs.length ? undefined : `incl. ${totalAttendees - regs.length} add-on members`}
+            subColor="#a78bfa"
           />
           <StatCard
             label="Checked In"
@@ -131,17 +147,19 @@ export default function AdminPage() {
             glowColor="rgba(251,191,36,0.1)"
             valueColor="#fbbf24"
           />
-          <StatCard
-            label="Total Revenue"
-            value={loading ? '—' : `₹${totalRevenue.toLocaleString('en-IN')}`}
-            icon={<RupeeIcon />}
-            gradFrom="#3d2e0a"
-            gradTo="#241b05"
-            borderColor="rgba(200,169,110,0.25)"
-            glowColor="rgba(200,169,110,0.12)"
-            valueColor="#c8a96e"
-            smallValue
-          />
+          {isAdmin && (
+            <StatCard
+              label="Total Revenue"
+              value={loading ? '—' : `₹${totalRevenue.toLocaleString('en-IN')}`}
+              icon={<RupeeIcon />}
+              gradFrom="#3d2e0a"
+              gradTo="#241b05"
+              borderColor="rgba(200,169,110,0.25)"
+              glowColor="rgba(200,169,110,0.12)"
+              valueColor="#c8a96e"
+              smallValue
+            />
+          )}
         </div>
 
         {/* Check-in progress bar */}
@@ -323,7 +341,7 @@ export default function AdminPage() {
                     <th className="px-5 py-3.5 text-left text-[10px] font-black uppercase tracking-widest text-white/25">Booking ID</th>
                     <th className="px-5 py-3.5 text-left text-[10px] font-black uppercase tracking-widest text-white/25">Attendee</th>
                     <th className="px-5 py-3.5 text-left text-[10px] font-black uppercase tracking-widest text-white/25 hidden sm:table-cell">Type</th>
-                    <th className="px-5 py-3.5 text-left text-[10px] font-black uppercase tracking-widest text-white/25 hidden md:table-cell">Amount</th>
+                    {isAdmin && <th className="px-5 py-3.5 text-left text-[10px] font-black uppercase tracking-widest text-white/25 hidden md:table-cell">Amount</th>}
                     <th className="px-5 py-3.5 text-left text-[10px] font-black uppercase tracking-widest text-white/25 hidden lg:table-cell">Phone</th>
                     <th className="px-5 py-3.5 text-left text-[10px] font-black uppercase tracking-widest text-white/25 hidden lg:table-cell">Registered</th>
                     <th className="px-5 py-3.5 text-left text-[10px] font-black uppercase tracking-widest text-white/25">Status</th>
@@ -332,7 +350,7 @@ export default function AdminPage() {
                 </thead>
                 <tbody>
                   {filtered.map((r, i) => (
-                    <TableRow key={r.bookingId} r={r} i={i} />
+                    <TableRow key={r.bookingId} r={r} i={i} isAdmin={isAdmin} />
                   ))}
                 </tbody>
               </table>
@@ -366,7 +384,7 @@ export default function AdminPage() {
 }
 
 // ── Table row ────────────────────────────────────────────────────────────────
-function TableRow({ r, i }: { r: Registration; i: number }) {
+function TableRow({ r, i, isAdmin }: { r: Registration; i: number; isAdmin: boolean }) {
   const [hovered,    setHovered]    = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [viewing,    setViewing]    = useState(false);
@@ -496,9 +514,11 @@ function TableRow({ r, i }: { r: Registration; i: number }) {
           </span>
         </td>
 
-        <td className="px-5 py-4 hidden md:table-cell">
-          <span className="text-sm font-bold text-white/75">₹{r.amount.toLocaleString('en-IN')}</span>
-        </td>
+        {isAdmin && (
+          <td className="px-5 py-4 hidden md:table-cell">
+            <span className="text-sm font-bold text-white/75">₹{r.amount.toLocaleString('en-IN')}</span>
+          </td>
+        )}
 
         <td className="px-5 py-4 hidden lg:table-cell text-xs text-white/35">{r.phone}</td>
         <td className="px-5 py-4 hidden lg:table-cell text-xs text-white/25">{r.registeredAt}</td>
@@ -711,6 +731,14 @@ function UsersIcon() {
   return (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+    </svg>
+  );
+}
+
+function AttendeesIcon() {
+  return (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
     </svg>
   );
 }

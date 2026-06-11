@@ -17,5 +17,6 @@ export async function GET(request: NextRequest) {
   }
 
   const registrations = await getRegistrations();
-  return NextResponse.json({ registrations });
+  const role = isAdmin ? 'admin' : (verifyStaffToken(staffCookie)?.role ?? 'staff');
+  return NextResponse.json({ registrations, role });
 }
