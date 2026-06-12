@@ -93,7 +93,7 @@ export default function Home() {
               <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
             </svg>
             <p className="text-[10px] font-bold text-[#c8a96e] uppercase tracking-widest">
-              Registration closes &middot; 12 June 2026
+              Registration extended &middot; now closes 15 June 2026
             </p>
           </div>
           <CountdownTimer variant="dark" />
@@ -169,7 +169,7 @@ export default function Home() {
                   <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
                 </svg>
                 <p className="text-[10px] font-bold text-[#1a4a1a]/50 uppercase tracking-widest">
-                  Registration closes &middot; 12 June 2026
+                  Registration extended &middot; now closes 15 June 2026
                 </p>
               </div>
               <CountdownTimer variant="light" />
@@ -369,7 +369,7 @@ export default function Home() {
                 <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
               </svg>
               <span className="text-[10px] font-bold text-[#c8a96e] uppercase tracking-widest">
-                Registration closes: 12 June 2026
+                Registration extended &middot; now closes 15 June 2026
               </span>
             </div>
           </div>

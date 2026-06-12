@@ -82,7 +82,7 @@ export default function RegisterPage() {
                 <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
               </svg>
               <span className="text-[10px] font-bold text-[#c8a96e] uppercase tracking-widest">
-                Registration closes · 12 June 2026
+                Registration extended · now closes 15 June 2026
               </span>
             </div>
             <CountdownTimer variant="dark" />

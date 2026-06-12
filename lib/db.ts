@@ -61,6 +61,18 @@ export async function initSchema(): Promise<void> {
       created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `;
+  // Per-member (guest) check-in state. member_index 1..N maps to the
+  // members_json array on the parent booking (the primary registrant lives on
+  // registrations.checked_in, so it is never stored here).
+  await sql`
+    CREATE TABLE IF NOT EXISTS member_checkins (
+      booking_id   TEXT        NOT NULL,
+      member_index INT         NOT NULL,
+      checked_in   BOOLEAN     NOT NULL DEFAULT FALSE,
+      checkin_time TIMESTAMPTZ,
+      PRIMARY KEY (booking_id, member_index)
+    )
+  `;
 }
 
 // Store a generated PDF (base64) keyed by booking ID.

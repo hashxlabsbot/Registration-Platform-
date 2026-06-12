@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
-// Registration closes: 12 June 2026, 23:59:59 IST
-const DEADLINE = new Date('2026-06-12T23:59:59+05:30').getTime();
+// Registration closes: 15 June 2026, 23:59:59 IST (extended from 12 June)
+const DEADLINE = new Date('2026-06-15T23:59:59+05:30').getTime();
 
 interface TimeLeft {
   days: number;

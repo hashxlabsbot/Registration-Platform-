@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkInRegistration } from '@/lib/registrations';
+import { checkInRegistration, checkInMember, undoCheckIn } from '@/lib/registrations';
 import { isValidSession, SESSION_COOKIE } from '@/lib/auth';
 import { verifyStaffToken, STAFF_COOKIE } from '@/lib/staff-auth';
 
@@ -14,11 +14,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { bookingId } = await request.json();
+  const { bookingId, memberIndex, undo } = await request.json();
   if (!bookingId) {
     return NextResponse.json({ error: 'bookingId is required.' }, { status: 400 });
   }
 
-  const result = await checkInRegistration(String(bookingId));
+  const idx = Number(memberIndex) || 0;
+
+  // Undo is destructive — restrict to admins.
+  if (undo) {
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'Only admins can undo a check-in.' }, { status: 403 });
+    }
+    const result = await undoCheckIn(String(bookingId), idx);
+    return NextResponse.json(result);
+  }
+
+  const result = idx >= 1
+    ? await checkInMember(String(bookingId), idx)
+    : await checkInRegistration(String(bookingId));
+
   return NextResponse.json(result);
 }

@@ -2,6 +2,15 @@
 
 import { useState, useEffect, useMemo } from 'react';
 
+interface Member {
+  name: string;
+  relation: string;
+  email: string;
+  phone: string;
+  checkedIn?: boolean;
+  checkinTime?: string;
+}
+
 interface Registration {
   bookingId: string;
   name: string;
@@ -11,6 +20,7 @@ interface Registration {
   registrationType: string;
   checkedIn: boolean;
   checkinTime: string;
+  members?: Member[];
 }
 
 interface TimelineSlot {
@@ -33,6 +43,7 @@ export default function CheckinPage() {
   const [search, setSearch] = useState('');
   const [checking, setChecking] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<{ id: string; status: 'ok' | 'already' } | null>(null);
+  const [role, setRole] = useState<string>('admin');
 
   async function loadAll() {
     setLoading(true);
@@ -44,6 +55,7 @@ export default function CheckinPage() {
       if (regsRes.ok) {
         const d = await regsRes.json();
         setRegs(d.registrations);
+        if (d.role) setRole(d.role);
       }
       if (statsRes.ok) {
         const d = await statsRes.json();
@@ -69,27 +81,73 @@ export default function CheckinPage() {
     ).slice(0, 10);
   }, [regs, search]);
 
-  async function handleCheckin(bookingId: string) {
-    setChecking(bookingId);
+  // key uniquely identifies a row: "BOOKING" for primary, "BOOKING:2" for member #2
+  function rowKey(bookingId: string, memberIndex = 0) {
+    return memberIndex >= 1 ? `${bookingId}:${memberIndex}` : bookingId;
+  }
+
+  async function handleCheckin(bookingId: string, memberIndex = 0) {
+    const key = rowKey(bookingId, memberIndex);
+    setChecking(key);
     try {
       const res = await fetch('/api/admin/checkin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bookingId }),
+        body: JSON.stringify({ bookingId, memberIndex }),
       });
       const data = await res.json();
-      setLastResult({ id: bookingId, status: data.status });
-      // Refresh data
-      setRegs((prev) => prev.map((r) => r.bookingId === bookingId ? { ...r, checkedIn: true } : r));
+      setLastResult({ id: key, status: data.status });
+
+      // Optimistically reflect the new state in the local list
+      setRegs((prev) => prev.map((r) => {
+        if (r.bookingId !== bookingId) return r;
+        if (memberIndex >= 1) {
+          const members = (r.members ?? []).map((m, i) =>
+            i === memberIndex - 1 ? { ...m, checkedIn: true } : m);
+          return { ...r, members };
+        }
+        return { ...r, checkedIn: true };
+      }));
+
       if (data.status === 'ok') {
-        // Add to recent feed
         const reg = regs.find((r) => r.bookingId === bookingId);
-        if (reg) {
+        const who = memberIndex >= 1 ? reg?.members?.[memberIndex - 1]?.name : reg?.name;
+        if (reg && who) {
           setRecent((prev) => [
-            { bookingId, name: reg.name, registrationType: reg.registrationType, checkinTime: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) },
+            { bookingId, name: who, registrationType: memberIndex >= 1 ? 'Guest' : reg.registrationType, checkinTime: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) },
             ...prev,
           ].slice(0, 20));
         }
+      }
+    } finally {
+      setChecking(null);
+    }
+  }
+
+  async function handleUndo(bookingId: string, memberIndex = 0) {
+    const key = rowKey(bookingId, memberIndex);
+    if (!confirm('Reverse this check-in? The attendee will be marked as not checked in.')) return;
+    setChecking(key);
+    try {
+      const res = await fetch('/api/admin/checkin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId, memberIndex, undo: true }),
+      });
+      const data = await res.json();
+      if (data.status === 'ok') {
+        setLastResult(null);
+        setRegs((prev) => prev.map((r) => {
+          if (r.bookingId !== bookingId) return r;
+          if (memberIndex >= 1) {
+            const members = (r.members ?? []).map((m, i) =>
+              i === memberIndex - 1 ? { ...m, checkedIn: false } : m);
+            return { ...r, members };
+          }
+          return { ...r, checkedIn: false };
+        }));
+      } else if (data.error) {
+        alert(data.error);
       }
     } finally {
       setChecking(null);
@@ -156,58 +214,63 @@ export default function CheckinPage() {
               )}
 
               {searchResults.length > 0 && (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {searchResults.map((r) => {
-                    const isThisChecking = checking === r.bookingId;
-                    const wasCheckedIn = r.checkedIn;
-                    const justResult = lastResult?.id === r.bookingId ? lastResult.status : null;
+                    const members = r.members ?? [];
+                    const groupTotal = 1 + members.length;
+                    const groupIn = (r.checkedIn ? 1 : 0) + members.filter((m) => m.checkedIn).length;
 
                     return (
                       <div
                         key={r.bookingId}
-                        className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 transition-all"
-                        style={{ background: wasCheckedIn ? 'rgba(74,222,128,0.05)' : 'rgba(255,255,255,0.03)', border: wasCheckedIn ? '1px solid rgba(74,222,128,0.15)' : '1px solid rgba(255,255,255,0.06)' }}
+                        className="rounded-xl overflow-hidden"
+                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
                       >
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-semibold text-white text-sm">{r.name}</p>
-                            <span className="text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-full"
-                              style={{ background: 'rgba(46,125,50,0.18)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.2)' }}>
-                              {r.registrationType}
-                            </span>
-                          </div>
-                          <p className="text-xs text-white/35 mt-0.5">{r.email} · {r.phone}</p>
-                          <p className="font-mono text-[10px] text-[#c8a96e] mt-0.5">{r.bookingId}</p>
-                        </div>
+                        {/* Primary registrant */}
+                        <CheckinRow
+                          name={r.name}
+                          sub={`${r.email} · ${r.phone}`}
+                          badge={r.registrationType}
+                          mono={r.bookingId}
+                          checkedIn={r.checkedIn}
+                          checking={checking === rowKey(r.bookingId)}
+                          anyChecking={!!checking}
+                          justResult={lastResult?.id === rowKey(r.bookingId) ? lastResult.status : null}
+                          showUndo={role === 'admin'}
+                          onCheckin={() => handleCheckin(r.bookingId)}
+                          onUndo={() => handleUndo(r.bookingId)}
+                        />
 
-                        <div className="flex-shrink-0">
-                          {wasCheckedIn ? (
-                            <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wide px-3 py-1.5 rounded-lg"
-                              style={{ background: 'rgba(74,222,128,0.12)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.2)' }}>
-                              <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
-                              {justResult === 'already' ? 'Already in' : 'Checked In'}
-                            </span>
-                          ) : (
-                            <button
-                              onClick={() => handleCheckin(r.bookingId)}
-                              disabled={!!checking}
-                              className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wide px-3 py-1.5 rounded-lg transition-all disabled:opacity-40"
-                              style={{ background: 'linear-gradient(135deg, #1a4a1a, #2e7d32)', color: '#fff', boxShadow: '0 2px 12px rgba(46,125,50,0.3)' }}
-                            >
-                              {isThisChecking ? (
-                                <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
-                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                                </svg>
-                              ) : (
-                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                                </svg>
-                              )}
-                              Check In
-                            </button>
-                          )}
-                        </div>
+                        {/* Group progress + guests */}
+                        {members.length > 0 && (
+                          <>
+                            <div className="px-4 py-1.5 flex items-center justify-between"
+                              style={{ background: 'rgba(0,0,0,0.25)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/35">
+                                {members.length} Guest{members.length > 1 ? 's' : ''}
+                              </span>
+                              <span className="text-[10px] font-bold" style={{ color: groupIn === groupTotal ? '#4ade80' : '#fbbf24' }}>
+                                {groupIn}/{groupTotal} in
+                              </span>
+                            </div>
+                            {members.map((m, mi) => (
+                              <CheckinRow
+                                key={`${r.bookingId}-M${mi + 1}`}
+                                name={m.name || `Guest ${mi + 1}`}
+                                sub={[m.relation, m.phone].filter(Boolean).join(' · ') || 'Guest'}
+                                mono={`${r.bookingId}-M${mi + 1}`}
+                                indent
+                                checkedIn={!!m.checkedIn}
+                                checking={checking === rowKey(r.bookingId, mi + 1)}
+                                anyChecking={!!checking}
+                                justResult={lastResult?.id === rowKey(r.bookingId, mi + 1) ? lastResult.status : null}
+                                showUndo={role === 'admin'}
+                                onCheckin={() => handleCheckin(r.bookingId, mi + 1)}
+                                onUndo={() => handleUndo(r.bookingId, mi + 1)}
+                              />
+                            ))}
+                          </>
+                        )}
                       </div>
                     );
                   })}
@@ -278,6 +341,94 @@ export default function CheckinPage() {
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+interface CheckinRowProps {
+  name: string;
+  sub: string;
+  badge?: string;
+  mono: string;
+  indent?: boolean;
+  checkedIn: boolean;
+  checking: boolean;
+  anyChecking: boolean;
+  justResult: 'ok' | 'already' | null;
+  showUndo: boolean;
+  onCheckin: () => void;
+  onUndo: () => void;
+}
+
+function CheckinRow({
+  name, sub, badge, mono, indent, checkedIn, checking, anyChecking, justResult, showUndo, onCheckin, onUndo,
+}: CheckinRowProps) {
+  return (
+    <div
+      className="flex items-center justify-between gap-3 px-4 py-3 transition-all"
+      style={{
+        paddingLeft: indent ? '2.5rem' : undefined,
+        background: checkedIn ? 'rgba(74,222,128,0.05)' : 'transparent',
+        borderTop: indent ? '1px solid rgba(255,255,255,0.04)' : undefined,
+      }}
+    >
+      <div className="min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className="font-semibold text-white text-sm">{name}</p>
+          {badge && (
+            <span className="text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-full"
+              style={{ background: 'rgba(46,125,50,0.18)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.2)' }}>
+              {badge}
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-white/35 mt-0.5">{sub}</p>
+        <p className="font-mono text-[10px] text-[#c8a96e] mt-0.5">{mono}</p>
+      </div>
+
+      <div className="flex-shrink-0 flex items-center gap-2">
+        {checkedIn ? (
+          <>
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wide px-3 py-1.5 rounded-lg"
+              style={{ background: 'rgba(74,222,128,0.12)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.2)' }}>
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
+              {justResult === 'already' ? 'Already in' : 'Checked In'}
+            </span>
+            {showUndo && (
+              <button
+                onClick={onUndo}
+                disabled={anyChecking}
+                title="Undo check-in"
+                className="inline-flex items-center justify-center w-7 h-7 rounded-lg transition-all disabled:opacity-40 text-white/40 hover:text-red-300"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+                </svg>
+              </button>
+            )}
+          </>
+        ) : (
+          <button
+            onClick={onCheckin}
+            disabled={anyChecking}
+            className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wide px-3 py-1.5 rounded-lg transition-all disabled:opacity-40"
+            style={{ background: 'linear-gradient(135deg, #1a4a1a, #2e7d32)', color: '#fff', boxShadow: '0 2px 12px rgba(46,125,50,0.3)' }}
+          >
+            {checking ? (
+              <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+              </svg>
+            ) : (
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+            )}
+            Check In
+          </button>
+        )}
       </div>
     </div>
   );

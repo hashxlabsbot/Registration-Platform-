@@ -15,6 +15,7 @@ interface QRPayload {
 
 interface CheckInResult {
   status: 'ok' | 'already' | 'not_found' | 'error';
+  queued?: boolean;
   registration?: {
     name: string;
     registrationType: string;
@@ -24,17 +25,154 @@ interface CheckInResult {
   error?: string;
 }
 
+// ── Offline cache + queue ────────────────────────────────────────────────────
+// A trimmed snapshot of every booking so scans can be validated and de-duped
+// even when the venue network drops. Member state is a boolean per guest.
+interface CachedReg { id: string; in: boolean; m: boolean[] }
+interface QueueItem { bookingId: string; memberIndex: number }
+
+const CACHE_KEY = 'scan_cache_v2';
+const QUEUE_KEY = 'scan_queue_v2';
+
+function loadCache(): Record<string, CachedReg> {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return {};
+    const arr = JSON.parse(raw) as { regs: CachedReg[] };
+    const map: Record<string, CachedReg> = {};
+    for (const r of arr.regs) map[r.id] = r;
+    return map;
+  } catch { return {}; }
+}
+function saveCache(map: Record<string, CachedReg>) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), regs: Object.values(map) }));
+  } catch { /* quota — ignore */ }
+}
+function loadQueue(): QueueItem[] {
+  try { return JSON.parse(localStorage.getItem(QUEUE_KEY) ?? '[]'); } catch { return []; }
+}
+function saveQueue(q: QueueItem[]) {
+  try { localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); } catch { /* ignore */ }
+}
+
+// Split "PK-XXXX-M2" into { parentId: "PK-XXXX", memberIndex: 2 }.
+function parseId(id: string): { parentId: string; memberIndex: number } {
+  const m = id.match(/^(.*)-M(\d+)$/);
+  return m ? { parentId: m[1], memberIndex: Number(m[2]) } : { parentId: id, memberIndex: 0 };
+}
+
 export default function ScanPage() {
   const videoRef  = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef    = useRef<number>(0);
   const activeRef = useRef(true);
+  const cacheRef  = useRef<Record<string, CachedReg>>({});
+  const syncingRef = useRef(false);
 
   const [cameraError, setCameraError] = useState('');
   const [scanned,     setScanned]     = useState<QRPayload | null>(null);
   const [result,      setResult]      = useState<CheckInResult | null>(null);
   const [checking,    setChecking]    = useState(false);
   const [scanCount,   setScanCount]   = useState(0);
+
+  const [online,      setOnline]      = useState(true);
+  const [cacheCount,  setCacheCount]  = useState(0);
+  const [pending,     setPending]     = useState(0);
+  const [syncing,     setSyncing]     = useState(false);
+
+  // ── Mutate the local cache so repeat scans show "already" without network ──
+  const markLocal = useCallback((parentId: string, memberIndex: number): 'ok' | 'already' | 'not_found' => {
+    const reg = cacheRef.current[parentId];
+    if (!reg) return 'not_found';
+    if (memberIndex >= 1) {
+      if (reg.m[memberIndex - 1]) return 'already';
+      reg.m[memberIndex - 1] = true;
+    } else {
+      if (reg.in) return 'already';
+      reg.in = true;
+    }
+    saveCache(cacheRef.current);
+    return 'ok';
+  }, []);
+
+  const enqueue = useCallback((item: QueueItem) => {
+    const q = loadQueue();
+    q.push(item);
+    saveQueue(q);
+    setPending(q.length);
+  }, []);
+
+  // ── Flush queued check-ins to the server ──────────────────────────────────
+  const flushQueue = useCallback(async () => {
+    if (syncingRef.current || !navigator.onLine) return;
+    const q = loadQueue();
+    if (q.length === 0) return;
+    syncingRef.current = true;
+    setSyncing(true);
+    const remaining: QueueItem[] = [];
+    for (const item of q) {
+      try {
+        const res = await fetch('/api/admin/checkin', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify(item),
+        });
+        // 4xx (e.g. not_found) → drop; 5xx / network → keep for retry
+        if (!res.ok && res.status >= 500) remaining.push(item);
+      } catch {
+        remaining.push(item);
+      }
+    }
+    saveQueue(remaining);
+    setPending(remaining.length);
+    syncingRef.current = false;
+    setSyncing(false);
+  }, []);
+
+  // ── Load cache + refresh from server on mount ─────────────────────────────
+  const refreshCache = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/registrations');
+      if (!res.ok) return;
+      const data = await res.json();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const map: Record<string, CachedReg> = {};
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      for (const r of data.registrations as any[]) {
+        map[r.bookingId] = {
+          id:  r.bookingId,
+          in:  !!r.checkedIn,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          m:   (r.members ?? []).map((mm: any) => !!mm.checkedIn),
+        };
+      }
+      cacheRef.current = map;
+      saveCache(map);
+      setCacheCount(Object.keys(map).length);
+    } catch { /* offline — keep whatever we loaded from localStorage */ }
+  }, []);
+
+  useEffect(() => {
+    cacheRef.current = loadCache();
+    setCacheCount(Object.keys(cacheRef.current).length);
+    setPending(loadQueue().length);
+    setOnline(navigator.onLine);
+    refreshCache();
+    flushQueue();
+
+    const goOnline  = () => { setOnline(true); refreshCache(); flushQueue(); };
+    const goOffline = () => setOnline(false);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    const iv = setInterval(() => { if (navigator.onLine) flushQueue(); }, 15000);
+
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+      clearInterval(iv);
+    };
+  }, [refreshCache, flushQueue]);
 
   const scan = useCallback(() => {
     if (!activeRef.current) return;
@@ -94,16 +232,47 @@ export default function ScanPage() {
   async function handleCheckIn() {
     if (!scanned) return;
     setChecking(true);
+
+    const { parentId, memberIndex } = parseId(scanned.id);
+    const fallbackReg = {
+      name: scanned.name,
+      registrationType: scanned.type,
+      phone: scanned.ph,
+      checkinTime: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+    };
+
+    // Offline → validate locally and queue.
+    if (!navigator.onLine) {
+      const status = markLocal(parentId, memberIndex);
+      if (status === 'ok') enqueue({ bookingId: parentId, memberIndex });
+      setResult(status === 'not_found'
+        ? { status: 'not_found' }
+        : { status, queued: status === 'ok', registration: fallbackReg });
+      setChecking(false);
+      return;
+    }
+
     try {
       const res = await fetch('/api/admin/checkin', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ bookingId: scanned.id }),
+        body:    JSON.stringify({ bookingId: parentId, memberIndex }),
       });
       const data = await res.json();
-      setResult(res.ok ? data : { status: 'error', error: data.error });
+      if (res.ok) {
+        // keep local cache in sync for subsequent offline scans
+        if (data.status === 'ok') markLocal(parentId, memberIndex);
+        setResult(data.registration ? data : { ...data, registration: fallbackReg });
+      } else {
+        setResult({ status: 'error', error: data.error });
+      }
     } catch {
-      setResult({ status: 'error', error: 'Network error. Try again.' });
+      // network dropped mid-request → fall back to offline queue
+      const status = markLocal(parentId, memberIndex);
+      if (status === 'ok') enqueue({ bookingId: parentId, memberIndex });
+      setResult(status === 'not_found'
+        ? { status: 'error', error: 'Offline and ticket not in cached list.' }
+        : { status, queued: status === 'ok', registration: fallbackReg });
     }
     setChecking(false);
   }
@@ -116,6 +285,23 @@ export default function ScanPage() {
 
   return (
     <div className="min-h-[calc(100vh-56px)] flex flex-col" style={{ background: '#000' }}>
+
+      {/* Connection / sync status bar */}
+      <div className="flex items-center justify-between px-4 py-2 text-[11px] font-bold"
+        style={{ background: online ? 'rgba(46,125,50,0.12)' : 'rgba(180,83,9,0.18)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <span className="flex items-center gap-1.5" style={{ color: online ? '#4ade80' : '#fbbf24' }}>
+          <span className="w-1.5 h-1.5 rounded-full" style={{ background: online ? '#4ade80' : '#fbbf24', boxShadow: `0 0 6px ${online ? '#4ade80' : '#fbbf24'}` }} />
+          {online ? 'Online' : 'Offline — scans are queued'}
+        </span>
+        <span className="flex items-center gap-3 text-white/40">
+          {pending > 0 && (
+            <span style={{ color: '#fbbf24' }}>
+              {syncing ? 'Syncing…' : `${pending} queued`}
+            </span>
+          )}
+          <span>{cacheCount} cached</span>
+        </span>
+      </div>
 
       {/* Camera area */}
       <div className="relative flex-1">
@@ -198,7 +384,9 @@ export default function ScanPage() {
               </svg>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#c8a96e] mb-0.5">QR Detected</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#c8a96e] mb-0.5">
+                QR Detected{parseId(scanned.id).memberIndex >= 1 ? ' · Guest' : ''}
+              </p>
               <h2 className="text-xl font-black text-white truncate">{scanned.name}</h2>
               <p className="text-sm text-white/45 mt-0.5">{scanned.type} · {scanned.amt}</p>
               <p className="text-xs text-white/25 mt-0.5 font-mono">{scanned.id}</p>
@@ -273,6 +461,9 @@ export default function ScanPage() {
               <p className="text-green-300 font-semibold mt-1 text-lg">{result.registration?.name ?? scanned?.name}</p>
               <p className="text-green-400/50 text-sm mt-0.5">{result.registration?.registrationType ?? scanned?.type}</p>
               <p className="text-green-500/40 text-xs mt-0.5 font-mono">{scanned?.id}</p>
+              {result.queued && (
+                <p className="mt-2 text-[11px] font-bold text-amber-300/80">Saved offline — will sync when back online.</p>
+              )}
             </div>
           )}
 
