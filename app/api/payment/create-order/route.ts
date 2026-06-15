@@ -3,7 +3,16 @@ import Razorpay from 'razorpay';
 
 export const runtime = 'nodejs';
 
+const REGISTRATION_CLOSED = true;
+
 export async function POST(request: NextRequest) {
+  if (REGISTRATION_CLOSED) {
+    return NextResponse.json(
+      { error: 'Registrations are now closed.' },
+      { status: 410 }
+    );
+  }
+
   try {
     const {
       amount, registrationType,

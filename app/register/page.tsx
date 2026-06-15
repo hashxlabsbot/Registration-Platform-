@@ -79,10 +79,10 @@ export default function RegisterPage() {
           <div className="relative w-full border-t border-white/10 pt-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <div className="flex items-center gap-2">
               <svg className="w-3.5 h-3.5 text-[#c8a96e] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
               <span className="text-[10px] font-bold text-[#c8a96e] uppercase tracking-widest">
-                Registration extended · now closes 15 June 2026
+                Registrations Closed on 15 June 2026
               </span>
             </div>
             <CountdownTimer variant="dark" />
@@ -107,7 +107,33 @@ export default function RegisterPage() {
             </div>
           </div>
         ) : (
-          <RegistrationForm onSuccess={setBooking} />
+          <div className="bg-white rounded-3xl border border-green-100 p-8 sm:p-12 text-center shadow-md space-y-6">
+            <div className="mx-auto w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center text-red-500 border border-red-100">
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-xl sm:text-2xl font-black text-[#1a4a1a]">Registrations are Closed</h2>
+              <p className="text-sm text-gray-500 max-w-md mx-auto leading-relaxed">
+                Thank you for your overwhelming response! The registration period for Prakriti 2026 has officially ended on June 15, 2026.
+              </p>
+            </div>
+            <div className="border-t border-green-50/80 pt-6">
+              <p className="text-xs text-gray-400">
+                If you have already registered and have queries regarding your tickets, please contact us at:
+              </p>
+              <div className="mt-3 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6">
+                <a href="mailto:iiafaridabadcentre@gmail.com" className="text-[#2e7d32] font-semibold text-xs hover:underline">
+                  iiafaridabadcentre@gmail.com
+                </a>
+                <span className="hidden sm:inline text-gray-300">|</span>
+                <a href="tel:+918810235570" className="text-[#2e7d32] font-semibold text-xs hover:underline">
+                  +91-8810235570 (Call/WhatsApp)
+                </a>
+              </div>
+            </div>
+          </div>
         )}
       </div>
 

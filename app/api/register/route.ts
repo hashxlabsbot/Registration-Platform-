@@ -6,7 +6,16 @@ import { sendTicketEmail, sendAdminNotification } from '@/lib/mailer';
 
 export const runtime = 'nodejs';
 
+const REGISTRATION_CLOSED = true;
+
 export async function POST(request: NextRequest) {
+  if (REGISTRATION_CLOSED) {
+    return NextResponse.json(
+      { error: 'Registrations are now closed. Thank you for your interest in Prakriti 2026.' },
+      { status: 410 }
+    );
+  }
+
   try {
     const body = await request.json();
 
