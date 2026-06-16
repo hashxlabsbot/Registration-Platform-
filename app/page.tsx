@@ -67,13 +67,13 @@ export default function Home() {
               <p className="text-xs font-bold text-[#c8a96e] uppercase tracking-widest">Prakriti 2026</p>
               <p className="text-[11px] text-gray-400">20 June 2026 · Faridabad</p>
             </div>
-            <button
-              disabled
-              className="rounded-lg bg-gray-300 px-3 py-2 sm:px-4 text-xs font-bold text-gray-500
-                cursor-not-allowed whitespace-nowrap"
+            <Link
+              href="/register"
+              className="rounded-lg bg-[#2e7d32] px-3 py-2 sm:px-4 text-xs font-bold text-white
+                hover:bg-[#1a4a1a] active:scale-95 transition-all whitespace-nowrap"
             >
-              Registration Closed
-            </button>
+              Register Now
+            </Link>
           </div>
         </div>
       </header>
@@ -93,7 +93,7 @@ export default function Home() {
               <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
             </svg>
             <p className="text-[10px] font-bold text-[#c8a96e] uppercase tracking-widest">
-              Registrations for Prakriti 2026 are Closed
+              Registration extended &middot; now closes 17 June 2026
             </p>
           </div>
           <CountdownTimer variant="dark" />
@@ -149,17 +149,17 @@ export default function Home() {
 
             {/* CTA */}
             <div className="mt-8 flex gap-3">
-              <button
-                disabled
-                className="inline-flex items-center justify-center gap-2.5 bg-gray-200
-                  text-gray-500 font-bold text-sm px-7 py-3.5 rounded-xl cursor-not-allowed
-                  border border-gray-300"
+              <Link
+                href="/register"
+                className="inline-flex items-center justify-center gap-2.5 bg-[#1a4a1a] hover:bg-[#2e7d32]
+                  active:scale-95 text-white font-bold text-sm px-7 py-3.5 rounded-xl
+                  transition-all shadow-md shadow-[#1a4a1a]/20"
               >
-                Registrations Closed
+                Secure Your Spot
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
-              </button>
+              </Link>
             </div>
 
             {/* Registration deadline + countdown */}
@@ -169,7 +169,7 @@ export default function Home() {
                   <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
                 </svg>
                 <p className="text-[10px] font-bold text-[#1a4a1a]/50 uppercase tracking-widest">
-                  Registrations Closed on 15 June 2026
+                  Registration extended &middot; now closes 17 June 2026
                 </p>
               </div>
               <CountdownTimer variant="light" />
@@ -295,13 +295,13 @@ export default function Home() {
               </div>
 
               <div className="mt-5 sm:mt-6 flex flex-col sm:flex-row gap-3">
-                <button
-                  disabled
-                  className="rounded-xl bg-gray-200 border border-gray-300 px-5 sm:px-6 py-3 text-sm font-bold text-gray-500
-                    cursor-not-allowed text-center"
+                <Link
+                  href="/register"
+                  className="rounded-xl bg-[#1a4a1a] px-5 sm:px-6 py-3 text-sm font-bold text-white
+                    hover:bg-[#2e7d32] active:scale-95 transition-all text-center"
                 >
-                  Registrations Closed
-                </button>
+                  Register Now →
+                </Link>
                 <a
                   href="https://www.indianinstituteofarchitects.com"
                   target="_blank"
@@ -366,10 +366,10 @@ export default function Home() {
             <div className="mt-4 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full"
               style={{ background: 'rgba(200,169,110,0.12)', border: '1px solid rgba(200,169,110,0.25)' }}>
               <svg className="w-3 h-3 text-[#c8a96e]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
               </svg>
               <span className="text-[10px] font-bold text-[#c8a96e] uppercase tracking-widest">
-                Registrations Closed on 15 June 2026
+                Registration extended &middot; now closes 17 June 2026
               </span>
             </div>
           </div>
@@ -397,17 +397,17 @@ export default function Home() {
           </div>
 
           <div className="text-center">
-            <button
-              disabled
-              className="inline-flex items-center justify-center gap-2.5 bg-gray-500/20 border border-white/10
-                text-gray-400 font-extrabold text-sm sm:text-base cursor-not-allowed
-                px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl transition-all"
+            <Link
+              href="/register"
+              className="inline-flex items-center justify-center gap-2.5 bg-[#c8a96e] hover:bg-[#b8995e]
+                active:scale-95 text-[#1a4a1a] font-extrabold text-sm sm:text-base
+                px-8 sm:px-10 py-3.5 sm:py-4 rounded-xl transition-all shadow-xl shadow-black/20"
             >
-              Registrations Closed
+              Register Now
               <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
-            </button>
+            </Link>
             <p className="mt-3 text-xs text-green-500">Pay via UPI · Confirmation email sent instantly</p>
             <p className="mt-1.5 text-xs text-green-600">
               Didn&apos;t receive your ticket? Call / WhatsApp:{' '}

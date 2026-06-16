@@ -3,10 +3,10 @@ import Razorpay from 'razorpay';
 
 export const runtime = 'nodejs';
 
-const REGISTRATION_CLOSED = true;
+const REGISTRATION_DEADLINE = new Date('2026-06-17T23:59:59+05:30').getTime();
 
 export async function POST(request: NextRequest) {
-  if (REGISTRATION_CLOSED) {
+  if (Date.now() > REGISTRATION_DEADLINE) {
     return NextResponse.json(
       { error: 'Registrations are now closed.' },
       { status: 410 }
