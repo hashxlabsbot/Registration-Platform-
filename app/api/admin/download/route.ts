@@ -20,13 +20,12 @@ const HEADERS = [
 ];
 
 export async function GET(request: NextRequest) {
-  const secret = request.nextUrl.searchParams.get('secret');
+  // Auth is via the session cookie only — never accept the secret in the URL
+  // (query strings leak into logs, proxies, and browser history).
   const cookie = request.cookies.get(SESSION_COOKIE)?.value;
   const staffCookie = request.cookies.get(STAFF_COOKIE)?.value;
 
-  const isAdmin =
-    (secret && process.env.ADMIN_SECRET && secret.trim() === process.env.ADMIN_SECRET.trim()) ||
-    isValidSession(cookie);
+  const isAdmin = isValidSession(cookie);
   const staffInfo = verifyStaffToken(staffCookie);
 
   if (!isAdmin && !staffInfo) {

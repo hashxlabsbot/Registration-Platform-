@@ -76,16 +76,18 @@ export default function RegisterPage() {
             </div>
           </div>
           {/* Deadline row */}
-          <div className="relative w-full border-t border-white/10 pt-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <div className="flex items-center gap-2">
-              <svg className="w-3.5 h-3.5 text-[#c8a96e] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-              </svg>
-              <span className="text-[10px] font-bold text-[#c8a96e] uppercase tracking-widest">
-                Registration extended · now closes 17 June 2026
-              </span>
+          <div className="relative w-full border-t border-white/10">
+            <div className="max-w-3xl mx-auto px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <svg className="w-3.5 h-3.5 text-[#c8a96e] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <span className="text-[10px] font-bold text-[#c8a96e] uppercase tracking-widest">
+                  Registration extended · now closes 17 June 2026
+                </span>
+              </div>
+              <CountdownTimer variant="dark" />
             </div>
-            <CountdownTimer variant="dark" />
           </div>
         </div>
       )}

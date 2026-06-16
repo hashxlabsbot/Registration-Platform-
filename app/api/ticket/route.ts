@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateTicketPDF } from '@/lib/pdf';
 import { getPdf, storePdf } from '@/lib/db';
+import { getRegistrationById } from '@/lib/registrations';
+import { isValidSession, SESSION_COOKIE } from '@/lib/auth';
+import { verifyStaffToken, STAFF_COOKIE } from '@/lib/staff-auth';
 
 export const runtime = 'nodejs';
 
@@ -15,6 +18,24 @@ export async function POST(request: NextRequest) {
 
     if (!bookingId || !name || !registrationType) {
       return NextResponse.json({ error: 'Missing ticket data.' }, { status: 400 });
+    }
+
+    // Authenticated admin/staff may fetch any ticket (admin panel, walk-in).
+    const isStaffOrAdmin =
+      isValidSession(request.cookies.get(SESSION_COOKIE)?.value) ||
+      verifyStaffToken(request.cookies.get(STAFF_COOKIE)?.value) !== null;
+
+    // Ownership check — if this booking exists, an unauthenticated caller must
+    // prove they own it by supplying the matching email. Prevents enumerating
+    // someone else's ticket (and its PII) by guessing a booking ID.
+    if (!isStaffOrAdmin) {
+      const reg = await getRegistrationById(bookingId);
+      if (reg) {
+        const provided = String(email ?? '').trim().toLowerCase();
+        if (!provided || provided !== reg.email.trim().toLowerCase()) {
+          return NextResponse.json({ error: 'Unauthorized.' }, { status: 403 });
+        }
+      }
     }
 
     // Try DB first — instant for tickets generated at registration time

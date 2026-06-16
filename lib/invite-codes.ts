@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import { getDb } from './db';
 
 async function initTable() {
@@ -39,7 +40,8 @@ export async function consumeInviteCode(code: string, bookingId: string): Promis
 export async function createInviteCode(description: string): Promise<string> {
   await initTable();
   const sql = getDb();
-  const code = `INV-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+  // Cryptographically-random, unguessable code (10 hex chars = 40 bits).
+  const code = `INV-${randomBytes(5).toString('hex').toUpperCase()}`;
   await sql`
     INSERT INTO invite_codes (code, description)
     VALUES (${code}, ${description})

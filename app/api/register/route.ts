@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { nanoid } from 'nanoid';
 import { appendRegistration } from '@/lib/registrations';
-import { isInviteCodeValid, consumeInviteCode } from '@/lib/invite-codes';
+import { consumeInviteCode } from '@/lib/invite-codes';
 import { sendTicketEmail, sendAdminNotification } from '@/lib/mailer';
 
 export const runtime = 'nodejs';
@@ -35,14 +35,17 @@ export async function POST(request: NextRequest) {
     }
 
     const isSpecialInvitee = registrationType === 'Special Invitee';
+    const bookingId = `PK-${nanoid(8).toUpperCase()}`;
 
-    // Invite code — validate & atomically consume
+    // Invite code — atomically consume FIRST so it is the single source of
+    // truth. A concurrent request for the same code will fail the atomic
+    // UPDATE, preventing double-use of a single-use code.
     if (isSpecialInvitee) {
       if (!inviteCode || typeof inviteCode !== 'string') {
         return NextResponse.json({ error: 'Invite code is required for Special Invitee.' }, { status: 400 });
       }
-      const valid = await isInviteCodeValid(inviteCode);
-      if (!valid) {
+      const consumed = await consumeInviteCode(inviteCode, bookingId);
+      if (!consumed) {
         return NextResponse.json({ error: 'Invalid or already used invite code.' }, { status: 400 });
       }
     } else {
@@ -51,8 +54,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'UPI Transaction ID / UTR number is required.' }, { status: 400 });
       }
     }
-
-    const bookingId = `PK-${nanoid(8).toUpperCase()}`;
 
     await appendRegistration({
       bookingId,
@@ -75,11 +76,6 @@ export async function POST(request: NextRequest) {
       pincode:             pincode  || '',
       membersJson:         JSON.stringify(Array.isArray(members) ? members : []),
     });
-
-    // Consume invite code after successful save
-    if (isSpecialInvitee) {
-      await consumeInviteCode(inviteCode, bookingId);
-    }
 
     // Send confirmation email + admin notification (fire-and-forget)
     const ticketData = {

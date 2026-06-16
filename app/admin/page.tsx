@@ -388,6 +388,7 @@ function TableRow({ r, i, isAdmin }: { r: Registration; i: number; isAdmin: bool
   const [hovered,    setHovered]    = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [viewing,    setViewing]    = useState(false);
+  const [resending,  setResending]  = useState(false);
   const [expanded,   setExpanded]   = useState(false);
   const base = i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.012)';
   const hasMembers = r.members && r.members.length > 0;
@@ -460,6 +461,29 @@ function TableRow({ r, i, isAdmin }: { r: Registration; i: number; isAdmin: bool
     }
   }
 
+  async function resendTicket() {
+    if (!r.email) {
+      alert('No email on file for this attendee.');
+      return;
+    }
+    if (!confirm(`Resend ticket to ${r.name} (${r.email})?`)) return;
+    setResending(true);
+    try {
+      const res = await fetch('/api/admin/resend-ticket', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ bookingId: r.bookingId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Failed');
+      alert(`Ticket sent to ${data.sentTo || r.email}.`);
+    } catch (err) {
+      alert(`Could not resend ticket. ${err instanceof Error ? err.message : ''}`.trim());
+    } finally {
+      setResending(false);
+    }
+  }
+
   return (
     <>
       <tr
@@ -491,6 +515,13 @@ function TableRow({ r, i, isAdmin }: { r: Registration; i: number; isAdmin: bool
                   disabled={downloading || viewing}
                   icon={<svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v13m0 0l-4-4m4 4l4-4M3 21h18" /></svg>}
                 />
+                {isAdmin && (
+                  <TicketButton
+                    label="Send" loading={resending} loadingLabel="…" color="#4ade80" colorAlpha="rgba(74,222,128"
+                    onClick={resendTicket} disabled={resending}
+                    icon={<svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>}
+                  />
+                )}
               </div>
             </div>
             {hasMembers && (
@@ -569,6 +600,13 @@ function TableRow({ r, i, isAdmin }: { r: Registration; i: number; isAdmin: bool
               disabled={downloading || viewing}
               icon={<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v13m0 0l-4-4m4 4l4-4M3 21h18" /></svg>}
             />
+            {isAdmin && (
+              <TicketButton
+                label="Send" loading={resending} loadingLabel="…" color="#4ade80" colorAlpha="rgba(74,222,128"
+                onClick={resendTicket} disabled={resending}
+                icon={<svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>}
+              />
+            )}
           </div>
         </td>
       </tr>

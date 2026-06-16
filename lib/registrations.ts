@@ -150,6 +150,16 @@ export async function getRegistrations(): Promise<Registration[]> {
   return rows.map((r) => rowToRegistration(r, memberMap[r.booking_id]));
 }
 
+// Used for payment idempotency — returns the existing booking for a given
+// UPI/Razorpay transaction id, if one was already recorded.
+export async function findRegistrationByUtr(utrNumber: string): Promise<Registration | null> {
+  await initSchema();
+  const sql = getDb();
+  const rows = await sql`SELECT * FROM registrations WHERE utr_number = ${utrNumber} LIMIT 1`;
+  if (rows.length === 0) return null;
+  return rowToRegistration(rows[0]);
+}
+
 export async function getRegistrationById(bookingId: string): Promise<Registration | null> {
   await initSchema();
   const sql = getDb();

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
+import { computeTotalAmount } from '@/lib/pricing';
 
 export const runtime = 'nodejs';
 
@@ -15,7 +16,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const {
-      amount, registrationType,
+      registrationType,
       name, email, phone,
       organization, designation,
       district, state, pincode,
@@ -23,8 +24,15 @@ export async function POST(request: NextRequest) {
       membersCount,
     } = await request.json();
 
-    if (!amount || !registrationType) {
-      return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
+    // ── Authoritative server-side amount — never trust the client ────────────
+    const memberCountNum = Number(membersCount ?? 0);
+    const amount = computeTotalAmount(registrationType, memberCountNum);
+    if (amount === null) {
+      return NextResponse.json({ error: 'Invalid registration type.' }, { status: 400 });
+    }
+    if (amount <= 0) {
+      // Free / Special Invitee registrations do not go through Razorpay.
+      return NextResponse.json({ error: 'This registration type does not require payment.' }, { status: 400 });
     }
 
     const keyId     = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;

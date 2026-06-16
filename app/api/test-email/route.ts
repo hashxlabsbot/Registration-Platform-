@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendTicketEmail } from '@/lib/mailer';
 import { generateTicketPDF, TicketData } from '@/lib/pdf';
+import { isValidSession, SESSION_COOKIE } from '@/lib/auth';
 
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
-  const secret = request.nextUrl.searchParams.get('secret');
-  if (secret !== process.env.ADMIN_SECRET) {
+  // Admin-only — authenticated via the session cookie, not a URL secret.
+  if (!isValidSession(request.cookies.get(SESSION_COOKIE)?.value)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

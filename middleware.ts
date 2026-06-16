@@ -7,6 +7,31 @@ const STAFF_COOKIE   = 'staff_session';
 const VOLUNTEER_ALLOWED_PREFIXES = ['/admin/scan', '/api/admin/checkin', '/api/admin/registrations'];
 const VOLUNTEER_ALLOWED_EXACT    = ['/admin'];
 
+// Edge-safe constant-time string compare.
+function safeEqualEdge(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+// Edge-safe HMAC token derivation matching lib/auth.ts adminSessionToken().
+async function adminSessionTokenEdge(secret: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode('admin-session-v1'));
+  // base64url encode
+  let bin = '';
+  const bytes = new Uint8Array(sig);
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
 // Edge-safe HMAC-SHA256 verification using Web Crypto API (no Node.js crypto)
 async function verifyStaffTokenEdge(token: string | undefined): Promise<{ username: string; role: string } | null> {
   if (!token) return null;
@@ -53,7 +78,7 @@ export async function middleware(request: NextRequest) {
   // ── Admin session (full access) ────────────────────────────────────────────
   const adminToken = request.cookies.get(SESSION_COOKIE)?.value?.trim();
   const secret     = (process.env.ADMIN_SECRET ?? '').trim();
-  if (adminToken && secret && adminToken === secret) return res;
+  if (adminToken && secret && safeEqualEdge(adminToken, await adminSessionTokenEdge(secret))) return res;
 
   // ── Staff session (restricted access) ─────────────────────────────────────
   const staffToken = request.cookies.get(STAFF_COOKIE)?.value;

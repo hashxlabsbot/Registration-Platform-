@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import Razorpay from 'razorpay';
 import { nanoid } from 'nanoid';
-import { appendRegistration } from '@/lib/registrations';
+import { appendRegistration, findRegistrationByUtr } from '@/lib/registrations';
 import { sendTicketEmail, sendAdminNotification } from '@/lib/mailer';
 import { generateTicketPDF, TicketData } from '@/lib/pdf';
 import { storePdf } from '@/lib/db';
+import { computeTotalAmount } from '@/lib/pricing';
 
 export const runtime = 'nodejs';
 
@@ -30,8 +31,30 @@ export async function POST(request: NextRequest) {
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest('hex');
 
-    if (expectedSignature !== razorpay_signature) {
+    if (
+      typeof razorpay_signature !== 'string' ||
+      expectedSignature.length !== razorpay_signature.length ||
+      !crypto.timingSafeEqual(Buffer.from(expectedSignature), Buffer.from(razorpay_signature))
+    ) {
       return NextResponse.json({ error: 'Payment verification failed.' }, { status: 400 });
+    }
+
+    // ── Idempotency — never double-register a single payment ──────────────────
+    const existing = await findRegistrationByUtr(razorpay_payment_id);
+    if (existing) {
+      return NextResponse.json({
+        success: true,
+        bookingId:        existing.bookingId,
+        name:             existing.name,
+        email:            existing.email,
+        phone:            existing.phone,
+        organization:     existing.organization || '—',
+        designation:      existing.designation  || '—',
+        registrationType: existing.registrationType,
+        totalAmount:      existing.amount,
+        utrNumber:        existing.utrNumber,
+        emailSent:        true,
+      });
     }
 
     // ── Fetch order from Razorpay to get the authoritative amount ─────────────
@@ -41,6 +64,15 @@ export async function POST(request: NextRequest) {
     });
     const order = await razorpay.orders.fetch(razorpay_order_id);
     const verifiedAmount = Number(order.amount) / 100; // paise → rupees
+
+    // ── Re-validate the paid amount against our own price table ───────────────
+    // Guards against an order created with a tampered amount.
+    const memberCount = Array.isArray(members) ? members.length : 0;
+    const expectedAmount = computeTotalAmount(registrationType, memberCount);
+    if (expectedAmount === null || verifiedAmount !== expectedAmount) {
+      console.error('[verify] amount mismatch', { registrationType, memberCount, verifiedAmount, expectedAmount });
+      return NextResponse.json({ error: 'Payment amount does not match the registration. Please contact support.' }, { status: 400 });
+    }
 
     // ── Payment verified — create booking ─────────────────────────────────────
     const bookingId = `PK-${nanoid(8).toUpperCase()}`;
