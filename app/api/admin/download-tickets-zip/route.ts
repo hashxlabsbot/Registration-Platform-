@@ -21,15 +21,28 @@ export async function GET(request: NextRequest) {
   await initSchema();
   const sql = getDb();
 
-  // 1. Pull the list of tickets (no PDF blobs) so we know what to fetch.
-  const list = await sql`
-    SELECT
-      tp.booking_id,
-      COALESCE(r.name, '') AS name
-    FROM ticket_pdfs tp
-    LEFT JOIN registrations r ON r.booking_id = tp.booking_id
-    ORDER BY tp.booking_id ASC
+  // 1. Derive the set of tickets that map to a *current* attendee. A ticket
+  //    PDF exists per attendee: the primary registrant under `booking_id`, and
+  //    each member under `booking_id-M{n}`. ticket_pdfs is upsert-only and is
+  //    never pruned, so editing/removing a member leaves orphaned PDFs behind.
+  //    We rebuild the valid id→name map from registrations (the source of
+  //    truth) so the archive always matches the admin attendee count, ignoring
+  //    any stale rows in ticket_pdfs.
+  const regs = await sql`
+    SELECT booking_id, name, members_json FROM registrations ORDER BY booking_id ASC
   `;
+
+  const nameById = new Map<string, string>();
+  for (const r of regs) {
+    const bookingId = r.booking_id as string;
+    nameById.set(bookingId, (r.name as string) ?? '');
+    let members: { name?: string }[] = [];
+    try { members = JSON.parse((r.members_json as string) ?? '[]'); } catch { members = []; }
+    members.forEach((m, i) => nameById.set(`${bookingId}-M${i + 1}`, m?.name ?? ''));
+  }
+
+  // Preserve the primary-then-members ordering for fetching/zipping.
+  const list = [...nameById.keys()].map((booking_id) => ({ booking_id }));
 
   if (list.length === 0) {
     return NextResponse.json({ error: 'No tickets found.' }, { status: 404 });
@@ -37,7 +50,7 @@ export async function GET(request: NextRequest) {
 
   const zip = new JSZip();
   const folder = zip.folder('Prakriti2026-Tickets')!;
-  const nameById = new Map(list.map((r) => [r.booking_id as string, r.name as string]));
+  let addedCount = 0;
 
   // 2. Fetch the PDF blobs in chunks and add them to the archive. PDFs are
   //    already compressed (they embed a PNG), so STORE avoids wasting CPU and
@@ -57,7 +70,12 @@ export async function GET(request: NextRequest) {
         .replace(/\s+/g, '_');
       const filename = rawName ? `${bookingId}_${rawName}.pdf` : `${bookingId}.pdf`;
       folder.file(filename, Buffer.from(pdfB64, 'base64'), { compression: 'STORE' });
+      addedCount++;
     }
+  }
+
+  if (addedCount === 0) {
+    return NextResponse.json({ error: 'No tickets found.' }, { status: 404 });
   }
 
   // 3. Stream the archive to the client instead of buffering the whole zip
@@ -92,7 +110,7 @@ export async function GET(request: NextRequest) {
   return new NextResponse(stream, {
     headers: {
       'Content-Type': 'application/zip',
-      'Content-Disposition': `attachment; filename="Prakriti2026-Tickets-${list.length}-${date}.zip"`,
+      'Content-Disposition': `attachment; filename="Prakriti2026-Tickets-${addedCount}-${date}.zip"`,
     },
   });
 }
