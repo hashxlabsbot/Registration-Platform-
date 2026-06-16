@@ -89,7 +89,7 @@ export default function InviteCodesPage() {
           className="rounded-2xl p-5 mb-6"
           style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
           <p className="text-xs font-black uppercase tracking-widest text-white/40 mb-3">Generate New Code</p>
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <input
               type="text"
               value={desc}
@@ -99,7 +99,7 @@ export default function InviteCodesPage() {
               style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)' }}
             />
             <button type="submit" disabled={creating}
-              className="px-5 py-2.5 rounded-xl font-bold text-sm text-white transition-all"
+              className="px-5 py-2.5 rounded-xl font-bold text-sm text-white transition-all sm:flex-shrink-0"
               style={{ background: 'linear-gradient(135deg, #1a4a1a, #2e7d32)', boxShadow: '0 2px 12px rgba(46,125,50,0.35)' }}>
               {creating ? 'Generating…' : '+ Generate'}
             </button>

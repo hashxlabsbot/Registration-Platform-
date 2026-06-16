@@ -238,12 +238,16 @@ export default function ReconcilePage() {
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <table className="w-full min-w-[600px]">
                     <thead>
                       <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                        {['Payment ID', 'Paid At', 'Name / Email', 'Phone', 'Type', 'Amount', 'Actions'].map((h) => (
-                          <th key={h} className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-white/25">{h}</th>
-                        ))}
+                        <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-white/25">Payment ID</th>
+                        <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-white/25 hidden md:table-cell">Paid At</th>
+                        <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-white/25">Name / Email</th>
+                        <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-white/25 hidden lg:table-cell">Phone</th>
+                        <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-white/25 hidden sm:table-cell">Type</th>
+                        <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-white/25">Amount</th>
+                        <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-white/25">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -267,35 +271,51 @@ export default function ReconcilePage() {
                                   : i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.012)',
                             }}
                           >
+                            {/* Payment ID — always visible */}
                             <td className="px-4 py-4">
-                              <div className="flex items-center gap-1.5">
+                              <div className="flex items-center gap-1.5 flex-wrap">
                                 {isDupe && (
                                   <span
                                     title={p.alreadyRegistered ? 'This email already has a registration in the DB — likely a test payment' : 'Same email appears multiple times in this list'}
                                     className="text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-full"
                                     style={{ background: 'rgba(251,191,36,0.15)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.25)' }}
                                   >
-                                    {p.alreadyRegistered ? 'ALREADY REG' : 'DUP'}
+                                    {p.alreadyRegistered ? 'REG' : 'DUP'}
                                   </span>
                                 )}
-                                <span className="font-mono text-xs font-bold text-[#c8a96e]">{p.paymentId}</span>
+                                <span className="font-mono text-xs font-bold text-[#c8a96e] break-all">{p.paymentId}</span>
                               </div>
+                              {/* Paid at — mobile only */}
+                              <p className="text-[10px] text-white/30 mt-0.5 md:hidden">{formatDate(p.createdAt)}</p>
                             </td>
 
-                            <td className="px-4 py-4 text-xs text-white/35 whitespace-nowrap">
+                            {/* Paid At — desktop only */}
+                            <td className="px-4 py-4 text-xs text-white/35 whitespace-nowrap hidden md:table-cell">
                               {formatDate(p.createdAt)}
                             </td>
 
+                            {/* Name / Email — always visible */}
                             <td className="px-4 py-4">
                               <p className="text-sm font-semibold text-white leading-snug">
                                 {p.name || <span className="text-white/25 italic">—</span>}
                               </p>
                               <p className="text-xs text-white/35 mt-0.5 break-all">{p.email}</p>
+                              {/* Phone + type — mobile only */}
+                              <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 lg:hidden">
+                                {p.phone && <p className="text-[10px] text-white/30">{p.phone}</p>}
+                                {p.registrationType && (
+                                  <p className="text-[10px] text-green-400/60 sm:hidden">
+                                    {p.registrationType === 'Non-Architect' || p.registrationType === 'Non - Architect' ? 'Delegate' : p.registrationType}
+                                  </p>
+                                )}
+                              </div>
                             </td>
 
-                            <td className="px-4 py-4 text-xs text-white/40">{p.phone || '—'}</td>
+                            {/* Phone — lg+ only */}
+                            <td className="px-4 py-4 text-xs text-white/40 hidden lg:table-cell">{p.phone || '—'}</td>
 
-                            <td className="px-4 py-4">
+                            {/* Type — sm+ only */}
+                            <td className="px-4 py-4 hidden sm:table-cell">
                               {p.registrationType ? (
                                 <span
                                   className="text-[10px] font-black uppercase tracking-wide px-2 py-1 rounded-full whitespace-nowrap"
@@ -309,10 +329,12 @@ export default function ReconcilePage() {
                               )}
                             </td>
 
+                            {/* Amount — always visible */}
                             <td className="px-4 py-4">
                               <span className="text-sm font-bold text-white/75">₹{p.amount.toLocaleString('en-IN')}</span>
                             </td>
 
+                            {/* Actions — always visible */}
                             <td className="px-4 py-4">
                               {isDone ? (
                                 <div>

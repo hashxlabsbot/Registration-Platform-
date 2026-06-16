@@ -1,14 +1,14 @@
 // Shared architectural SVG components used across pages
 
 // ─── IIA Logo ─────────────────────────────────────────────────────────────────
-export function IIAEmblem({ size = 40, variant = 'dark' }: { size?: number; variant?: 'dark' | 'light' }) {
+export function IIAEmblem({ size = 40, variant = 'dark', className }: { size?: number; variant?: 'dark' | 'light'; className?: string }) {
   return (
     <img
       src="/IIA-Logo.svg"
       alt="IIA Logo"
       width={size}
       height={size}
-      className="shrink-0 object-contain"
+      className={`shrink-0 object-contain ${className || ''}`}
       style={variant === 'light' ? { filter: 'brightness(0) invert(1)' } : undefined}
     />
   );

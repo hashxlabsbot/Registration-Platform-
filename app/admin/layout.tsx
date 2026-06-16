@@ -203,7 +203,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                   <span className="text-[10px] font-bold text-green-400/70 uppercase tracking-wider">Live</span>
                 </div>
               )}
-              <LogoutButton role={role} />
+              <div className="hidden sm:block">
+                <LogoutButton role={role} />
+              </div>
             </div>
           </div>
         </nav>

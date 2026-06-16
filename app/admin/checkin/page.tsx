@@ -304,9 +304,9 @@ export default function CheckinPage() {
             )}
           </div>
 
-          {/* Right: recent check-ins feed */}
+          {/* Right: recent check-ins feed — below on mobile, sidebar on desktop */}
           <div>
-            <div className="rounded-2xl p-5 sticky top-20" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <div className="rounded-2xl p-5 lg:sticky lg:top-20" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.07)' }}>
               <div className="flex items-center justify-between mb-4">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Recent Check-ins</p>
                 <button onClick={loadAll} className="text-[10px] font-bold text-white/30 hover:text-white/60 transition-all">Refresh</button>

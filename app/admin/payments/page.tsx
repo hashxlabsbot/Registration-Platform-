@@ -146,9 +146,12 @@ export default function PaymentsPage() {
               <table className="w-full">
                 <thead>
                   <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                    {['Booking ID', 'Attendee', 'Type', 'Amount', 'Payment Ref', 'Date'].map((h) => (
-                      <th key={h} className="px-5 py-3.5 text-left text-[10px] font-black uppercase tracking-widest text-white/25">{h}</th>
-                    ))}
+                    <th className="px-5 py-3.5 text-left text-[10px] font-black uppercase tracking-widest text-white/25">Booking ID</th>
+                    <th className="px-5 py-3.5 text-left text-[10px] font-black uppercase tracking-widest text-white/25">Attendee</th>
+                    <th className="px-5 py-3.5 text-left text-[10px] font-black uppercase tracking-widest text-white/25">Type</th>
+                    <th className="px-5 py-3.5 text-left text-[10px] font-black uppercase tracking-widest text-white/25">Amount</th>
+                    <th className="px-5 py-3.5 text-left text-[10px] font-black uppercase tracking-widest text-white/25 hidden md:table-cell">Payment Ref</th>
+                    <th className="px-5 py-3.5 text-left text-[10px] font-black uppercase tracking-widest text-white/25 hidden md:table-cell">Date</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -162,6 +165,11 @@ export default function PaymentsPage() {
                         <td className="px-5 py-4">
                           <p className="font-semibold text-white text-sm">{r.name}</p>
                           <p className="text-xs text-white/30">{r.email}</p>
+                          {/* Mobile subtext details */}
+                          <div className="mt-1 space-y-0.5 md:hidden text-[10px]">
+                            <p className="text-white/35 font-mono">Ref: {r.utrNumber || '—'}</p>
+                            <p className="text-white/20">{r.registeredAt}</p>
+                          </div>
                         </td>
                         <td className="px-5 py-4">
                           <span className="inline-block text-[10px] font-black uppercase tracking-wide px-2.5 py-1 rounded-full"
@@ -174,7 +182,7 @@ export default function PaymentsPage() {
                             {r.amount > 0 ? `₹${r.amount.toLocaleString('en-IN')}` : <span className="text-white/30">—</span>}
                           </span>
                         </td>
-                        <td className="px-5 py-4">
+                        <td className="px-5 py-4 hidden md:table-cell">
                           {r.utrNumber ? (
                             <div>
                               <span className="font-mono text-xs text-white/50">{r.utrNumber}</span>
@@ -192,7 +200,7 @@ export default function PaymentsPage() {
                             </div>
                           ) : <span className="text-white/20">—</span>}
                         </td>
-                        <td className="px-5 py-4 text-xs text-white/25">{r.registeredAt}</td>
+                        <td className="px-5 py-4 text-xs text-white/25 hidden md:table-cell">{r.registeredAt}</td>
                       </tr>
                     );
                   })}

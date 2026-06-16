@@ -58,7 +58,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
           {/* Logo + name */}
           <div className="flex items-center shrink-0 min-w-0">
-            <IIAEmblem size={220} />
+            <IIAEmblem size={220} className="w-[145px] xs:w-[180px] sm:w-[220px]" />
           </div>
 
           {/* Right side */}
@@ -460,7 +460,7 @@ export default function Home() {
 
             {/* Logo */}
             <div className="flex items-center justify-center sm:justify-start">
-              <IIAEmblem size={320} variant="light" />
+              <IIAEmblem size={320} variant="light" className="w-[200px] xs:w-[260px] sm:w-[320px]" />
             </div>
 
             {/* Contact info */}

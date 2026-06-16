@@ -480,6 +480,18 @@ function TableRow({ r, i, isAdmin }: { r: Registration; i: number; isAdmin: bool
             <div>
               <p className="font-semibold text-white text-sm leading-snug">{r.name}</p>
               <p className="text-xs text-white/30 mt-0.5">{r.email}</p>
+              {/* Mobile/Tablet action buttons */}
+              <div className="flex md:hidden items-center gap-1.5 mt-2">
+                <TicketButton label="View" loading={viewing} loadingLabel="…" color="#63b3ed" colorAlpha="rgba(99,179,237" onClick={viewTicket} disabled={viewing || downloading} />
+                <TicketButton
+                  label="PDF" loading={downloading} loadingLabel="…" color="#c8a96e" colorAlpha="rgba(200,169,110"
+                  onClick={() => downloadTicket({ bookingId: r.bookingId, name: r.name, email: r.email, phone: r.phone,
+                    organization: r.organization, designation: r.designation, registrationType: r.registrationType,
+                    totalAmount: r.amount, utrNumber: r.utrNumber })}
+                  disabled={downloading || viewing}
+                  icon={<svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v13m0 0l-4-4m4 4l4-4M3 21h18" /></svg>}
+                />
+              </div>
             </div>
             {hasMembers && (
               <button
@@ -685,7 +697,7 @@ function StatCard({
 }) {
   return (
     <div
-      className="relative rounded-2xl p-5 overflow-hidden"
+      className="relative rounded-2xl p-3.5 sm:p-5 overflow-hidden"
       style={{
         background: `linear-gradient(135deg, ${gradFrom} 0%, ${gradTo} 100%)`,
         border: `1px solid ${borderColor}`,
@@ -709,7 +721,7 @@ function StatCard({
       </div>
       {/* Value */}
       <p
-        className={`font-black text-white ${smallValue ? 'text-xl' : 'text-2xl'}`}
+        className={`font-black text-white ${smallValue ? 'text-base sm:text-xl' : 'text-lg sm:text-2xl'}`}
         style={{ color: valueColor, textShadow: `0 0 20px ${glowColor}` }}
       >
         {value}
