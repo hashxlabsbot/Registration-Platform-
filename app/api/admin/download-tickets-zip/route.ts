@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
   for (let i = 0; i < list.length; i += FETCH_CHUNK) {
     const ids = list.slice(i, i + FETCH_CHUNK).map((r) => r.booking_id as string);
     const blobs = await sql`
-      SELECT booking_id, pdf_b64 FROM ticket_pdfs WHERE booking_id = ANY(${ids})
+      SELECT booking_id, pdf_b64 FROM ticket_pdfs WHERE booking_id = ANY(${ids}::text[])
     `;
 
     for (const row of blobs) {
