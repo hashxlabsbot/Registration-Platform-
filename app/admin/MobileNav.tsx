@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -109,8 +110,12 @@ const ALL_NAV_ITEMS = [
 
 export default function MobileNav({ role }: { role: 'admin' | 'volunteer' | 'viewer' }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+
+  // Only render portal on client (avoids SSR hydration mismatch)
+  useEffect(() => { setMounted(true); }, []);
 
   const items =
     role === 'viewer'
@@ -124,7 +129,7 @@ export default function MobileNav({ role }: { role: 'admin' | 'volunteer' | 'vie
     setOpen(false);
   }, [pathname]);
 
-  // Lock body scroll
+  // Lock body scroll when open
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden';
@@ -142,6 +147,183 @@ export default function MobileNav({ role }: { role: 'admin' | 'volunteer' | 'vie
     router.replace('/admin/login');
   }
 
+  // The drawer JSX — extracted so we can portal it
+  const drawer = (
+    <div className="fixed inset-0 z-[9999]" style={{ isolation: 'isolate' }}>
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0"
+        style={{ background: 'rgba(0,0,0,0.75)' }}
+        onClick={() => setOpen(false)}
+      />
+
+      {/* Slide-in panel */}
+      <div
+        className="absolute top-0 left-0 bottom-0 flex flex-col"
+        style={{
+          width: '280px',
+          background: '#0a1a0c',
+          borderRight: '1px solid rgba(200,169,110,0.15)',
+          boxShadow: '8px 0 48px rgba(0,0,0,0.9)',
+        }}
+      >
+        {/* Header */}
+        <div
+          className="flex items-center justify-between px-5"
+          style={{ height: '60px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}
+        >
+          <div className="flex items-center gap-2.5">
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{
+                background: 'linear-gradient(135deg, #1a4a1a, #2e7d32)',
+                boxShadow: '0 0 12px rgba(46,125,50,0.4)',
+              }}
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="#c8a96e" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+              </svg>
+            </div>
+            <span style={{ color: '#c8a96e', fontWeight: 900, fontSize: '14px', letterSpacing: '0.05em' }}>
+              Prakriti 2026
+            </span>
+          </div>
+          <button
+            onClick={() => setOpen(false)}
+            aria-label="Close navigation"
+            style={{
+              color: 'rgba(255,255,255,0.4)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '6px',
+              borderRadius: '8px',
+              lineHeight: 0,
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Role badge */}
+        <div style={{ padding: '16px 20px 8px' }}>
+          {role === 'admin' ? (
+            <div
+              className="inline-flex items-center gap-1.5"
+              style={{
+                background: 'rgba(74,222,128,0.08)',
+                border: '1px solid rgba(74,222,128,0.2)',
+                borderRadius: '999px',
+                padding: '4px 10px',
+              }}
+            >
+              <span
+                className="animate-pulse"
+                style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ade80', boxShadow: '0 0 6px #4ade80', display: 'inline-block' }}
+              />
+              <span style={{ color: 'rgba(74,222,128,0.7)', fontWeight: 700, fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                Live
+              </span>
+            </div>
+          ) : (
+            <div
+              className="inline-flex items-center"
+              style={{
+                background: 'rgba(99,179,237,0.1)',
+                border: '1px solid rgba(99,179,237,0.2)',
+                borderRadius: '999px',
+                padding: '4px 10px',
+                color: '#63b3ed',
+                fontWeight: 700,
+                fontSize: '10px',
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+              }}
+            >
+              {role === 'viewer' ? 'Viewer' : 'Volunteer'}
+            </div>
+          )}
+        </div>
+
+        {/* Nav links */}
+        <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 12px' }}>
+          {items.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px 16px',
+                  borderRadius: '12px',
+                  marginBottom: '4px',
+                  textDecoration: 'none',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  transition: 'background 0.15s, color 0.15s',
+                  color: isActive ? '#c8a96e' : 'rgba(255,255,255,0.75)',
+                  background: isActive ? 'rgba(200,169,110,0.1)' : 'transparent',
+                  border: isActive ? '1px solid rgba(200,169,110,0.2)' : '1px solid transparent',
+                }}
+              >
+                <span style={{ color: isActive ? '#c8a96e' : 'rgba(255,255,255,0.45)', flexShrink: 0 }}>
+                  {item.icon}
+                </span>
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Divider */}
+        <div style={{ height: '1px', background: 'rgba(255,255,255,0.07)', margin: '0 20px' }} />
+
+        {/* Sign out */}
+        <div style={{ padding: '12px' }}>
+          <button
+            onClick={handleLogout}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              width: '100%',
+              padding: '12px 16px',
+              borderRadius: '12px',
+              border: '1px solid transparent',
+              background: 'none',
+              cursor: 'pointer',
+              fontSize: '15px',
+              fontWeight: 600,
+              color: 'rgba(255,255,255,0.35)',
+              transition: 'color 0.15s, background 0.15s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = '#f87171';
+              e.currentTarget.style.background = 'rgba(239,68,68,0.08)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'rgba(255,255,255,0.35)';
+              e.currentTarget.style.background = 'none';
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            Sign Out
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <>
       {/* Hamburger — mobile only */}
@@ -158,182 +340,9 @@ export default function MobileNav({ role }: { role: 'admin' | 'volunteer' | 'vie
         </svg>
       </button>
 
-      {/* Overlay + Drawer portal */}
-      {open && (
-        <div className="fixed inset-0 z-[9999] sm:hidden" style={{ isolation: 'isolate' }}>
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0"
-            style={{ background: 'rgba(0,0,0,0.75)' }}
-            onClick={() => setOpen(false)}
-          />
-
-          {/* Drawer */}
-          <div
-            className="absolute top-0 left-0 bottom-0 flex flex-col"
-            style={{
-              width: '280px',
-              background: '#0a1a0c',
-              borderRight: '1px solid rgba(200,169,110,0.15)',
-              boxShadow: '8px 0 48px rgba(0,0,0,0.9)',
-            }}
-          >
-            {/* Header */}
-            <div
-              className="flex items-center justify-between px-5"
-              style={{ height: '60px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}
-            >
-              <div className="flex items-center gap-2.5">
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{
-                    background: 'linear-gradient(135deg, #1a4a1a, #2e7d32)',
-                    boxShadow: '0 0 12px rgba(46,125,50,0.4)',
-                  }}
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="#c8a96e" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-                  </svg>
-                </div>
-                <span style={{ color: '#c8a96e', fontWeight: 900, fontSize: '14px', letterSpacing: '0.05em' }}>
-                  Prakriti 2026
-                </span>
-              </div>
-              <button
-                onClick={() => setOpen(false)}
-                aria-label="Close navigation"
-                style={{
-                  color: 'rgba(255,255,255,0.4)',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '6px',
-                  borderRadius: '8px',
-                  lineHeight: 0,
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Role badge */}
-            <div style={{ padding: '16px 20px 8px' }}>
-              {role === 'admin' ? (
-                <div
-                  className="inline-flex items-center gap-1.5"
-                  style={{
-                    background: 'rgba(74,222,128,0.08)',
-                    border: '1px solid rgba(74,222,128,0.2)',
-                    borderRadius: '999px',
-                    padding: '4px 10px',
-                  }}
-                >
-                  <span
-                    className="animate-pulse"
-                    style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ade80', boxShadow: '0 0 6px #4ade80', display: 'inline-block' }}
-                  />
-                  <span style={{ color: 'rgba(74,222,128,0.7)', fontWeight: 700, fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                    Live
-                  </span>
-                </div>
-              ) : (
-                <div
-                  className="inline-flex items-center"
-                  style={{
-                    background: 'rgba(99,179,237,0.1)',
-                    border: '1px solid rgba(99,179,237,0.2)',
-                    borderRadius: '999px',
-                    padding: '4px 10px',
-                    color: '#63b3ed',
-                    fontWeight: 700,
-                    fontSize: '10px',
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  {role === 'viewer' ? 'Viewer' : 'Volunteer'}
-                </div>
-              )}
-            </div>
-
-            {/* Nav links */}
-            <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 12px' }}>
-              {items.map((item) => {
-                const isActive = pathname === item.href;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      padding: '12px 16px',
-                      borderRadius: '12px',
-                      marginBottom: '4px',
-                      textDecoration: 'none',
-                      fontSize: '15px',
-                      fontWeight: 600,
-                      transition: 'background 0.15s, color 0.15s',
-                      color: isActive ? '#c8a96e' : 'rgba(255,255,255,0.75)',
-                      background: isActive ? 'rgba(200,169,110,0.1)' : 'transparent',
-                      border: isActive ? '1px solid rgba(200,169,110,0.2)' : '1px solid transparent',
-                    }}
-                  >
-                    <span style={{ color: isActive ? '#c8a96e' : 'rgba(255,255,255,0.45)', flexShrink: 0 }}>
-                      {item.icon}
-                    </span>
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
-
-            {/* Divider */}
-            <div style={{ height: '1px', background: 'rgba(255,255,255,0.07)', margin: '0 20px' }} />
-
-            {/* Sign out */}
-            <div style={{ padding: '12px' }}>
-              <button
-                onClick={handleLogout}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  width: '100%',
-                  padding: '12px 16px',
-                  borderRadius: '12px',
-                  border: '1px solid transparent',
-                  background: 'none',
-                  cursor: 'pointer',
-                  fontSize: '15px',
-                  fontWeight: 600,
-                  color: 'rgba(255,255,255,0.35)',
-                  transition: 'color 0.15s, background 0.15s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = '#f87171';
-                  e.currentTarget.style.background = 'rgba(239,68,68,0.08)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = 'rgba(255,255,255,0.35)';
-                  e.currentTarget.style.background = 'none';
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
-                  <polyline points="16 17 21 12 16 7" />
-                  <line x1="21" y1="12" x2="9" y2="12" />
-                </svg>
-                Sign Out
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Portal renders directly on <body>, escaping the nav's backdrop-filter
+          stacking context which would otherwise trap z-index children */}
+      {mounted && open && createPortal(drawer, document.body)}
     </>
   );
 }
