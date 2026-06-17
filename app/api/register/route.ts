@@ -3,13 +3,12 @@ import { nanoid } from 'nanoid';
 import { appendRegistration } from '@/lib/registrations';
 import { consumeInviteCode } from '@/lib/invite-codes';
 import { sendTicketEmail, sendAdminNotification } from '@/lib/mailer';
+import { isRegistrationClosed } from '@/lib/registration-status';
 
 export const runtime = 'nodejs';
 
-const REGISTRATION_DEADLINE = new Date('2026-06-17T23:59:59+05:30').getTime();
-
 export async function POST(request: NextRequest) {
-  if (Date.now() > REGISTRATION_DEADLINE) {
+  if (isRegistrationClosed()) {
     return NextResponse.json(
       { error: 'Registrations are now closed. Thank you for your interest in Prakriti 2026.' },
       { status: 410 }

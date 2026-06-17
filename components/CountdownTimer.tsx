@@ -1,9 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-
-// Registration closes: 17 June 2026, 23:59:59 IST (extended from 15 June)
-const DEADLINE = new Date('2026-06-17T23:59:59+05:30').getTime();
+import { REGISTRATION_DEADLINE, isRegistrationClosed } from '@/lib/registration-status';
 
 interface TimeLeft {
   days: number;
@@ -14,8 +12,8 @@ interface TimeLeft {
 }
 
 function calc(): TimeLeft {
-  const diff = DEADLINE - Date.now();
-  if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, expired: true };
+  const diff = REGISTRATION_DEADLINE - Date.now();
+  if (diff <= 0 || isRegistrationClosed()) return { days: 0, hours: 0, minutes: 0, seconds: 0, expired: true };
   return {
     days:    Math.floor(diff / 86_400_000),
     hours:   Math.floor((diff % 86_400_000) / 3_600_000),

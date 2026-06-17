@@ -7,9 +7,11 @@ import SuccessScreen from '@/components/SuccessScreen';
 import { BookingResult } from '@/lib/types';
 import { IIAEmblem, BlueprintGridOverlay } from '@/components/arch-elements';
 import CountdownTimer from '@/components/CountdownTimer';
+import { isRegistrationClosed } from '@/lib/registration-status';
 
 export default function RegisterPage() {
   const [booking, setBooking] = useState<BookingResult | null>(null);
+  const closed = isRegistrationClosed();
 
   return (
     <div className="min-h-screen" style={{
@@ -107,6 +109,28 @@ export default function RegisterPage() {
                 Back to Event Page
               </Link>
             </div>
+          </div>
+        ) : closed ? (
+          <div className="bg-white rounded-2xl border border-green-100 shadow-sm p-10 text-center">
+            <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full"
+              style={{ background: 'rgba(239,68,68,0.1)' }}>
+              <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="#dc2626" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-extrabold text-[#1a4a1a]">Registrations are now closed</h2>
+            <p className="mt-2 text-sm text-gray-500 max-w-md mx-auto">
+              Thank you for your interest in Prakriti 2026. Online registration has closed.
+              For any queries, please reach out to the IIA Faridabad Centre.
+            </p>
+            <Link href="/"
+              className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-[#2e7d32]
+                hover:text-[#1a4a1a] transition-colors">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+              Back to Event Page
+            </Link>
           </div>
         ) : (
           <RegistrationForm onSuccess={setBooking} />
